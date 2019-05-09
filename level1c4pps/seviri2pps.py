@@ -22,6 +22,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# This program was developed by CMSAF to be used for the processing of
+# CLAAS3. 
+
 """Script to make seviri level1c in PPS-format with pytroll"""
 
 import os
@@ -117,7 +120,6 @@ def process_one_scan(tslot_files, out_path,
         image_num += 1   
 
     #correct area  
-    """
     area_corr = pyresample.geometry.AreaDefinition(
         'seviri-corrected',
         'Corrected SEVIRI L1.5 grid (since Dec 2017)',
@@ -130,7 +132,6 @@ def process_one_scan(tslot_files, out_path,
     )
     if not scn_[scn_.keys()[0]].attrs['georef_offset_corrected']:
         scn_ = scn_.resample(area_corr)
-    """
     #import pdb;pdb.set_trace()
     #Set som header attributes:
     scn_.attrs['platform'] = platform_name
@@ -169,9 +170,9 @@ def process_one_scan(tslot_files, out_path,
     if process_buggy_satellite_zenith_angles:
         print(" Making buggy satellite zenith angels on purpose!")
         sata, satel = get_observer_look(
-            irch.attrs['satellite_longitude'],
-            irch.attrs['satellite_latitude'],
-            irch.attrs['satellite_altitude'], 
+            irch.attrs['navigation']['satellite_actual_longitude'],
+            irch.attrs['navigation']['satellite_actual_latitude'],
+            irch.attrs['navigation']['satellite_actual_altitude'],
             irch.attrs['start_time'],
             lons, lats, 0)  
     elif (get_observer_look(0, 0, 36000*1000, 
@@ -182,9 +183,9 @@ def process_one_scan(tslot_files, out_path,
                           np.array([58]), np.array([0]))[1]<23 and 
         irch.attrs['satellite_altitude']>38000):
         sata, satel = get_observer_look(
-            irch.attrs['satellite_longitude'],
-            irch.attrs['satellite_latitude'],
-            0.001*irch.attrs['satellite_altitude'], #m=>km
+            irch.attrs['navigation']['satellite_actual_longitude'],
+            irch.attrs['navigation']['satellite_actual_latitude'],
+            0.001*irch.attrs['navigation']['satellite_actual_altitude'],
             irch.attrs['start_time'],
             lons, lats, 0)
     else:
@@ -314,6 +315,8 @@ def process_one_scan(tslot_files, out_path,
     header_attrs['sensor'] = sensor.lower()
     
 
+    # Replace boolean and dictionary attributes 
+    # Likely they will be supoorted in later versions of satpy
     for band in BANDNAMES:
         idtag = PPS_TAGNAMES[band]
         scn_[band].attrs['georef_offset_corrected'] = (
@@ -321,10 +324,11 @@ def process_one_scan(tslot_files, out_path,
         to_pop = []
         for attr in scn_[band].attrs.keys():
             if hasattr(scn_[band].attrs[attr],'keys'):
-                print("found dict", attr)
+                print("WARNING found dictionary", attr)
                 to_pop.append(attr)
         for attr in to_pop:        
             attr_dict = scn_[band].attrs[attr]
+            print("WARNING replacing dictionary attribute", attr)
             scn_[band].attrs.pop(attr)
             for key in attr_dict.keys():
                 scn_[band].attrs[attr+str(key)] = attr_dict[key]
