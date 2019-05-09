@@ -132,7 +132,7 @@ def process_one_file(gac_file, out_path='.'):
     # lats = lats.where(lats >= -90, 999.0)
 
     my_coords = irch.coords
-    my_coords['time'] = irch.attrs['end_time']
+    my_coords['time'] = irch.attrs['start_time']
     scn_['lat'] = scn_['latitude']
     del scn_['latitude']
     scn_['lat'].attrs['long_name'] = 'latitude coordinate'
@@ -151,6 +151,7 @@ def process_one_file(gac_file, out_path='.'):
     angle_names.append("image{:d}".format(image_num))
     scn_['sunzenith'].attrs['coordinates'] = 'lon lat'
     del scn_['sunzenith'].attrs['area']
+    scn_['sunzenith'].coords['time'] = irch.attrs['start_time']
     image_num += 1
 
     # satzenith
@@ -163,6 +164,7 @@ def process_one_file(gac_file, out_path='.'):
     angle_names.append("image{:d}".format(image_num))
     scn_['satzenith'].attrs['coordinates'] = 'lon lat'
     del scn_['satzenith'].attrs['area']
+    scn_['satzenith'].coords['time'] = irch.attrs['start_time']
     image_num += 1
 
     # azidiff
@@ -178,6 +180,7 @@ def process_one_file(gac_file, out_path='.'):
     angle_names.append("image{:d}".format(image_num))
     scn_['azimuthdiff'].attrs['coordinates'] = 'lon lat'
     del scn_['azimuthdiff'].attrs['area']
+    scn_['azimuthdiff'].coords['time'] = irch.attrs['start_time']
     image_num += 1
 
     # Get filename
