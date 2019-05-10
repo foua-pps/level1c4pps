@@ -187,10 +187,10 @@ def process_one_file(gac_file, out_path='.'):
     start_time = irch.attrs['start_time']
     end_time = irch.attrs['end_time']
     platform_name = irch.attrs['platform_name']
-    orbit_number = scn_.attrs['orbit_number']
+    orbit_number = int(scn_.attrs['orbit_number'])
     filename = os.path.join(
         out_path,
-        "S_NWC_avhrr_{:s}_{:s}_{:s}Z_{:s}Z.nc".format(
+        "S_NWC_avhrr_{:s}_{:05d}_{:s}Z_{:s}Z.nc".format(
             platform_name.lower().replace('-',''),
             orbit_number,
             start_time.strftime('%Y%m%dT%H%M%S%f')[:-5],
