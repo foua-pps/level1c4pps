@@ -124,22 +124,22 @@ def process_one_file(gac_file, out_path='.'):
     irch = scn_['4']
     scn_.attrs['platform'] = irch.attrs['platform_name']
     scn_.attrs['platform_name'] = irch.attrs['platform_name']
-    scn_.attrs['orbit_number'] = str(irch.attrs['orbit_number'])
-    scn_.attrs['orbit'] = str(irch.attrs['orbit_number'])
+    scn_.attrs['orbit_number'] = '{:05d}'.format(irch.attrs['orbit_number'])
+    scn_.attrs['orbit'] = scn_.attrs['orbit_number']
     # lons = lons.where(lons <= 360, -999.0)
     # lons = lons.where(lons >= -360, 999.0)
     # lats = lats.where(lats <= 90, -999.0)
     # lats = lats.where(lats >= -90, 999.0)
 
-    my_coords = irch.coords
-    my_coords['time'] = irch.attrs['start_time']
     scn_['lat'] = scn_['latitude']
     del scn_['latitude']
     scn_['lat'].attrs['long_name'] = 'latitude coordinate'
+    del scn_['lat'].coords['acq_time']
 
     scn_['lon'] = scn_['longitude']
     del scn_['longitude']
     scn_['lon'].attrs['long_name'] = 'longitude coordinate'
+    del scn_['lon'].coords['acq_time']
 
     angle_names = []
     scn_['sunzenith'] = scn_['solar_zenith_angle']
@@ -152,6 +152,7 @@ def process_one_file(gac_file, out_path='.'):
     scn_['sunzenith'].attrs['coordinates'] = 'lon lat'
     del scn_['sunzenith'].attrs['area']
     scn_['sunzenith'].coords['time'] = irch.attrs['start_time']
+    del scn_['sunzenith'].coords['acq_time']
     image_num += 1
 
     # satzenith
@@ -165,6 +166,7 @@ def process_one_file(gac_file, out_path='.'):
     scn_['satzenith'].attrs['coordinates'] = 'lon lat'
     del scn_['satzenith'].attrs['area']
     scn_['satzenith'].coords['time'] = irch.attrs['start_time']
+    del scn_['satzenith'].coords['acq_time']
     image_num += 1
 
     # azidiff
@@ -181,6 +183,7 @@ def process_one_file(gac_file, out_path='.'):
     scn_['azimuthdiff'].attrs['coordinates'] = 'lon lat'
     del scn_['azimuthdiff'].attrs['area']
     scn_['azimuthdiff'].coords['time'] = irch.attrs['start_time']
+    del scn_['azimuthdiff'].coords['acq_time']
     image_num += 1
 
     # Get filename
@@ -211,8 +214,8 @@ def process_one_file(gac_file, out_path='.'):
             logger.debug("No band named %s", band)
             continue
         # Add time coordinate. To make cfwriter aware that we want 3D data.
-        my_coords = scn_[band].coords
-        my_coords['time'] = irch.attrs['start_time']
+        scn_[band].coords['time'] = irch.attrs['start_time']
+        del scn_[band].coords['acq_time']
 
         if 'tb' in idtag:
             save_info[name] = {'dtype': 'int16',
@@ -265,7 +268,7 @@ def process_one_file(gac_file, out_path='.'):
             continue
 
 
-
+    import ipdb; ipdb.set_trace()
     scn_.save_datasets(writer='cf', filename=filename,
                        header_attrs=header_attrs, engine='netcdf4',
                        encoding=save_info)
