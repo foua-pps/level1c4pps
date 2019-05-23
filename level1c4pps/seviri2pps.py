@@ -267,10 +267,11 @@ def process_one_scan(tslot_files, out_path,
             start_time.strftime('%Y%m%dT%H%M%S%f')[:-5],
             end_time.strftime('%Y%m%dT%H%M%S%f')[:-5]))
         
-    for dataset in scn_.keys():
-        if hasattr(scn_[dataset],'attrs'):
-            if hasattr(scn_[dataset].attrs, 'modifiers'):
-                scn_[dataset].attrs['modifiers'] = 0.0
+    #for dataset in scn_.keys():
+    #    if hasattr(scn_[dataset],'attrs'):
+    #        if hasattr(scn_[dataset].attrs, 'modifiers'):
+    #            scn_[dataset].attrs['modifiers'] = 0.0
+
     #Encoding for channels
     save_info = {}
     for band in BANDNAMES:
