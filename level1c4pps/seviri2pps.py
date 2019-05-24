@@ -245,9 +245,9 @@ def process_one_scan(tslot_files, out_path,
         da.from_array(azidiff[:,:], chunks=(53, 3712)),
         dims=['y','x'], coords=my_coords)
     scn_['azimuthdiff'].attrs['id_tag'] = 'azimuthdiff'
-    scn_['azimuthdiff'].attrs['standard_name'] = (
-        'angle_of_rotation_from_solar_azimuth_to_platform_azimuth')
-    scn_['azimuthdiff'].attrs['long_name'] = 'azimuth difference angle'
+    #scn_['azimuthdiff'].attrs['standard_name'] = (
+    #    'angle_of_rotation_from_solar_azimuth_to_platform_azimuth')
+    scn_['azimuthdiff'].attrs['long_name'] = 'absoulte azimuth difference angle'
     scn_['azimuthdiff'].attrs['valid_range'] = [0, 18000]
     scn_['azimuthdiff'].attrs['name'] = "image{:d}".format(image_num)
     image_num +=1
