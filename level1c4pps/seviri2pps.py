@@ -130,15 +130,17 @@ def process_one_scan(tslot_files, out_path,
         (5567248.28340708, 5570248.686685662, 
          -5570248.686685662, -5567248.28340708)
     )
-    if not scn_[scn_.keys()[0]].attrs['georef_offset_corrected']:
+    if not scn_['IR_108'].attrs['georef_offset_corrected']:
         scn_ = scn_.resample(area_corr)
+        print(scn_['IR_108'].attrs['georef_offset_corrected'])
+    
     #import pdb;pdb.set_trace()
     #Set som header attributes:
     scn_.attrs['platform'] = platform_name
     scn_.attrs['instrument'] = sensor.upper()
     scn_.attrs['source'] = "seviri2pps.py"
     scn_.attrs['orbit_number'] = "99999"
-    scn_.attrs['orbit'] = "99999"
+    #scn_.attrs['orbit'] = "99999"
     nowutc = datetime.utcnow()
     scn_.attrs['date_created'] = nowutc.strftime("%Y-%m-%dT%H:%M:%SZ")        
     #Find lat/lon data 
@@ -148,6 +150,7 @@ def process_one_scan(tslot_files, out_path,
     lons[lons<-360] = -999.0
     lats[lats>360] = -999.0
     lats[lats<-360] = -999.0
+
     #Find angles data
     sunalt, suna = get_alt_az(
         irch.attrs['start_time'], *irch.attrs['area'].get_lonlats())
@@ -199,15 +202,19 @@ def process_one_scan(tslot_files, out_path,
     #Add lat/lon  and angles datasets to the scen object
     my_coords = scn_['IR_108'].coords
     my_coords['time'] = irch.attrs['start_time']
-    scn_['lat'] = xr.DataArray(da.from_array(lats, chunks=(53, 3712)), 
-                               dims=['y','x'])
+    scn_['lat'] = xr.DataArray(
+        da.from_array(lats, chunks=(53, 3712)), 
+        dims=['y','x'], 
+        coords={'y': scn_['IR_108']['y'], 'x': scn_['IR_108']['x']})
     scn_['lat'].attrs['long_name'] = 'latitude coordinate'
     scn_['lat'].attrs['standard_name'] = 'latitude'
     scn_['lat'].attrs['units'] = 'degrees_north'
     scn_['lat'].attrs['start_time'] = irch.attrs['start_time']
     scn_['lat'].attrs['end_time'] = irch.attrs['end_time']
-    scn_['lon'] = xr.DataArray(da.from_array(lons, chunks=(53, 3712)),  
-                               dims=['y','x'])
+    scn_['lon'] = xr.DataArray(
+        da.from_array(lons, chunks=(53, 3712)),  
+        dims=['y','x'], 
+        coords={'y': scn_['IR_108']['y'], 'x': scn_['IR_108']['x']})
     scn_['lon'].attrs['long_name'] = 'longitude coordinate'
     scn_['lon'].attrs['standard_name'] = 'longitude'
     scn_['lon'].attrs['units'] = 'degrees_east'
@@ -220,12 +227,8 @@ def process_one_scan(tslot_files, out_path,
     scn_['sunzenith'].attrs['id_tag'] = 'sunzenith'
     scn_['sunzenith'].attrs['long_name'] = 'sun zenith angle'
     scn_['sunzenith'].attrs['standard_name'] = 'solar_zenith_angle'
-    scn_['sunzenith'].attrs['units'] = 'degree'
     scn_['sunzenith'].attrs['valid_range'] = [0, 18000]
     scn_['sunzenith'].attrs['name'] = "image{:d}".format(image_num)
-    scn_['sunzenith'].attrs['coordinates'] = 'lon lat'
-    scn_['sunzenith'].attrs['start_time'] = irch.attrs['start_time']
-    scn_['sunzenith'].attrs['end_time'] = irch.attrs['end_time']
     image_num +=1
     #satzenith
     scn_['satzenith'] = xr.DataArray(
@@ -234,12 +237,8 @@ def process_one_scan(tslot_files, out_path,
     scn_['satzenith'].attrs['id_tag'] = 'satzenith'
     scn_['satzenith'].attrs['long_name'] = 'satellite zenith angle'
     scn_['satzenith'].attrs['standard_name'] = 'platform_zenith_angle'
-    scn_['satzenith'].attrs['units'] = 'degree'
     scn_['satzenith'].attrs['valid_range'] = [0, 9000]
     scn_['satzenith'].attrs['name'] = "image{:d}".format(image_num)
-    scn_['satzenith'].attrs['coordinates'] = 'lon lat'
-    scn_['satzenith'].attrs['start_time'] = irch.attrs['start_time']
-    scn_['satzenith'].attrs['end_time'] = irch.attrs['end_time']
     image_num +=1
     #azidiff
     scn_['azimuthdiff'] = xr.DataArray(
@@ -249,13 +248,20 @@ def process_one_scan(tslot_files, out_path,
     scn_['azimuthdiff'].attrs['standard_name'] = (
         'angle_of_rotation_from_solar_azimuth_to_platform_azimuth')
     scn_['azimuthdiff'].attrs['long_name'] = 'azimuth difference angle'
-    scn_['azimuthdiff'].attrs['units'] =  'degree'
     scn_['azimuthdiff'].attrs['valid_range'] = [0, 18000]
     scn_['azimuthdiff'].attrs['name'] = "image{:d}".format(image_num)
-    scn_['azimuthdiff'].attrs['coordinates'] = 'lon lat'
-    scn_['azimuthdiff'].attrs['start_time'] = irch.attrs['start_time']
-    scn_['azimuthdiff'].attrs['end_time'] = irch.attrs['end_time']
     image_num +=1
+    for angle in ['azimuthdiff', 'satzenith', 'sunzenith']:
+        scn_[angle].attrs['units'] =  'degree'
+        for attr in irch.attrs.keys():
+            if attr in ["start_time",
+                        "end_time",
+                        "navigation",
+                        "georef_offset_corrected",
+                        "projection"
+            ]:
+                scn_[angle].attrs[attr] = irch.attrs[attr]
+
     #Get filename
     start_time = scn_['IR_108'].attrs['start_time']
     end_time = scn_['IR_108'].attrs['end_time']
@@ -267,16 +273,12 @@ def process_one_scan(tslot_files, out_path,
             start_time.strftime('%Y%m%dT%H%M%S%f')[:-5],
             end_time.strftime('%Y%m%dT%H%M%S%f')[:-5]))
         
-    #for dataset in scn_.keys():
-    #    if hasattr(scn_[dataset],'attrs'):
-    #        if hasattr(scn_[dataset].attrs, 'modifiers'):
-    #            scn_[dataset].attrs['modifiers'] = 0.0
-
     #Encoding for channels
     save_info = {}
     for band in BANDNAMES:
         idtag = PPS_TAGNAMES[band]
         name = scn_[band].attrs['name']
+        scn_[band].attrs.pop('area',None)
         # Add time coordinate. To make cfwriter aware that we want 3D data.
         my_coords = scn_[band].coords
         my_coords['time'] = irch.attrs['start_time']
@@ -297,12 +299,14 @@ def process_one_scan(tslot_files, out_path,
                                'add_offset': 0.0 }
     #Encoding for angles and lat/lon       
     for name in ['image11', 'image12', 'image13']:    
-        save_info[name] = {'dtype': 'int16', 
-                           'scale_factor':0.01, 
-                           'zlib': True,
-                           'complevel': 4,
-                           '_FillValue': -32767, 
-                           'add_offset': 0.0 }
+        save_info[name] = {
+            'dtype': 'int16', 
+            'scale_factor':0.01, 
+            'zlib': True,
+            'complevel': 4,
+            '_FillValue': -32767, 
+            'add_offset': 0.0 }
+
     for name in ['lon', 'lat']:
         save_info[name] = {'dtype': 'float32',    'zlib': True,
                            'complevel': 4, '_FillValue': -999.0}
@@ -314,31 +318,18 @@ def process_one_scan(tslot_files, out_path,
         "%Y-%m-%d %H:%M:%S",
         irch.attrs['end_time'].timetuple())
     header_attrs['sensor'] = sensor.lower()
-    
-
-    # Replace boolean and dictionary attributes 
-    # Likely they will be supoorted in later versions of satpy
-    for band in BANDNAMES:
-        idtag = PPS_TAGNAMES[band]
-        scn_[band].attrs['georef_offset_corrected'] = (
-            str(scn_[band].attrs['georef_offset_corrected']))
-        to_pop = []
-        for attr in scn_[band].attrs.keys():
-            if hasattr(scn_[band].attrs[attr],'keys'):
-                print("WARNING found dictionary", attr)
-                to_pop.append(attr)
-        for attr in to_pop:        
-            attr_dict = scn_[band].attrs[attr]
-            print("WARNING replacing dictionary attribute", attr)
-            scn_[band].attrs.pop(attr)
-            for key in attr_dict.keys():
-                scn_[band].attrs[attr+str(key)] = attr_dict[key]
-
+    header_attrs.pop('platform_name', None)
             
 
-    scn_.save_datasets(writer='cf', filename=filename,  
-                       header_attrs=header_attrs, engine='netcdf4', 
-                       encoding=save_info)
+    scn_.save_datasets(writer='cf', 
+                       filename=filename,  
+                       header_attrs=header_attrs, 
+                       engine='netcdf4', 
+                       encoding=save_info,
+                       include_lonlats=False,
+                       pretty=True,
+                       flatten_attrs=True,
+                       exclude_attrs=['raw_metadata'])
     print("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),
         time.time()-tic)) #About 40 seconds 
