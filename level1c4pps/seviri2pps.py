@@ -173,9 +173,9 @@ def process_one_scan(tslot_files, out_path,
     if process_buggy_satellite_zenith_angles:
         print(" Making buggy satellite zenith angels on purpose!")
         sata, satel = get_observer_look(
-            irch.attrs['navigation']['satellite_actual_longitude'],
-            irch.attrs['navigation']['satellite_actual_latitude'],
-            irch.attrs['navigation']['satellite_actual_altitude'],
+            irch.attrs['orbital_parameters']['satellite_actual_longitude'],
+            irch.attrs['orbital_parameters']['satellite_actual_latitude'],
+            irch.attrs['orbital_parameters']['satellite_actual_altitude'],
             irch.attrs['start_time'],
             lons, lats, 0)  
     elif (get_observer_look(0, 0, 36000*1000, 
@@ -184,11 +184,11 @@ def process_one_scan(tslot_files, out_path,
         get_observer_look(0, 0, 36000, 
                           datetime.utcnow(), np.array([16]), 
                           np.array([58]), np.array([0]))[1]<23 and 
-        irch.attrs['satellite_altitude']>38000):
+        irch.attrs['orbital_parameters']['satellite_actual_altitude']>38000):
         sata, satel = get_observer_look(
-            irch.attrs['navigation']['satellite_actual_longitude'],
-            irch.attrs['navigation']['satellite_actual_latitude'],
-            0.001*irch.attrs['navigation']['satellite_actual_altitude'],
+            irch.attrs['orbital_parameters']['satellite_actual_longitude'],
+            irch.attrs['orbital_parameters']['satellite_actual_latitude'],
+            0.001*irch.attrs['orbital_parameters']['satellite_actual_altitude'],
             irch.attrs['start_time'],
             lons, lats, 0)
     else:
