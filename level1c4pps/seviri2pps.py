@@ -333,13 +333,13 @@ def process_one_scan(tslot_files, out_path,
     print("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),
         time.time()-tic)) #About 40 seconds 
+    return filename
 
 def process_all_scans_in_dname(dname, out_path, ok_dates=None):
     """ Make level 1c files for all files in directory dname """
     fl_ = glob(os.path.join(dname, globify(hrit_file_pattern)))
     dates = [p__.parse(os.path.basename(p))['start_time'] for p in fl_]
     unique_dates = np.unique(dates).tolist()
-
     for uqdate in unique_dates:
         date_formated = uqdate.strftime("%Y%m%d%H%M")
         if ok_dates is not None and date_formated not in ok_dates.keys():
@@ -351,7 +351,7 @@ def process_all_scans_in_dname(dname, out_path, ok_dates=None):
         tslot_files = [f for f in fl_ if p__.parse(
             os.path.basename(f))['start_time'] == uqdate]
         try:
-            process_one_scan(tslot_files, out_path)
+        process_one_scan(tslot_files, out_path)
         except:
             pass
 
