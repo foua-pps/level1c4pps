@@ -351,7 +351,7 @@ def process_all_scans_in_dname(dname, out_path, ok_dates=None):
         tslot_files = [f for f in fl_ if p__.parse(
             os.path.basename(f))['start_time'] == uqdate]
         try:
-        process_one_scan(tslot_files, out_path)
+            process_one_scan(tslot_files, out_path)
         except:
             pass
 
