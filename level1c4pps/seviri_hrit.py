@@ -5,7 +5,9 @@
 
 # Author(s):
 
-#   Adam.Dybbroe <a000680@c21529.ad.smhi.se>
+#   Nina Håkansson <nina.hakansson@smhi.se>
+#   Martin Raspaud <martin.raspaud@smhi.se>
+#   Adam Dybbroe <adam.dybbroe@smhi.se>
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by

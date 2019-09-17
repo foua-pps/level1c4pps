@@ -22,3 +22,13 @@
 
 """level1c4pps Package Initializer
 """
+
+
+def make_azidiff_angle(sata, suna, fill=None):
+    """ Calculate azimuth difference angle """
+    daz = sata - suna
+    daz[daz < 0] = -1 * daz[daz < 0]
+    daz = daz % 360
+    daz[daz > 180] = 360 - daz[daz > 180]
+
+    return daz
