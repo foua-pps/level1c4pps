@@ -64,15 +64,6 @@ INSTRUMENTS = {'tirosn': 'avhrr',
                'noaa19': 'avhrr/3'}
 
 
-def make_azidiff_angle(sata, suna, fill):
-    """ Calculate azimuth difference angle """
-    daz = sata - suna
-    daz[daz < 0] = -1 * daz[daz < 0]
-    daz[daz > 360] = daz[daz > 360] % 360
-    daz[daz > 180] = 360 - daz[daz > 180]
-    return daz
-
-
 def process_one_file(gac_file, out_path='.'):
     """Make level 1c files in PPS-format."""
     tic = time.time()

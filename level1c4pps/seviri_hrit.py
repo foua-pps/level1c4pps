@@ -38,6 +38,7 @@ from trollsift.parser import globify, Parser
 from pyorbital.astronomy import get_alt_az, sun_zenith_angle
 from pyorbital.orbital import get_observer_look
 from level1c4pps.calibration_coefs import get_calibration_for_time, CALIB_MODE
+from level1c4pps import make_azidiff_angle
 import pyresample
 
 
@@ -67,19 +68,6 @@ PLATFORM_SHORTNAMES = {"MSG1": "Meteosat-8",
 # H-000-MSG3__-MSG3________-IR_120___-000003___-201410051115-__:
 hrit_file_pattern = '{rate:1s}-000-{hrit_format:_<6s}-{platform_shortname:_<12s}-{channel:_<8s}_-{segment:_<9s}-{start_time:%Y%m%d%H%M}-__'
 p__ = Parser(hrit_file_pattern)
-
-
-def make_azidiff_angle(sata, suna, fill):
-    """ Calculate azimuth difference angle """
-    # np.ma.mod(np.ma.abs(sunaz - sataz), 180) same as?
-    daz = sata - suna
-    daz[daz < 0] = -1 * daz[daz < 0]
-    daz[daz > 360] = daz[daz > 360] - 360
-    daz[daz > 180] = 360 - daz[daz > 180]
-    # fix nodata
-    #daz[suna == fill] = fill
-    #daz[sata == fill] = fill
-    return daz
 
 
 def process_one_scan(tslot_files, out_path,
