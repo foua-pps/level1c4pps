@@ -25,22 +25,15 @@
 """Script to make seviri level1c in PPS-format with pytroll"""
 
 import os
-import sys
-import numpy as np
-import xarray as xr
-import dask.array as da
-from glob import glob
 import time
 from datetime import datetime
 from satpy.scene import Scene
-from trollsift.parser import globify, Parser
-from pyorbital.astronomy import get_alt_az, sun_zenith_angle
-from pyorbital.orbital import get_observer_look
-from calibration_coefs import get_calibration_for_time, CALIB_MODE
-import pyresample
 import logging
+
+
 class UnexpectedSatPyVersion(Exception):
     pass
+
 
 logger = logging.getLogger('gac2pps')
 
@@ -267,14 +260,12 @@ def process_one_file(gac_file, out_path='.'):
         except KeyError:
             continue
 
-
-    import ipdb; ipdb.set_trace()
     scn_.save_datasets(writer='cf', filename=filename,
                        header_attrs=header_attrs, engine='netcdf4',
                        encoding=save_info)
     print("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),
-        time.time()-tic)) #About 40 seconds
+        time.time()-tic))
 
 
 # -----------------------------------------------------------------------------
@@ -283,7 +274,6 @@ if __name__ == "__main__":
     """ Create PPS-format level1c data
     From a list of hirt files hrit create a level1c file for pps.
     """
-    #python3 seviri2pps.py file1 file2 ... fileN -o output
     import argparse
     parser = argparse.ArgumentParser(
         description = ('Script to produce a PPS-level1c file for a '
