@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2019 Martin.Raspaud
+# Copyright (c) 2019 Adam.Dybbroe
 
 # Author(s):
 
-#   Nina.Hakansson  a001865
-#   Adam.Dybbroe
-#   Martin.Raspaud
+#   Martin Raspaud <martin.raspaud@smhi.se>
+#   Nina Håkansson <nina.hakansson@smhi.se>
+#   Adam.Dybbroe <adam.dybbroe@smhi.se>
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Script to make seviri level1c in PPS-format with pytroll"""
+"""Utilities to convert AVHRR GAC formattet data to PPS level-1c format
+"""
+
 
 import os
 import time
@@ -60,14 +62,6 @@ INSTRUMENTS = {'tirosn': 'avhrr',
                'noaa17': 'avhrr/3',
                'noaa18': 'avhrr/3',
                'noaa19': 'avhrr/3'}
-
-def make_azidiff_angle(sata, suna, fill):
-    """ Calculate azimuth difference angle """
-    daz = sata - suna
-    daz[daz < 0] = -1 * daz[daz < 0]
-    daz[daz > 360] = daz[daz > 360] % 360
-    daz[daz > 180] = 360 - daz[daz > 180]
-    return daz
 
 
 def process_one_file(gac_file, out_path='.'):
@@ -187,7 +181,7 @@ def process_one_file(gac_file, out_path='.'):
     filename = os.path.join(
         out_path,
         "S_NWC_avhrr_{:s}_{:05d}_{:s}Z_{:s}Z.nc".format(
-            platform_name.lower().replace('-',''),
+            platform_name.lower().replace('-', ''),
             orbit_number,
             start_time.strftime('%Y%m%dT%H%M%S%f')[:-5],
             end_time.strftime('%Y%m%dT%H%M%S%f')[:-5]))
@@ -266,23 +260,3 @@ def process_one_file(gac_file, out_path='.'):
     print("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),
         time.time()-tic))
-
-
-# -----------------------------------------------------------------------------
-# Main:
-if __name__ == "__main__":
-    """ Create PPS-format level1c data
-    From a list of hirt files hrit create a level1c file for pps.
-    """
-    import argparse
-    parser = argparse.ArgumentParser(
-        description = ('Script to produce a PPS-level1c file for a '
-                       'GAC.'))
-    parser.add_argument('file', type=str,
-                        help='GAC file to process')
-    parser.add_argument('-o', '--out_dir', type=str, nargs='?',
-                        required=False, default='.',
-                        help="Output directory where to store level1c file.")
-
-    options = parser.parse_args()
-    process_one_file(options.file, options.out_dir)
