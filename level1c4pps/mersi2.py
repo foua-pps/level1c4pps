@@ -116,11 +116,11 @@ def process_one_scene(scene_files, out_path):
     nowutc = datetime.utcnow()
     scn_.attrs['date_created'] = nowutc.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    scn_['lat'] = scn_['latitude']
+    scn_['lat'] = scn_['latitude'].copy()
     del scn_['latitude']
     scn_['lat'].attrs['long_name'] = 'latitude coordinate'
 
-    scn_['lon'] = scn_['longitude']
+    scn_['lon'] = scn_['longitude'].copy()
     del scn_['longitude']
     scn_['lon'].attrs['long_name'] = 'longitude coordinate'
 
@@ -128,7 +128,9 @@ def process_one_scene(scene_files, out_path):
     scn_['sunzenith'] = scn_['solar_zenith_angle']
     del scn_['solar_zenith_angle']
     scn_['sunzenith'].attrs['id_tag'] = 'sunzenith'
-    scn_['sunzenith'].attrs['long_name'] = 'sun zenith angle'
+    scn_['sunzenith'].attrs['file_key'] = 'Geolocation/SolarZenithAngle'
+    scn_['sunzenith'].attrs['long_name'] = 'solar zenith angle'
+    scn_['sunzenith'].attrs['standard_name'] = 'solar_zenith_angle'
     scn_['sunzenith'].attrs['valid_range'] = [0, 18000]
     scn_['sunzenith'].attrs['name'] = "image{:d}".format(nimg)
     angle_names.append("image{:d}".format(image_num))
@@ -141,7 +143,9 @@ def process_one_scene(scene_files, out_path):
     scn_['satzenith'] = scn_['satellite_zenith_angle']
     del scn_['satellite_zenith_angle']
     scn_['satzenith'].attrs['id_tag'] = 'satzenith'
-    scn_['satzenith'].attrs['long_name'] = 'satellite zenith angle'
+    scn_['satzenith'].attrs['file_key'] = 'Geolocation/SensorZenithAngle'
+    scn_['satzenith'].attrs['long_name'] = 'sensor zenith angle'
+    scn_['satzenith'].attrs['stadard_name'] = 'sensor_zenith_angle'
     scn_['satzenith'].attrs['valid_range'] = [0, 9000]
     scn_['satzenith'].attrs['name'] = "image{:d}".format(nimg)
     angle_names.append("image{:d}".format(nimg))
@@ -152,11 +156,15 @@ def process_one_scene(scene_files, out_path):
 
     # azidiff
     scn_['azimuthdiff'] = make_azidiff_angle(scn_['satellite_azimuth_angle'], scn_['solar_azimuth_angle'])
-    scn_['azimuthdiff'].attrs = scn_['solar_azimuth_angle'].attrs
+    scn_['azimuthdiff'].attrs = scn_['solar_azimuth_angle'].attrs.copy()
     del scn_['solar_azimuth_angle']
     del scn_['satellite_azimuth_angle']
     scn_['azimuthdiff'].attrs['id_tag'] = 'azimuthdiff'
-    scn_['azimuthdiff'].attrs['long_name'] = 'absolute azimuth difference angle'
+    scn_['azimuthdiff'].attrs['file_key'] = 'Geolocation/SensorSolarAzimuthDifference'
+    scn_['azimuthdiff'].attrs['standard_name'] = 'absolute_sensor_solar_azimuth_difference_angle'
+    scn_['azimuthdiff'].attrs['long_name'] = 'absolute sensor-solar azimuth difference angle'
+    scn_['azimuthdiff'].attrs['Description'] = ('Sensor Solar azimuth diference angle at' +
+                                                ' the geolocated beam position center')
     scn_['azimuthdiff'].attrs['valid_range'] = [0, 18000]
     scn_['azimuthdiff'].attrs['name'] = "image{:d}".format(nimg)
     angle_names.append("image{:d}".format(nimg))
@@ -196,6 +204,8 @@ def process_one_scene(scene_files, out_path):
         # Add time coordinate. To make cfwriter aware that we want 3D data.
         scn_[band].coords['time'] = irch.attrs['start_time']
 
+        print(name)
+
         if 'tb' in idtag:
             save_info[name] = {'dtype': 'int16',
                                'scale_factor': 0.01,
@@ -213,6 +223,7 @@ def process_one_scene(scene_files, out_path):
 
     # Encoding for angles and lat/lon
     for name in angle_names:
+        print(name)
         save_info[name] = {'dtype': 'int16',
                            'scale_factor': 0.01,
                            'zlib': True,
@@ -220,6 +231,7 @@ def process_one_scene(scene_files, out_path):
                            '_FillValue': -32767,
                            'add_offset': 0.0}
     for name in ['lon', 'lat']:
+        print(name)
         save_info[name] = {'dtype': 'float32',    'zlib': True,
                            'complevel': 4, '_FillValue': -999.0}
     header_attrs = scn_.attrs.copy()
