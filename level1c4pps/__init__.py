@@ -23,12 +23,17 @@
 """level1c4pps Package Initializer
 """
 
+import numpy as np
+import xarray as xr
+
 
 def make_azidiff_angle(sata, suna, fill=None):
     """ Calculate azimuth difference angle """
-    daz = sata - suna
-    daz[daz < 0] = -1 * daz[daz < 0]
+    daz = abs(sata - suna)
     daz = daz % 360
-    daz[daz > 180] = 360 - daz[daz > 180]
-
-    return daz
+    if isinstance(daz, np.ndarray):
+        return np.where(np.greater(daz, 180), 360 - daz, daz)
+    elif isinstance(daz, xr.DataArray):
+        return daz.where(daz > 180, 360 - daz)
+    else:
+        raise ValueError("Azimuth difference is neither a Numpy nor an Xarray object! Type = %s", type(daz))
