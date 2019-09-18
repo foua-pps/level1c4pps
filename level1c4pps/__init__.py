@@ -32,7 +32,8 @@ def make_azidiff_angle(sata, suna, fill=None):
     daz = abs(sata - suna)
     daz = daz % 360
     if isinstance(daz, np.ndarray):
-        return np.where(np.greater(daz, 180), 360 - daz, daz)
+        daz[daz > 180] = 360 - daz[daz > 180]
+        return daz
     elif isinstance(daz, xr.DataArray):
         return daz.where(daz > 180, 360 - daz)
     else:
