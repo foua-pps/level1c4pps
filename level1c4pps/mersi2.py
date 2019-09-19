@@ -144,8 +144,8 @@ def process_one_scene(scene_files, out_path):
     del scn_['satellite_zenith_angle']
     scn_['satzenith'].attrs['id_tag'] = 'satzenith'
     scn_['satzenith'].attrs['file_key'] = 'Geolocation/SensorZenithAngle'
-    scn_['satzenith'].attrs['long_name'] = 'sensor zenith angle'
-    scn_['satzenith'].attrs['stadard_name'] = 'sensor_zenith_angle'
+    scn_['satzenith'].attrs['long_name'] = 'satellite zenith angle'
+    scn_['satzenith'].attrs['stadard_name'] = 'platform_zenith_angle'
     scn_['satzenith'].attrs['valid_range'] = [0, 9000]
     scn_['satzenith'].attrs['name'] = "image{:d}".format(nimg)
     angle_names.append("image{:d}".format(nimg))
