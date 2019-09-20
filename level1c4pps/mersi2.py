@@ -116,11 +116,11 @@ def process_one_scene(scene_files, out_path):
     nowutc = datetime.utcnow()
     scn_.attrs['date_created'] = nowutc.strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    scn_['lat'] = scn_['latitude'].copy()
+    scn_['lat'] = scn_['latitude']
     del scn_['latitude']
     scn_['lat'].attrs['long_name'] = 'latitude coordinate'
 
-    scn_['lon'] = scn_['longitude'].copy()
+    scn_['lon'] = scn_['longitude']
     del scn_['longitude']
     scn_['lon'].attrs['long_name'] = 'longitude coordinate'
 
@@ -133,6 +133,9 @@ def process_one_scene(scene_files, out_path):
     scn_['sunzenith'].attrs['standard_name'] = 'solar_zenith_angle'
     scn_['sunzenith'].attrs['valid_range'] = [0, 18000]
     scn_['sunzenith'].attrs['name'] = "image{:d}".format(nimg)
+    scn_['sunzenith'].attrs['scale_factor'] = 0.01
+    scn_['sunzenith'].attrs['add_offset'] = 0.0
+    scn_['sunzenith'].attrs['_FillValue'] = -32767
     angle_names.append("image{:d}".format(image_num))
     scn_['sunzenith'].attrs['coordinates'] = 'lon lat'
     del scn_['sunzenith'].attrs['area']
@@ -204,8 +207,6 @@ def process_one_scene(scene_files, out_path):
         # Add time coordinate. To make cfwriter aware that we want 3D data.
         scn_[band].coords['time'] = irch.attrs['start_time']
 
-        print(name)
-
         if 'tb' in idtag:
             save_info[name] = {'dtype': 'int16',
                                'scale_factor': 0.01,
@@ -223,7 +224,6 @@ def process_one_scene(scene_files, out_path):
 
     # Encoding for angles and lat/lon
     for name in angle_names:
-        print(name)
         save_info[name] = {'dtype': 'int16',
                            'scale_factor': 0.01,
                            'zlib': True,
@@ -231,7 +231,6 @@ def process_one_scene(scene_files, out_path):
                            '_FillValue': -32767,
                            'add_offset': 0.0}
     for name in ['lon', 'lat']:
-        print(name)
         save_info[name] = {'dtype': 'float32',    'zlib': True,
                            'complevel': 4, '_FillValue': -999.0}
     header_attrs = scn_.attrs.copy()
@@ -261,6 +260,7 @@ def process_one_scene(scene_files, out_path):
 
     scn_.save_datasets(writer='cf', filename=filename,
                        header_attrs=header_attrs, engine='netcdf4',
+                       include_lonlats=False,
                        encoding=save_info)
     print("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),
