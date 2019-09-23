@@ -50,13 +50,14 @@ logger = logging.getLogger('mersi22pps')
 
 PLATFORM_SHORTNAMES = {'FY3D': 'FY-3D'}
 #BANDNAMES = ['%d' % (chn+1) for chn in range(25)]
-BANDNAMES = ['5', '6', '12', '15', '20', '23', '24', '25']
+BANDNAMES = ['3', '4', '5', '6', '20', '23', '24', '25']
 
-PPS_TAGNAMES = {'12': 'ch_r06',
-                '15': 'ch_r09',
+PPS_TAGNAMES = {'3': 'ch_r06',
+                '4': 'ch_r09',
                 '5': 'ch_r13',
                 '6': 'ch_r16',
                 '20': 'ch_tb37',
+                '22': 'ch_tb73',
                 '23': 'ch_tb85',
                 '24': 'ch_tb11',
                 '25': 'ch_tb12'}
@@ -71,7 +72,7 @@ def process_one_scene(scene_files, out_path):
     """ Make level 1c files in PPS-format """
     tic = time.time()
 
-    image_num = 0  # name of first dataset is image0
+    nimg = 0  # name of first dataset is image0
 
     platform_shortname = p__.parse(
         os.path.basename(scene_files[0]))['platform_shortname']
@@ -87,7 +88,6 @@ def process_one_scene(scene_files, out_path):
     scn_.load(BANDNAMES + ['latitude', 'longitude',
                            'satellite_zenith_angle', 'solar_zenith_angle',
                            'satellite_azimuth_angle', 'solar_azimuth_angle'], resolution=1000)
-    nimg = 0
     for band in BANDNAMES:
         idtag = PPS_TAGNAMES.get(band, None)
         if not idtag:
@@ -133,10 +133,10 @@ def process_one_scene(scene_files, out_path):
     scn_['sunzenith'].attrs['standard_name'] = 'solar_zenith_angle'
     scn_['sunzenith'].attrs['valid_range'] = [0, 18000]
     scn_['sunzenith'].attrs['name'] = "image{:d}".format(nimg)
-    scn_['sunzenith'].attrs['scale_factor'] = 0.01
-    scn_['sunzenith'].attrs['add_offset'] = 0.0
-    scn_['sunzenith'].attrs['_FillValue'] = -32767
-    angle_names.append("image{:d}".format(image_num))
+    #scn_['sunzenith'].attrs['scale_factor'] = 0.01
+    #scn_['sunzenith'].attrs['add_offset'] = 0.0
+    #scn_['sunzenith'].attrs['_FillValue'] = -32767
+    angle_names.append("image{:d}".format(nimg))
     scn_['sunzenith'].attrs['coordinates'] = 'lon lat'
     del scn_['sunzenith'].attrs['area']
     scn_['sunzenith'].coords['time'] = irch.attrs['start_time']
@@ -148,7 +148,7 @@ def process_one_scene(scene_files, out_path):
     scn_['satzenith'].attrs['id_tag'] = 'satzenith'
     scn_['satzenith'].attrs['file_key'] = 'Geolocation/SensorZenithAngle'
     scn_['satzenith'].attrs['long_name'] = 'satellite zenith angle'
-    scn_['satzenith'].attrs['stadard_name'] = 'platform_zenith_angle'
+    scn_['satzenith'].attrs['standard_name'] = 'platform_zenith_angle'
     scn_['satzenith'].attrs['valid_range'] = [0, 9000]
     scn_['satzenith'].attrs['name'] = "image{:d}".format(nimg)
     angle_names.append("image{:d}".format(nimg))
@@ -230,6 +230,7 @@ def process_one_scene(scene_files, out_path):
                            'complevel': 4,
                            '_FillValue': -32767,
                            'add_offset': 0.0}
+
     for name in ['lon', 'lat']:
         save_info[name] = {'dtype': 'float32',    'zlib': True,
                            'complevel': 4, '_FillValue': -999.0}
