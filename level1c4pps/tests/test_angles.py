@@ -26,6 +26,7 @@
 from level1c4pps import make_azidiff_angle
 
 import numpy as np
+import xarray as xr
 import sys
 if sys.version_info < (2, 7):
     import unittest2 as unittest
@@ -35,17 +36,36 @@ else:
 SAT_AZ = np.ma.array([[48.0,  56.0, 64.0,  72.0],
                       [80.0,  88.0, 96.0, 104.0],
                       [-80.0,  -88.0, -96.0, -104.0],
-                      [-180.0,  -188.0, -196.0, -204.0]], mask=False)
+                      [-180.0,  -188.0, -196.0, -204.0],
+                      [261.88999414630234,  266.1, 271.1, 276.1]], mask=False)
+XSAT_AZ = xr.DataArray([[48.0,  56.0, 64.0,  72.0],
+                        [80.0,  88.0, 96.0, 104.0],
+                        [-80.0,  -88.0, -96.0, -104.0],
+                        [-180.0,  -188.0, -196.0, -204.0],
+                        [261.88999414630234, 266.1, 271.1, 276.1]])
 SUN_AZ = np.ma.array([[148.0,  156.0, 164.0,  172.0],
                       [180.0,  188.0, 196.0, 204.0],
                       [180.0,  188.0, 196.0, 204.0],
-                      [185.0,  193.0, 201.0, 209.0]], mask=False)
+                      [185.0,  193.0, 201.0, 209.0],
+                      [196.77999560162425, 201.1, 206.1, 211.1]], mask=False)
+XSUN_AZ = xr.DataArray([[148.0,  156.0, 164.0,  172.0],
+                        [180.0,  188.0, 196.0, 204.0],
+                        [180.0,  188.0, 196.0, 204.0],
+                        [185.0,  193.0, 201.0, 209.0],
+                        [196.77999560162425, 201.1, 206.1, 211.1]])
 
 RES = np.ma.array([[100., 100., 100., 100.],
                    [100., 100., 100., 100.],
                    [100.,  84.,  68.,  52.],
-                   [5.,  21.,  37.,  53.]],
+                   [5.,  21.,  37.,  53.],
+                   [65.10999854, 65., 65., 65.]],
                   mask=False)
+
+XRES = xr.DataArray([[100., 100., 100., 100.],
+                     [100., 100., 100., 100.],
+                     [100.,  84.,  68.,  52.],
+                     [5.,  21.,  37.,  53.],
+                     [65.10999854, 65., 65., 65.]])
 
 
 class TestAzimuthDifferenceAngles(unittest.TestCase):
@@ -56,6 +76,10 @@ class TestAzimuthDifferenceAngles(unittest.TestCase):
 
         daz = make_azidiff_angle(SAT_AZ, SUN_AZ)
         np.testing.assert_almost_equal(daz, RES)
+
+        # Xarray data:
+        xdaz = make_azidiff_angle(XSAT_AZ, XSUN_AZ)
+        xr.testing.assert_allclose(xdaz, XRES, rtol=0.00001)
 
 
 def suite():
