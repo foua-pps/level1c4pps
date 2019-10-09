@@ -29,7 +29,7 @@
 
 
 import argparse
-from level1c4pps.seviri_hrit import process_one_scan
+from level1c4pps.seviri2pps_lib import process_one_scan
 
 # -----------------------------------------------------------------------------
 # Main:

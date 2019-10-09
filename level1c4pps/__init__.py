@@ -20,15 +20,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""level1c4pps Package Initializer
-"""
+"""Package Initializer for level1c4pps."""
 
 import numpy as np
 import xarray as xr
 
 
 def make_azidiff_angle(sata, suna, fill=None):
-    """ Calculate azimuth difference angle """
+    """Calculate azimuth difference angle."""
     daz = abs(sata - suna)
     daz = daz % 360
     if isinstance(daz, np.ndarray):

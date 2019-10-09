@@ -24,7 +24,7 @@
 """
 
 import argparse
-from level1c4pps.mersi2 import process_one_scene
+from level1c4pps.mersi22pps_lib import process_one_scene
 
 
 if __name__ == "__main__":

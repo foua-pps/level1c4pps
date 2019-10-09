@@ -25,7 +25,7 @@
 """Script to make seviri level1c in PPS-format with pytroll"""
 
 import argparse
-from level1c4pps.avhrr_gac import process_one_file
+from level1c4pps.gac2pps_lib import process_one_file
 
 
 # -----------------------------------------------------------------------------
