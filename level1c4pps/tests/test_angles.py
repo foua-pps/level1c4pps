@@ -20,8 +20,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-"""
+"""Unit tests for angle computations."""
 
 from level1c4pps import make_azidiff_angle
 
@@ -72,8 +71,7 @@ class TestAzimuthDifferenceAngles(unittest.TestCase):
     """Class for testing the derivation of azimuth difference angles."""
 
     def test_make_azidiff_angle(self):
-        """Test calculating the azimuth difference angles"""
-
+        """Test calculating the azimuth difference angles."""
         daz = make_azidiff_angle(SAT_AZ, SUN_AZ)
         np.testing.assert_almost_equal(daz, RES)
 

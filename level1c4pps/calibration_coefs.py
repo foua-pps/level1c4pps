@@ -1,4 +1,29 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# Copyright (c) 2019 level1c4pps developers
+#
+# This file is part of level1c4pps.py
+#
+# atrain_match is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# atrain_match is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with atrain_match.  If not, see <http://www.gnu.org/licenses/>.
+# -*- coding: utf-8 -*-
+# Author(s):
+
+#  Nina.Hakansson
+
+
 import datetime
+"""Module with calibration coefficients for SEVIRI."""
 
 CALIB_MODE = 'Nominal'
 COEFS_MEIRINK = dict(
@@ -29,7 +54,7 @@ REF_TIME = datetime.datetime(2000, 1, 1, 0, 0)
 
 
 def calib_meirink(platform, channel, time):
-    """Get MODIS-intercalibrated gain and offset for SEVIRI VIS channels
+    """Get MODIS-intercalibrated gain and offset for SEVIRI VIS channels.
 
     Reference: http://msgcpp.knmi.nl/mediawiki/index.php/MSG-SEVIRI_solar_channel_calibration
 
@@ -48,7 +73,7 @@ def calib_meirink(platform, channel, time):
 
 
 def calib_meirink_date(platform, channel, date):
-    """Get MODIS-intercalibrated gain and offset for SEVIRI VIS channels
+    """Get MODIS-intercalibrated gain and offset for SEVIRI VIS channels.
 
     Reference: http://msgcpp.knmi.nl/mediawiki/index.php/MSG-SEVIRI_solar_channel_calibration
 
@@ -66,6 +91,7 @@ def calib_meirink_date(platform, channel, date):
 
 
 def get_calibration_for_time(platform, time):
+    """Get MODIS-intercalibrated gain and offset for specific time."""
     coefs = {}
     for channel in ('VIS006', 'VIS008', 'IR_016'):
         gain, offset = calib_meirink(platform=platform, channel=channel, time=time)
@@ -75,6 +101,7 @@ def get_calibration_for_time(platform, time):
 
 
 def get_calibration_for_date(platform, date):
+    """Get MODIS-intercalibrated gain and offset for specific date."""
     coefs = {}
     for channel in ('VIS006', 'VIS008', 'IR_016'):
         gain, offset = calib_meirink_date(platform=platform, channel=channel, date=date)
@@ -84,6 +111,7 @@ def get_calibration_for_date(platform, date):
 
 
 def test_get_calibration_for_date():
+    """Test MODIS-intercalibrated gain and offset for specific date."""
     coefs = get_calibration_for_date(platform='MSG3',
                                      date=datetime.date(2018, 1, 18))
     REF = {'VIS006': {'gain': 0.023689275200000002, 'offset': -1.2081530352},
@@ -96,6 +124,7 @@ def test_get_calibration_for_date():
 
 
 def test_get_calibration_for_time():
+    """Test MODIS-intercalibrated gain and offset for specific time."""
     coefs = get_calibration_for_time(platform='MSG3',
                                      time=datetime.datetime(2018, 1, 18, 0, 0))
     REF = {'VIS006': {'gain': 0.023689275200000002, 'offset': -1.2081530352},
@@ -110,6 +139,7 @@ def test_get_calibration_for_time():
 
 
 def test_get_calibration():
+    """Test MODIS-intercalibrated for date and time."""
     coefs1 = get_calibration_for_time(platform='MSG3',
                                       time=datetime.datetime(2018, 1, 18, 23, 59))
     coefs2 = get_calibration_for_date(platform='MSG3',
