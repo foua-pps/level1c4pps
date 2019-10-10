@@ -27,6 +27,7 @@ COEFS_MEIRINK = dict(
 REF_DATE = datetime.date(2000, 1, 1)
 REF_TIME = datetime.datetime(2000, 1, 1, 0, 0)
 
+
 def calib_meirink(platform, channel, time):
     """Get MODIS-intercalibrated gain and offset for SEVIRI VIS channels
 
@@ -45,6 +46,7 @@ def calib_meirink(platform, channel, time):
 
     return gain, offset
 
+
 def calib_meirink_date(platform, channel, date):
     """Get MODIS-intercalibrated gain and offset for SEVIRI VIS channels
 
@@ -62,59 +64,63 @@ def calib_meirink_date(platform, channel, date):
 
     return gain, offset
 
+
 def get_calibration_for_time(platform, time):
     coefs = {}
     for channel in ('VIS006', 'VIS008', 'IR_016'):
         gain, offset = calib_meirink(platform=platform, channel=channel, time=time)
-        coefs[channel] =  {'gain': gain, 'offset': offset}
+        coefs[channel] = {'gain': gain, 'offset': offset}
 
-    return coefs 
+    return coefs
+
 
 def get_calibration_for_date(platform, date):
     coefs = {}
     for channel in ('VIS006', 'VIS008', 'IR_016'):
         gain, offset = calib_meirink_date(platform=platform, channel=channel, date=date)
-        coefs[channel] =  {'gain': gain, 'offset': offset}
+        coefs[channel] = {'gain': gain, 'offset': offset}
 
     return coefs
 
+
 def test_get_calibration_for_date():
-    coefs = get_calibration_for_date(platform='MSG3', 
+    coefs = get_calibration_for_date(platform='MSG3',
                                      date=datetime.date(2018, 1, 18))
-    REF = {'VIS006': {'gain': 0.023689275200000002, 'offset': -1.2081530352}, 
+    REF = {'VIS006': {'gain': 0.023689275200000002, 'offset': -1.2081530352},
            'VIS008': {'gain': 0.029757990399999996, 'offset': -1.5176575103999999},
            'IR_016': {'gain': 0.0228774688, 'offset': -1.1667509087999999}}
     for channel in REF.keys():
         if (REF[channel]['gain'] == coefs[channel]['gain'] and
-            REF[channel]['offset'] == coefs[channel]['offset']):
+                REF[channel]['offset'] == coefs[channel]['offset']):
             print("Calibration for channel {:s} is OK!".format(channel))
-                  
+
 
 def test_get_calibration_for_time():
-    coefs = get_calibration_for_time(platform='MSG3', 
+    coefs = get_calibration_for_time(platform='MSG3',
                                      time=datetime.datetime(2018, 1, 18, 0, 0))
-    REF = {'VIS006': {'gain': 0.023689275200000002, 'offset': -1.2081530352}, 
+    REF = {'VIS006': {'gain': 0.023689275200000002, 'offset': -1.2081530352},
            'VIS008': {'gain': 0.029757990399999996, 'offset': -1.5176575103999999},
            'IR_016': {'gain': 0.0228774688, 'offset': -1.1667509087999999}}
     for channel in REF.keys():
         if (REF[channel]['gain'] == coefs[channel]['gain'] and
-            REF[channel]['offset'] == coefs[channel]['offset']):
+                REF[channel]['offset'] == coefs[channel]['offset']):
             print("Calibration for channel {:s} is OK!".format(channel))
-        else :
+        else:
             print(REF[channel]['gain'] - coefs[channel]['gain'])
-        
+
+
 def test_get_calibration():
-    coefs1 = get_calibration_for_time(platform='MSG3', 
+    coefs1 = get_calibration_for_time(platform='MSG3',
                                       time=datetime.datetime(2018, 1, 18, 23, 59))
-    coefs2 = get_calibration_for_date(platform='MSG3', 
+    coefs2 = get_calibration_for_date(platform='MSG3',
                                       date=datetime.date(2018, 1, 19))
     for channel in coefs1.keys():
         if (coefs1[channel]['gain'] - coefs2[channel]['gain'] < 10e-8 and
-            coefs1[channel]['offset'] - coefs2[channel]['offset'] < 10e-8):
+                coefs1[channel]['offset'] - coefs2[channel]['offset'] < 10e-8):
             print("Calibration for channel {:s} is OK!".format(channel))
-        else :
+        else:
             print(coefs2[channel]['gain'] - coefs1[channel]['gain'])
-                  
+
 
 if __name__ == '__main__':
     test_get_calibration_for_time()
@@ -129,5 +135,3 @@ if __name__ == '__main__':
         coefs[channel] = {'gain': gain, 'offset': offset}
 
     print(coefs)
-
-
