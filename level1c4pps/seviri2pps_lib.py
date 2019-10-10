@@ -1,29 +1,31 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-# Copyright (c) 2019 Adam.Dybbroe
-
-# Author(s):
-
-#   Nina Håkansson <nina.hakansson@smhi.se>
-#   Martin Raspaud <martin.raspaud@smhi.se>
-#   Adam Dybbroe <adam.dybbroe@smhi.se>
-
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
+# Copyright (c) 2019 level1c4pps developers
+#
+# This file is part of level1c4pps
+#
+# atrain_match is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-
+#
+# atrain_match is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with atrain_match.  If not, see <http://www.gnu.org/licenses/>.
+# Author(s):
 
-"""Tools to convert SEVIRI hrit to PPS level-1c format
-"""
+#   Martin Raspaud <martin.raspaud@smhi.se>
+#   Nina Hakansson <nina.hakansson@smhi.se>
+#   Adam.Dybbroe <adam.dybbroe@smhi.se>
+
+# This program was developed by CMSAF to be used for the processing of
+# CLAAS3.
+
+"""Tools to convert SEVIRI hrit to PPS level-1c format."""
 
 
 import os
@@ -42,7 +44,9 @@ from level1c4pps import make_azidiff_angle
 import pyresample
 
 
-class UnexpectedSatPyVersion(Exception):
+class UnexpectedSatpyVersion(Exception):
+    """Exception if unexpected satpy version."""
+
     pass
 
 
@@ -72,7 +76,7 @@ p__ = Parser(hrit_file_pattern)
 
 def process_one_scan(tslot_files, out_path,
                      process_buggy_satellite_zenith_angles=False):
-    """ Make level 1c files in PPS-format """
+    """Make level 1c files in PPS-format."""
     tic = time.time()
     image_num = 0  # name of first dataset is image0
     # if len(tslot_files) != 8 * len(BANDNAMES) + 2:
@@ -129,7 +133,7 @@ def process_one_scan(tslot_files, out_path,
     scn_.attrs['instrument'] = sensor.upper()
     scn_.attrs['source'] = "seviri2pps.py"
     scn_.attrs['orbit_number'] = "99999"
-    #scn_.attrs['orbit'] = "99999"
+    # scn_.attrs['orbit'] = "99999"
     nowutc = datetime.utcnow()
     scn_.attrs['date_created'] = nowutc.strftime("%Y-%m-%dT%H:%M:%SZ")
     # Find lat/lon data
@@ -325,7 +329,7 @@ def process_one_scan(tslot_files, out_path,
 
 
 def process_all_scans_in_dname(dname, out_path, ok_dates=None):
-    """ Make level 1c files for all files in directory dname """
+    """Make level 1c files for all files in directory dname."""
     fl_ = glob(os.path.join(dname, globify(hrit_file_pattern)))
     dates = [p__.parse(os.path.basename(p))['start_time'] for p in fl_]
     unique_dates = np.unique(dates).tolist()

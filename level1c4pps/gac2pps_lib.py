@@ -1,29 +1,28 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-# Copyright (c) 2019 Adam.Dybbroe
-
+# Copyright (c) 2019 level1c4pps developers
+#
+# This file is part of level1c4pps
+#
+# atrain_match is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# atrain_match is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with atrain_match.  If not, see <http://www.gnu.org/licenses/>.
 # Author(s):
 
 #   Martin Raspaud <martin.raspaud@smhi.se>
-#   Nina Håkansson <nina.hakansson@smhi.se>
+#   Nina Hakansson <nina.hakansson@smhi.se>
 #   Adam.Dybbroe <adam.dybbroe@smhi.se>
 
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-"""Utilities to convert AVHRR GAC formattet data to PPS level-1c format
-"""
+"""Utilities to convert AVHRR GAC formattet data to PPS level-1c format."""
 
 
 import os
@@ -31,11 +30,6 @@ import time
 from datetime import datetime
 from satpy.scene import Scene
 import logging
-
-
-class UnexpectedSatPyVersion(Exception):
-    pass
-
 
 logger = logging.getLogger('gac2pps')
 
@@ -85,6 +79,7 @@ def process_one_file(gac_file, out_path='.'):
         sensor = 'avhrr'
         scn_.load(BANDNAMES + ['latitude', 'longitude',
                                'sensor_zenith_angle', 'solar_zenith_angle',
+                               'solar_azimuth_angle', 'sensor_azimuth_angle',
                                'sun_sensor_azimuth_difference_angle'])
     for band in BANDNAMES:
         try:
@@ -171,6 +166,34 @@ def process_one_file(gac_file, out_path='.'):
     del scn_['azimuthdiff'].attrs['area']
     scn_['azimuthdiff'].coords['time'] = irch.attrs['start_time']
     del scn_['azimuthdiff'].coords['acq_time']
+    image_num += 1
+
+    # satazimuth
+    scn_['sunazimuth'] = scn_['solar_azimuth_angle']
+    del scn_['solar_azimuth_angle']
+    scn_['sunazimuth'].attrs['id_tag'] = 'sunazimuth'
+    scn_['sunazimuth'].attrs['long_name'] = 'sun azimuth angle'
+    scn_['sunazimuth'].attrs['valid_range'] = [0, 18000]
+    scn_['sunazimuth'].attrs['name'] = "image{:d}".format(image_num)
+    angle_names.append("image{:d}".format(image_num))
+    scn_['sunazimuth'].attrs['coordinates'] = 'lon lat'
+    del scn_['sunazimuth'].attrs['area']
+    scn_['sunazimuth'].coords['time'] = irch.attrs['start_time']
+    del scn_['sunazimuth'].coords['acq_time']
+    image_num += 1
+
+    # satazimuth
+    scn_['satazimuth'] = scn_['sensor_azimuth_angle']
+    del scn_['sensor_azimuth_angle']
+    scn_['satazimuth'].attrs['id_tag'] = 'satazimuth'
+    scn_['satazimuth'].attrs['long_name'] = 'satellite azimuth angle'
+    scn_['satazimuth'].attrs['valid_range'] = [0, 9000]
+    scn_['satazimuth'].attrs['name'] = "image{:d}".format(image_num)
+    angle_names.append("image{:d}".format(image_num))
+    scn_['satazimuth'].attrs['coordinates'] = 'lon lat'
+    del scn_['satazimuth'].attrs['area']
+    scn_['satazimuth'].coords['time'] = irch.attrs['start_time']
+    del scn_['satazimuth'].coords['acq_time']
     image_num += 1
 
     # Get filename
