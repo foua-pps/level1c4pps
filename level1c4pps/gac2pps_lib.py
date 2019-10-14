@@ -188,9 +188,11 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
     # scanline timestamps
     import numpy as np
     first_jan_1970 = np.array([datetime(1970, 1, 1, 0, 0, 0)]).astype('datetime64[ns]')
-    scanline_timestamps = np.array(scn_['qual_flags'].coords['acq_time'] - first_jan_1970).astype(dtype='timedelta64[ms]').astype(np.float64)
-    scn_['scanline_timestamps'] =xr.DataArray(da.from_array(scanline_timestamps), dims=['y'], coords={'y': scn_['qual_flags']['y']})
-    scn_['scanline_timestamps'].attrs['units'] = 'Milliseconds since 1970-01-01 00:00:00 UTC' 
+    scanline_timestamps = np.array(scn_['qual_flags'].coords['acq_time'] -
+                                   first_jan_1970).astype(dtype='timedelta64[ms]').astype(np.float64)
+    scn_['scanline_timestamps'] = xr.DataArray(da.from_array(scanline_timestamps),
+                                               dims=['y'], coords={'y': scn_['qual_flags']['y']})
+    scn_['scanline_timestamps'].attrs['units'] = 'Milliseconds since 1970-01-01 00:00:00 UTC'
 
     # qual_flags
     scn_['qual_flags'] = scn_['qual_flags'].rename({'x': 'z'})  # x is 409 already
@@ -211,7 +213,6 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
             orbit_number,
             start_time.strftime('%Y%m%dT%H%M%S%f')[:-5],
             end_time.strftime('%Y%m%dT%H%M%S%f')[:-5]))
-
 
     # Encoding for channels
     save_info = {}

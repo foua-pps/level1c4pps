@@ -53,10 +53,8 @@ if __name__ == "__main__":
                         required=False, default=None,
                         help="Use only part of data, start with end_line.")
 
-
     options = parser.parse_args()
-    print(options.dont_strip_invalid_coords)
-    print(not options.dont_strip_invalid_coords)
-    process_one_file(options.file, options.out_dir, reader_kwargs={'start_line': options.start_line, 
-                                                                   'end_line': options.end_line, 
-                                                                   'strip_invalid_coords':  not options.dont_strip_invalid_coords})
+    process_one_file(options.file, options.out_dir,
+                     reader_kwargs={'start_line': options.start_line,
+                                    'end_line': options.end_line,
+                                    'strip_invalid_coords': not options.dont_strip_invalid_coords})
