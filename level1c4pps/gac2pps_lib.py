@@ -60,7 +60,7 @@ INSTRUMENTS = {'tirosn': 'avhrr',
                'noaa19': 'avhrr/3'}
 
 
-def process_one_file(gac_file, out_path='.'):
+def process_one_file(gac_file, out_path='.', reader_kwargs=None):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     image_num = 0  # name of first dataset is image0
@@ -73,9 +73,8 @@ def process_one_file(gac_file, out_path='.'):
     # coefs = get_calibration_for_time(platform=platform_shortname,
     #                                  time=start_time)
 
-    scn_ = Scene(
-        reader='avhrr_l1b_gaclac',
-        filenames=[gac_file])
+    scn_ = Scene(reader='avhrr_l1b_gaclac',
+                 filenames=[gac_file], reader_kwargs=reader_kwargs)
 
     if 'avhrr-3' in scn_.attrs['sensor']:
         sensor = 'avhrr'
