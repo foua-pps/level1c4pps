@@ -43,6 +43,18 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--out_dir', type=str, nargs='?',
                         required=False, default='.',
                         help="Output directory where to store level1c file.")
+    parser.add_argument('-d', '--dont_strip_invalid_coords',
+                        required=False, default=False, action='store_true',
+                        help="Turn off striping of invalid coords.")
+    parser.add_argument('-sl', '--start_line', type=int, nargs='?',
+                        required=False, default=None,
+                        help="Use only part of data, start with start_line.")
+    parser.add_argument('-el', '--end_line', type=int, nargs='?',
+                        required=False, default=None,
+                        help="Use only part of data, start with end_line.")
 
     options = parser.parse_args()
-    process_one_file(options.file, options.out_dir)
+    process_one_file(options.file, options.out_dir,
+                     reader_kwargs={'start_line': options.start_line,
+                                    'end_line': options.end_line,
+                                    'strip_invalid_coords': not options.dont_strip_invalid_coords})
