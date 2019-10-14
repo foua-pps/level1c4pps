@@ -64,15 +64,6 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     image_num = 0  # name of first dataset is image0
-    # platform_shortname = p__.parse(
-    #     os.path.basename(tslot_files[0]))['platform_shortname']
-    # start_time = p__.parse(
-    #     os.path.basename(tslot_files[0]))['start_time']
-    # platform_name = PLATFORM_SHORTNAMES[platform_shortname]
-    # #Load channel data for one scene and set some attributes
-    # coefs = get_calibration_for_time(platform=platform_shortname,
-    #                                  time=start_time)
-
     scn_ = Scene(reader='avhrr_l1b_gaclac',
                  filenames=[gac_file], reader_kwargs=reader_kwargs)
 
@@ -110,10 +101,6 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
     scn_.attrs['platform_name'] = irch.attrs['platform_name']
     scn_.attrs['orbit_number'] = '{:05d}'.format(irch.attrs['orbit_number'])
     scn_.attrs['orbit'] = scn_.attrs['orbit_number']
-    # lons = lons.where(lons <= 360, -999.0)
-    # lons = lons.where(lons >= -360, 999.0)
-    # lats = lats.where(lats <= 90, -999.0)
-    # lats = lats.where(lats >= -90, 999.0)
 
     scn_['lat'] = scn_['latitude']
     del scn_['latitude']
@@ -198,13 +185,7 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
     del scn_['satazimuth'].coords['acq_time']
     image_num += 1
 
-    # scanline_timestamps
-    """
-    scn_['lat'] = xr.DataArray(
-        da.from_array(lats, chunks=(53, 3712)),
-        dims=['y', 'x'],
-        coords={'y': scn_['IR_108']['y'], 'x': scn_['IR_108']['x']})
-    """
+    # scanline timestamps
     import numpy as np
     first_jan_1970 = np.array([datetime(1970, 1, 1, 0, 0, 0)]).astype('datetime64[ns]')
     scanline_timestamps = np.array(scn_['qual_flags'].coords['acq_time'] - first_jan_1970).astype(dtype='timedelta64[ms]').astype(np.float64)
@@ -218,19 +199,6 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
     scn_['qual_flags'].coords['time'] = irch.attrs['start_time']
     del scn_['qual_flags'].coords['acq_time']
 
-    
-    # scn_['qual_flags'].coords['acq_time']
-    """
-   # scanline_timestamps
-    scn_['scanline_timestamps'] = scn_['scanline_timestamps'].rename({'x': 'w'})  # x is 409 already
-    scn_['scanline_timestamps'].attrs['id_tag'] = 'scanline_timestamps'
-    scn_['scanline_timestamps'].attrs['long_name'] = 'pygac quality flags'
-    scn_['scanline_timestamps'].attrs['name'] = "image{:d}".format(image_num)
-    scn_['scanline_timestamps'].coords['time'] = irch.attrs['start_time']
-    del scn_['scanline_timestamps'].coords['acq_time']
-    image_num += 1
-    """
-    
     # Get filename
     start_time = irch.attrs['start_time']
     end_time = irch.attrs['end_time']
@@ -284,9 +252,9 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
         save_info[name] = {'dtype': 'float32',    'zlib': True,
                            'complevel': 4, '_FillValue': -999.0}
     save_info['qual_flags'] = {'dtype': 'int16', 'zlib': True,
-                               'complevel': 4, '_FillValue': -32001.0}  
+                               'complevel': 4, '_FillValue': -32001.0}
     save_info['scanline_timestamps'] = {'dtype': 'int64', 'zlib': True,
-                                        'complevel': 4}  
+                                        'complevel': 4}
 
     header_attrs = scn_.attrs.copy()
     header_attrs['start_time'] = time.strftime(
