@@ -198,15 +198,39 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
     del scn_['satazimuth'].coords['acq_time']
     image_num += 1
 
+    # scanline_timestamps
+    """
+    scn_['lat'] = xr.DataArray(
+        da.from_array(lats, chunks=(53, 3712)),
+        dims=['y', 'x'],
+        coords={'y': scn_['IR_108']['y'], 'x': scn_['IR_108']['x']})
+    """
+    import numpy as np
+    first_jan_1970 = np.array([datetime(1970, 1, 1, 0, 0, 0)]).astype('datetime64[ns]')
+    scanline_timestamps = np.array(scn_['qual_flags'].coords['acq_time'] - first_jan_1970).astype(dtype='timedelta64[ms]').astype(np.float64)
+    scn_['scanline_timestamps'] =xr.DataArray(da.from_array(scanline_timestamps), dims=['y'], coords={'y': scn_['qual_flags']['y']})
+    scn_['scanline_timestamps'].attrs['units'] = 'Milliseconds since 1970-01-01 00:00:00 UTC' 
+
     # qual_flags
     scn_['qual_flags'] = scn_['qual_flags'].rename({'x': 'z'})  # x is 409 already
     scn_['qual_flags'].attrs['id_tag'] = 'qual_flags'
     scn_['qual_flags'].attrs['long_name'] = 'pygac quality flags'
-    scn_['qual_flags'].attrs['name'] = "image{:d}".format(image_num)
     scn_['qual_flags'].coords['time'] = irch.attrs['start_time']
     del scn_['qual_flags'].coords['acq_time']
-    image_num += 1
 
+    
+    # scn_['qual_flags'].coords['acq_time']
+    """
+   # scanline_timestamps
+    scn_['scanline_timestamps'] = scn_['scanline_timestamps'].rename({'x': 'w'})  # x is 409 already
+    scn_['scanline_timestamps'].attrs['id_tag'] = 'scanline_timestamps'
+    scn_['scanline_timestamps'].attrs['long_name'] = 'pygac quality flags'
+    scn_['scanline_timestamps'].attrs['name'] = "image{:d}".format(image_num)
+    scn_['scanline_timestamps'].coords['time'] = irch.attrs['start_time']
+    del scn_['scanline_timestamps'].coords['acq_time']
+    image_num += 1
+    """
+    
     # Get filename
     start_time = irch.attrs['start_time']
     end_time = irch.attrs['end_time']
@@ -219,6 +243,7 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
             orbit_number,
             start_time.strftime('%Y%m%dT%H%M%S%f')[:-5],
             end_time.strftime('%Y%m%dT%H%M%S%f')[:-5]))
+
 
     # Encoding for channels
     save_info = {}
@@ -258,6 +283,11 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
     for name in ['lon', 'lat']:
         save_info[name] = {'dtype': 'float32',    'zlib': True,
                            'complevel': 4, '_FillValue': -999.0}
+    save_info['qual_flags'] = {'dtype': 'int16', 'zlib': True,
+                               'complevel': 4, '_FillValue': -32001.0}  
+    save_info['scanline_timestamps'] = {'dtype': 'int64', 'zlib': True,
+                                        'complevel': 4}  
+
     header_attrs = scn_.attrs.copy()
     header_attrs['start_time'] = time.strftime(
         "%Y-%m-%d %H:%M:%S",
