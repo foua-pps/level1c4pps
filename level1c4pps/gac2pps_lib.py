@@ -31,6 +31,7 @@ import xarray as xr
 import dask.array as da
 from datetime import datetime
 from satpy.scene import Scene
+from level1c4pps import dt64_to_datetime
 import logging
 
 logger = logging.getLogger('gac2pps')
@@ -195,7 +196,6 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
     scn_['scanline_timestamps'].attrs['units'] = 'Milliseconds since 1970-01-01 00:00:00 UTC'
 
     # qual_flags
-    scn_['qual_flags'] = scn_['qual_flags'].rename({'x': 'z'})  # x is 409 already
     scn_['qual_flags'].attrs['id_tag'] = 'qual_flags'
     scn_['qual_flags'].attrs['long_name'] = 'pygac quality flags'
     scn_['qual_flags'].coords['time'] = irch.attrs['start_time']
@@ -211,8 +211,8 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
         "S_NWC_avhrr_{:s}_{:05d}_{:s}Z_{:s}Z.nc".format(
             platform_name.lower().replace('-', ''),
             orbit_number,
-            start_time.strftime('%Y%m%dT%H%M%S%f')[:-5],
-            end_time.strftime('%Y%m%dT%H%M%S%f')[:-5]))
+            datetime.strftime(dt64_to_datetime(start_time), '%Y%m%dT%H%M%S%f')[:-5],
+            datetime.strftime(dt64_to_datetime(end_time), '%Y%m%dT%H%M%S%f')[:-5]))
 
     # Encoding for channels
     save_info = {}
@@ -258,12 +258,11 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
                                         'complevel': 4}
 
     header_attrs = scn_.attrs.copy()
-    header_attrs['start_time'] = time.strftime(
-        "%Y-%m-%d %H:%M:%S",
-        irch.attrs['start_time'].timetuple())
-    header_attrs['end_time'] = time.strftime(
-        "%Y-%m-%d %H:%M:%S",
-        irch.attrs['end_time'].timetuple())
+    print(type(irch.attrs['start_time']))
+    header_attrs['start_time'] = datetime.strftime(dt64_to_datetime(irch.attrs['start_time']),
+                                                   "%Y-%m-%d %H:%M:%S")
+    header_attrs['end_time'] = datetime.strftime(dt64_to_datetime(irch.attrs['end_time']),
+                                                 "%Y-%m-%d %H:%M:%S")
     header_attrs['sensor'] = sensor.lower()
 
     for band in BANDNAMES:
