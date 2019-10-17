@@ -29,8 +29,10 @@ import os
 import time
 import xarray as xr
 import dask.array as da
+import numpy as np
 from datetime import datetime
 from satpy.scene import Scene
+from level1c4pps import dt64_to_datetime
 import logging
 
 logger = logging.getLogger('gac2pps')
@@ -162,7 +164,7 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
     del scn_['solar_azimuth_angle']
     scn_['sunazimuth'].attrs['id_tag'] = 'sunazimuth'
     scn_['sunazimuth'].attrs['long_name'] = 'sun azimuth angle degree clockwise from north'
-    scn_['sunazimuth'].attrs['valid_range'] = [0, 18000]
+    scn_['sunazimuth'].attrs['valid_range'] = [-18000, 18000]
     scn_['sunazimuth'].attrs['name'] = "image{:d}".format(image_num)
     angle_names.append("image{:d}".format(image_num))
     scn_['sunazimuth'].attrs['coordinates'] = 'lon lat'
@@ -176,7 +178,7 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
     del scn_['sensor_azimuth_angle']
     scn_['satazimuth'].attrs['id_tag'] = 'satazimuth'
     scn_['satazimuth'].attrs['long_name'] = 'satellite azimuth angle degree clockwise from north'
-    scn_['satazimuth'].attrs['valid_range'] = [0, 9000]
+    scn_['satazimuth'].attrs['valid_range'] = [-18000, 18000]
     scn_['satazimuth'].attrs['name'] = "image{:d}".format(image_num)
     angle_names.append("image{:d}".format(image_num))
     scn_['satazimuth'].attrs['coordinates'] = 'lon lat'
@@ -186,7 +188,6 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
     image_num += 1
 
     # scanline timestamps
-    import numpy as np
     first_jan_1970 = np.array([datetime(1970, 1, 1, 0, 0, 0)]).astype('datetime64[ns]')
     scanline_timestamps = np.array(scn_['qual_flags'].coords['acq_time'] -
                                    first_jan_1970).astype(dtype='timedelta64[ms]').astype(np.float64)
@@ -195,7 +196,6 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
     scn_['scanline_timestamps'].attrs['units'] = 'Milliseconds since 1970-01-01 00:00:00 UTC'
 
     # qual_flags
-    scn_['qual_flags'] = scn_['qual_flags'].rename({'x': 'z'})  # x is 409 already
     scn_['qual_flags'].attrs['id_tag'] = 'qual_flags'
     scn_['qual_flags'].attrs['long_name'] = 'pygac quality flags'
     scn_['qual_flags'].coords['time'] = irch.attrs['start_time']
@@ -211,8 +211,8 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
         "S_NWC_avhrr_{:s}_{:05d}_{:s}Z_{:s}Z.nc".format(
             platform_name.lower().replace('-', ''),
             orbit_number,
-            start_time.strftime('%Y%m%dT%H%M%S%f')[:-5],
-            end_time.strftime('%Y%m%dT%H%M%S%f')[:-5]))
+            datetime.strftime(dt64_to_datetime(start_time), '%Y%m%dT%H%M%S%f')[:-5],
+            datetime.strftime(dt64_to_datetime(end_time), '%Y%m%dT%H%M%S%f')[:-5]))
 
     # Encoding for channels
     save_info = {}
@@ -258,12 +258,10 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
                                         'complevel': 4}
 
     header_attrs = scn_.attrs.copy()
-    header_attrs['start_time'] = time.strftime(
-        "%Y-%m-%d %H:%M:%S",
-        irch.attrs['start_time'].timetuple())
-    header_attrs['end_time'] = time.strftime(
-        "%Y-%m-%d %H:%M:%S",
-        irch.attrs['end_time'].timetuple())
+    header_attrs['start_time'] = datetime.strftime(dt64_to_datetime(irch.attrs['start_time']),
+                                                   "%Y-%m-%d %H:%M:%S")
+    header_attrs['end_time'] = datetime.strftime(dt64_to_datetime(irch.attrs['end_time']),
+                                                 "%Y-%m-%d %H:%M:%S")
     header_attrs['sensor'] = sensor.lower()
 
     for band in BANDNAMES:
@@ -281,10 +279,10 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
                     scn_[band].attrs[attr+str(key)] = attr_dict[key]
         except KeyError:
             continue
-
     scn_.save_datasets(writer='cf', filename=filename,
                        header_attrs=header_attrs, engine='netcdf4',
                        encoding=save_info)
+
     print("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),
         time.time()-tic))
