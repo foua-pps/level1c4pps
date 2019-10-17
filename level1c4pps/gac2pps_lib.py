@@ -212,6 +212,7 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
             platform_name.lower().replace('-', ''),
             orbit_number,
             datetime.strftime(dt64_to_datetime(start_time), '%Y%m%dT%H%M%S%f')[:-5],
+
             datetime.strftime(dt64_to_datetime(end_time), '%Y%m%dT%H%M%S%f')[:-5]))
 
     # Encoding for channels
@@ -255,7 +256,7 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
     save_info['qual_flags'] = {'dtype': 'int16', 'zlib': True,
                                'complevel': 4, '_FillValue': -32001.0}
     save_info['scanline_timestamps'] = {'dtype': 'int64', 'zlib': True,
-                                        'complevel': 4}
+                                        'complevel': 4, '_FillValue': -1.0}
 
     header_attrs = scn_.attrs.copy()
     header_attrs['start_time'] = datetime.strftime(dt64_to_datetime(irch.attrs['start_time']),
