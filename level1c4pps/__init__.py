@@ -27,6 +27,13 @@ import numpy as np
 import xarray as xr
 import datetime
 
+from pkg_resources import get_distribution, DistributionNotFound
+try:
+    __version__ = get_distribution(__name__).version
+except DistributionNotFound:
+    # package is not installed
+    pass
+
 def make_azidiff_angle(sata, suna, fill=None):
     """Calculate azimuth difference angle."""
     daz = abs(sata - suna)
