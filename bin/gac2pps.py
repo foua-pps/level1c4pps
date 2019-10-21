@@ -1,31 +1,32 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-# Copyright (c) 2019 Martin.Raspaud
-
-# Author(s):
-
-#   Nina.Hakansson  a001865
-#   Adam.Dybbroe
-#   Martin.Raspaud
-
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
+# Copyright (c) 2019 level1c4pps developers
+#
+# This file is part of level1c4pps
+#
+# atrain_match is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-
+#
+# atrain_match is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with atrain_match.  If not, see <http://www.gnu.org/licenses/>.
+# Author(s):
 
-"""Script to make seviri level1c in PPS-format with pytroll"""
+#   Martin Raspaud <martin.raspaud@smhi.se>
+#   Nina Hakansson <nina.hakansson@smhi.se>
+#   Adam.Dybbroe <adam.dybbroe@smhi.se>
+
+
+"""Script to make seviri level1c in PPS-format with pytroll."""
 
 import argparse
-from level1c4pps.avhrr_gac import process_one_file
+from level1c4pps.gac2pps_lib import process_one_file
 
 
 # -----------------------------------------------------------------------------
@@ -42,6 +43,18 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--out_dir', type=str, nargs='?',
                         required=False, default='.',
                         help="Output directory where to store level1c file.")
+    parser.add_argument('-d', '--dont_strip_invalid_coords',
+                        required=False, default=False, action='store_true',
+                        help="Turn off striping of invalid coords.")
+    parser.add_argument('-sl', '--start_line', type=int, nargs='?',
+                        required=False, default=None,
+                        help="Use only part of data, start with start_line.")
+    parser.add_argument('-el', '--end_line', type=int, nargs='?',
+                        required=False, default=None,
+                        help="Use only part of data, start with end_line.")
 
     options = parser.parse_args()
-    process_one_file(options.file, options.out_dir)
+    process_one_file(options.file, options.out_dir,
+                     reader_kwargs={'start_line': options.start_line,
+                                    'end_line': options.end_line,
+                                    'strip_invalid_coords': not options.dont_strip_invalid_coords})

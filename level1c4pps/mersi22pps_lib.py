@@ -1,27 +1,28 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-# Copyright (c) 2019 Adam.Dybbroe
-
-# Author(s):
-
-#   Adam.Dybbroe <a000680@c21529.ad.smhi.se>
-
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
+# Copyright (c) 2019 level1c4pps developers
+#
+# This file is part of level1c4pps
+#
+# atrain_match is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-
+#
+# atrain_match is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with atrain_match.  If not, see <http://www.gnu.org/licenses/>.
+# Author(s):
 
-"""Functions to convert MERSI-2 level-1 data to a NWCSAF/PPS level-1c formatet netCDF/CF file
-"""
+#   Martin Raspaud <martin.raspaud@smhi.se>
+#   Nina Hakansson <nina.hakansson@smhi.se>
+#   Adam.Dybbroe <adam.dybbroe@smhi.se>
+
+"""Functions to convert MERSI-2 level-1 data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
 
 import os
 import numpy as np
@@ -34,7 +35,6 @@ from satpy.scene import Scene
 from trollsift.parser import globify, Parser
 from pyorbital.astronomy import get_alt_az, sun_zenith_angle
 from pyorbital.orbital import get_observer_look
-from level1c4pps.calibration_coefs import get_calibration_for_time, CALIB_MODE
 from level1c4pps import make_azidiff_angle
 import pyresample
 import logging
@@ -49,7 +49,7 @@ import logging
 logger = logging.getLogger('mersi22pps')
 
 PLATFORM_SHORTNAMES = {'FY3D': 'FY-3D'}
-#BANDNAMES = ['%d' % (chn+1) for chn in range(25)]
+# BANDNAMES = ['%d' % (chn+1) for chn in range(25)]
 BANDNAMES = ['3', '4', '5', '6', '20', '23', '24', '25']
 
 PPS_TAGNAMES = {'3': 'ch_r06',
@@ -69,7 +69,7 @@ p__ = Parser(MERSI2_LEVEL1_FILE_PATTERN)
 
 
 def process_one_scene(scene_files, out_path):
-    """ Make level 1c files in PPS-format """
+    """Make level 1c files in PPS-format."""
     tic = time.time()
 
     nimg = 0  # name of first dataset is image0
@@ -110,7 +110,7 @@ def process_one_scene(scene_files, out_path):
     # Perhaps one can get the orbit number from the hdf file?
     # FIXME!
     scn_.attrs['orbit_number'] = "99999"
-    #scn_.attrs['orbit'] = scn_.attrs['orbit_number']
+    # scn_.attrs['orbit'] = scn_.attrs['orbit_number']
     irch = scn_['24']
 
     nowutc = datetime.utcnow()
@@ -133,9 +133,9 @@ def process_one_scene(scene_files, out_path):
     scn_['sunzenith'].attrs['standard_name'] = 'solar_zenith_angle'
     scn_['sunzenith'].attrs['valid_range'] = [0, 18000]
     scn_['sunzenith'].attrs['name'] = "image{:d}".format(nimg)
-    #scn_['sunzenith'].attrs['scale_factor'] = 0.01
-    #scn_['sunzenith'].attrs['add_offset'] = 0.0
-    #scn_['sunzenith'].attrs['_FillValue'] = -32767
+    # scn_['sunzenith'].attrs['scale_factor'] = 0.01
+    # scn_['sunzenith'].attrs['add_offset'] = 0.0
+    # scn_['sunzenith'].attrs['_FillValue'] = -32767
     angle_names.append("image{:d}".format(nimg))
     scn_['sunzenith'].attrs['coordinates'] = 'lon lat'
     del scn_['sunzenith'].attrs['area']

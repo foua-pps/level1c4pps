@@ -1,41 +1,39 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-# Copyright (c) 2019 Adam.Dybbroe
-
+# Copyright (c) 2019 level1c4pps developers
+#
+# This file is part of level1c4pps
+#
+# atrain_match is free software: you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# atrain_match is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with atrain_match.  If not, see <http://www.gnu.org/licenses/>.
 # Author(s):
 
 #   Martin Raspaud <martin.raspaud@smhi.se>
-#   Nina Håkansson <nina.hakansson@smhi.se>
+#   Nina Hakansson <nina.hakansson@smhi.se>
 #   Adam.Dybbroe <adam.dybbroe@smhi.se>
 
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-"""Utilities to convert AVHRR GAC formattet data to PPS level-1c format
-"""
+"""Utilities to convert AVHRR GAC formattet data to PPS level-1c format."""
 
 
 import os
 import time
+import xarray as xr
+import dask.array as da
+import numpy as np
 from datetime import datetime
 from satpy.scene import Scene
+from level1c4pps import dt64_to_datetime
 import logging
-
-
-class UnexpectedSatPyVersion(Exception):
-    pass
-
 
 logger = logging.getLogger('gac2pps')
 
@@ -64,27 +62,19 @@ INSTRUMENTS = {'tirosn': 'avhrr',
                'noaa19': 'avhrr/3'}
 
 
-def process_one_file(gac_file, out_path='.'):
+def process_one_file(gac_file, out_path='.', reader_kwargs=None):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     image_num = 0  # name of first dataset is image0
-    # platform_shortname = p__.parse(
-    #     os.path.basename(tslot_files[0]))['platform_shortname']
-    # start_time = p__.parse(
-    #     os.path.basename(tslot_files[0]))['start_time']
-    # platform_name = PLATFORM_SHORTNAMES[platform_shortname]
-    # #Load channel data for one scene and set some attributes
-    # coefs = get_calibration_for_time(platform=platform_shortname,
-    #                                  time=start_time)
-
-    scn_ = Scene(
-        reader='avhrr_l1b_gaclac',
-        filenames=[gac_file])
+    scn_ = Scene(reader='avhrr_l1b_gaclac',
+                 filenames=[gac_file], reader_kwargs=reader_kwargs)
 
     if 'avhrr-3' in scn_.attrs['sensor']:
         sensor = 'avhrr'
         scn_.load(BANDNAMES + ['latitude', 'longitude',
+                               'qual_flags',
                                'sensor_zenith_angle', 'solar_zenith_angle',
+                               'solar_azimuth_angle', 'sensor_azimuth_angle',
                                'sun_sensor_azimuth_difference_angle'])
     for band in BANDNAMES:
         try:
@@ -113,10 +103,6 @@ def process_one_file(gac_file, out_path='.'):
     scn_.attrs['platform_name'] = irch.attrs['platform_name']
     scn_.attrs['orbit_number'] = '{:05d}'.format(irch.attrs['orbit_number'])
     scn_.attrs['orbit'] = scn_.attrs['orbit_number']
-    # lons = lons.where(lons <= 360, -999.0)
-    # lons = lons.where(lons >= -360, 999.0)
-    # lats = lats.where(lats <= 90, -999.0)
-    # lats = lats.where(lats >= -90, 999.0)
 
     scn_['lat'] = scn_['latitude']
     del scn_['latitude']
@@ -173,6 +159,48 @@ def process_one_file(gac_file, out_path='.'):
     del scn_['azimuthdiff'].coords['acq_time']
     image_num += 1
 
+    # satazimuth
+    scn_['sunazimuth'] = scn_['solar_azimuth_angle']
+    del scn_['solar_azimuth_angle']
+    scn_['sunazimuth'].attrs['id_tag'] = 'sunazimuth'
+    scn_['sunazimuth'].attrs['long_name'] = 'sun azimuth angle degree clockwise from north'
+    scn_['sunazimuth'].attrs['valid_range'] = [-18000, 18000]
+    scn_['sunazimuth'].attrs['name'] = "image{:d}".format(image_num)
+    angle_names.append("image{:d}".format(image_num))
+    scn_['sunazimuth'].attrs['coordinates'] = 'lon lat'
+    del scn_['sunazimuth'].attrs['area']
+    scn_['sunazimuth'].coords['time'] = irch.attrs['start_time']
+    del scn_['sunazimuth'].coords['acq_time']
+    image_num += 1
+
+    # satazimuth
+    scn_['satazimuth'] = scn_['sensor_azimuth_angle']
+    del scn_['sensor_azimuth_angle']
+    scn_['satazimuth'].attrs['id_tag'] = 'satazimuth'
+    scn_['satazimuth'].attrs['long_name'] = 'satellite azimuth angle degree clockwise from north'
+    scn_['satazimuth'].attrs['valid_range'] = [-18000, 18000]
+    scn_['satazimuth'].attrs['name'] = "image{:d}".format(image_num)
+    angle_names.append("image{:d}".format(image_num))
+    scn_['satazimuth'].attrs['coordinates'] = 'lon lat'
+    del scn_['satazimuth'].attrs['area']
+    scn_['satazimuth'].coords['time'] = irch.attrs['start_time']
+    del scn_['satazimuth'].coords['acq_time']
+    image_num += 1
+
+    # scanline timestamps
+    first_jan_1970 = np.array([datetime(1970, 1, 1, 0, 0, 0)]).astype('datetime64[ns]')
+    scanline_timestamps = np.array(scn_['qual_flags'].coords['acq_time'] -
+                                   first_jan_1970).astype(dtype='timedelta64[ms]').astype(np.float64)
+    scn_['scanline_timestamps'] = xr.DataArray(da.from_array(scanline_timestamps),
+                                               dims=['y'], coords={'y': scn_['qual_flags']['y']})
+    scn_['scanline_timestamps'].attrs['units'] = 'Milliseconds since 1970-01-01 00:00:00 UTC'
+
+    # qual_flags
+    scn_['qual_flags'].attrs['id_tag'] = 'qual_flags'
+    scn_['qual_flags'].attrs['long_name'] = 'pygac quality flags'
+    scn_['qual_flags'].coords['time'] = irch.attrs['start_time']
+    del scn_['qual_flags'].coords['acq_time']
+
     # Get filename
     start_time = irch.attrs['start_time']
     end_time = irch.attrs['end_time']
@@ -183,13 +211,9 @@ def process_one_file(gac_file, out_path='.'):
         "S_NWC_avhrr_{:s}_{:05d}_{:s}Z_{:s}Z.nc".format(
             platform_name.lower().replace('-', ''),
             orbit_number,
-            start_time.strftime('%Y%m%dT%H%M%S%f')[:-5],
-            end_time.strftime('%Y%m%dT%H%M%S%f')[:-5]))
+            datetime.strftime(dt64_to_datetime(start_time), '%Y%m%dT%H%M%S%f')[:-5],
 
-    for dataset in scn_.keys():
-        if hasattr(scn_[dataset], 'attrs'):
-            if hasattr(scn_[dataset].attrs, 'modifiers'):
-                scn_[dataset].attrs['modifiers'] = 0.0
+            datetime.strftime(dt64_to_datetime(end_time), '%Y%m%dT%H%M%S%f')[:-5]))
 
     # Encoding for channels
     save_info = {}
@@ -229,13 +253,16 @@ def process_one_file(gac_file, out_path='.'):
     for name in ['lon', 'lat']:
         save_info[name] = {'dtype': 'float32',    'zlib': True,
                            'complevel': 4, '_FillValue': -999.0}
+    save_info['qual_flags'] = {'dtype': 'int16', 'zlib': True,
+                               'complevel': 4, '_FillValue': -32001.0}
+    save_info['scanline_timestamps'] = {'dtype': 'int64', 'zlib': True,
+                                        'complevel': 4, '_FillValue': -1.0}
+
     header_attrs = scn_.attrs.copy()
-    header_attrs['start_time'] = time.strftime(
-        "%Y-%m-%d %H:%M:%S",
-        irch.attrs['start_time'].timetuple())
-    header_attrs['end_time'] = time.strftime(
-        "%Y-%m-%d %H:%M:%S",
-        irch.attrs['end_time'].timetuple())
+    header_attrs['start_time'] = datetime.strftime(dt64_to_datetime(irch.attrs['start_time']),
+                                                   "%Y-%m-%d %H:%M:%S")
+    header_attrs['end_time'] = datetime.strftime(dt64_to_datetime(irch.attrs['end_time']),
+                                                 "%Y-%m-%d %H:%M:%S")
     header_attrs['sensor'] = sensor.lower()
 
     for band in BANDNAMES:
@@ -253,10 +280,10 @@ def process_one_file(gac_file, out_path='.'):
                     scn_[band].attrs[attr+str(key)] = attr_dict[key]
         except KeyError:
             continue
-
     scn_.save_datasets(writer='cf', filename=filename,
                        header_attrs=header_attrs, engine='netcdf4',
                        encoding=save_info)
+
     print("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),
         time.time()-tic))
