@@ -73,6 +73,15 @@ hrit_file_pattern = '{rate:1s}-000-{hrit_format:_<6s}-{platform_shortname:_<12s}
 p__ = Parser(hrit_file_pattern)
 
 
+def rotate_band(scene, band):
+    """Rotate band by 180 degrees."""
+    scene[band] = scene[band].reindex(x=scene[band].x[::-1],
+                                      y=scene[band].y[::-1])
+    llx, lly, urx, ury = scene[band].attrs['area'].area_extent
+    scene[band].attrs['area'] = scene[band].attrs['area'].copy(
+        area_extent=[urx, ury, llx, lly])
+
+
 def process_one_scan(tslot_files, out_path,
                      process_buggy_satellite_zenith_angles=False):
     """Make level 1c files in PPS-format."""
@@ -111,6 +120,10 @@ def process_one_scan(tslot_files, out_path,
         scn_[band].attrs['name'] = "image{:d}".format(image_num)
         scn_[band].attrs['coordinates'] = 'lon lat'
         image_num += 1
+
+    # By default pixel (0,0) is S-E. Rotate bands so that (0,0) is N-W.
+    for band in BANDNAMES:
+        rotate_band(scn_, band)
 
     # Set som header attributes:
     scn_.attrs['platform'] = platform_name
