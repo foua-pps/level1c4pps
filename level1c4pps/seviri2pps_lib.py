@@ -41,7 +41,6 @@ from pyorbital.astronomy import get_alt_az, sun_zenith_angle
 from pyorbital.orbital import get_observer_look
 from level1c4pps.calibration_coefs import get_calibration_for_time, CALIB_MODE
 from level1c4pps import make_azidiff_angle
-import pyresample
 
 
 class UnexpectedSatpyVersion(Exception):
@@ -112,21 +111,6 @@ def process_one_scan(tslot_files, out_path,
         scn_[band].attrs['name'] = "image{:d}".format(image_num)
         scn_[band].attrs['coordinates'] = 'lon lat'
         image_num += 1
-
-    # correct area
-    area_corr = pyresample.geometry.AreaDefinition(
-        'seviri-corrected',
-        'Corrected SEVIRI L1.5 grid (since Dec 2017)',
-        'geosmsg',
-        {'a': 6378169.00, 'b': 6356583.80, 'h': 35785831.0,
-         'lon_0': 0.0, 'proj': 'geos', 'units': 'm'},
-        3712, 3712,
-        (5567248.28340708, 5570248.686685662,
-         -5570248.686685662, -5567248.28340708)
-    )
-    if not scn_['IR_108'].attrs['georef_offset_corrected']:
-        scn_ = scn_.resample(area_corr)
-        print(scn_['IR_108'].attrs['georef_offset_corrected'])
 
     # Set som header attributes:
     scn_.attrs['platform'] = platform_name
