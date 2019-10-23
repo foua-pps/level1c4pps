@@ -43,7 +43,7 @@ if __name__ == "__main__":
                      'SEVIRI hrit files.'))
     parser.add_argument('files', metavar='fileN', type=str, nargs='+',
                         help='List of hrit files to process for one scan')
-    parser.add_argument('-o', '--out_dir', type=str, nargs='?',
+    parser.add_argument('-o', '--out_dir', type=str, default='.',
                         required=False,
                         help="Output directory where to store level1c file.")
     parser.add_argument('-b', '--buggy_satz', const=True, nargs='?',
