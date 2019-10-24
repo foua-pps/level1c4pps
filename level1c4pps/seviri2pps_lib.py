@@ -67,8 +67,7 @@ PPS_TAGNAMES = {'VIS006': 'ch_r06',
                 'WV_073': 'ch_tb73'}
 
 # H-000-MSG3__-MSG3________-IR_120___-000003___-201410051115-__:
-hrit_file_pattern = '{rate:1s}-000-{hrit_format:_<6s}-{platform_shortname:_<12s}-{channel:_<8s}_-{segment:_<9s}-{start_time:%Y%m%d%H%M}-__'
-p__ = Parser(hrit_file_pattern)
+HRIT_FILE_PATTERN = '{rate:1s}-000-{hrit_format:_<6s}-{platform_shortname:_<12s}-{channel:_<8s}_-{segment:_<9s}-{start_time:%Y%m%d%H%M}-__'
 
 
 def rotate_band(scene, band):
@@ -337,9 +336,10 @@ def get_header_attrs(scene):
 def process_one_scan(tslot_files, out_path):
     """Make level 1c files in PPS-format."""
     tic = time.time()
-    platform_shortname = p__.parse(
+    parser = Parser(HRIT_FILE_PATTERN)
+    platform_shortname = parser.parse(
         os.path.basename(tslot_files[0]))['platform_shortname']
-    start_time = p__.parse(
+    start_time = parser.parse(
         os.path.basename(tslot_files[0]))['start_time']
 
     # Load and calibrate data using inter-calibration coefficients from
@@ -395,8 +395,9 @@ def process_one_scan(tslot_files, out_path):
 
 def process_all_scans_in_dname(dname, out_path, ok_dates=None):
     """Make level 1c files for all files in directory dname."""
-    fl_ = glob(os.path.join(dname, globify(hrit_file_pattern)))
-    dates = [p__.parse(os.path.basename(p))['start_time'] for p in fl_]
+    parser = Parser(HRIT_FILE_PATTERN)
+    fl_ = glob(os.path.join(dname, globify(HRIT_FILE_PATTERN)))
+    dates = [parser.parse(os.path.basename(p))['start_time'] for p in fl_]
     unique_dates = np.unique(dates).tolist()
     for uqdate in unique_dates:
         date_formated = uqdate.strftime("%Y%m%d%H%M")
@@ -406,7 +407,7 @@ def process_all_scans_in_dname(dname, out_path, ok_dates=None):
         # Every hour only:
         # if uqdate.minute != 0:
         #    continue
-        tslot_files = [f for f in fl_ if p__.parse(
+        tslot_files = [f for f in fl_ if parser.parse(
             os.path.basename(f))['start_time'] == uqdate]
         try:
             process_one_scan(tslot_files, out_path)
