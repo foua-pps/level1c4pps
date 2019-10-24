@@ -110,52 +110,7 @@ def get_calibration_for_date(platform, date):
     return coefs
 
 
-def test_get_calibration_for_date():
-    """Test MODIS-intercalibrated gain and offset for specific date."""
-    coefs = get_calibration_for_date(platform='MSG3',
-                                     date=datetime.date(2018, 1, 18))
-    REF = {'VIS006': {'gain': 0.023689275200000002, 'offset': -1.2081530352},
-           'VIS008': {'gain': 0.029757990399999996, 'offset': -1.5176575103999999},
-           'IR_016': {'gain': 0.0228774688, 'offset': -1.1667509087999999}}
-    for channel in REF.keys():
-        if (REF[channel]['gain'] == coefs[channel]['gain'] and
-                REF[channel]['offset'] == coefs[channel]['offset']):
-            print("Calibration for channel {:s} is OK!".format(channel))
-
-
-def test_get_calibration_for_time():
-    """Test MODIS-intercalibrated gain and offset for specific time."""
-    coefs = get_calibration_for_time(platform='MSG3',
-                                     time=datetime.datetime(2018, 1, 18, 0, 0))
-    REF = {'VIS006': {'gain': 0.023689275200000002, 'offset': -1.2081530352},
-           'VIS008': {'gain': 0.029757990399999996, 'offset': -1.5176575103999999},
-           'IR_016': {'gain': 0.0228774688, 'offset': -1.1667509087999999}}
-    for channel in REF.keys():
-        if (REF[channel]['gain'] == coefs[channel]['gain'] and
-                REF[channel]['offset'] == coefs[channel]['offset']):
-            print("Calibration for channel {:s} is OK!".format(channel))
-        else:
-            print(REF[channel]['gain'] - coefs[channel]['gain'])
-
-
-def test_get_calibration():
-    """Test MODIS-intercalibrated for date and time."""
-    coefs1 = get_calibration_for_time(platform='MSG3',
-                                      time=datetime.datetime(2018, 1, 18, 23, 59))
-    coefs2 = get_calibration_for_date(platform='MSG3',
-                                      date=datetime.date(2018, 1, 19))
-    for channel in coefs1.keys():
-        if (coefs1[channel]['gain'] - coefs2[channel]['gain'] < 10e-8 and
-                coefs1[channel]['offset'] - coefs2[channel]['offset'] < 10e-8):
-            print("Calibration for channel {:s} is OK!".format(channel))
-        else:
-            print(coefs2[channel]['gain'] - coefs1[channel]['gain'])
-
-
 if __name__ == '__main__':
-    test_get_calibration_for_time()
-    test_get_calibration_for_date()
-    test_get_calibration()
     time = datetime.datetime(2018, 1, 18, 12, 0)
     platform = 'MSG3'
 
