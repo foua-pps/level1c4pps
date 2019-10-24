@@ -34,7 +34,7 @@ except DistributionNotFound:
     # package is not installed
     pass
 
-def make_azidiff_angle(sata, suna, fill=None):
+def make_azidiff_angle(sata, suna):
     """Calculate azimuth difference angle."""
     daz = abs(sata - suna)
     daz = daz % 360

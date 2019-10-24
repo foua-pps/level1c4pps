@@ -46,12 +46,5 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--out_dir', type=str, default='.',
                         required=False,
                         help="Output directory where to store level1c file.")
-    parser.add_argument('-b', '--buggy_satz', const=True, nargs='?',
-                        required=False,
-                        help="Create buggy satellite zenith angle data")
     options = parser.parse_args()
-    process_buggy_satellite_zenith_angles = False
-    if options.buggy_satz:
-        process_buggy_satellite_zenith_angles = True
-    process_one_scan(options.files, options.out_dir,
-                     process_buggy_satellite_zenith_angles)
+    process_one_scan(options.files, options.out_dir)

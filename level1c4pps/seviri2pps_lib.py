@@ -36,9 +36,11 @@ from glob import glob
 import time
 from datetime import datetime
 from satpy.scene import Scene
+import satpy.utils
 from trollsift.parser import globify, Parser
 from pyorbital.astronomy import get_alt_az, sun_zenith_angle
 from pyorbital.orbital import get_observer_look
+
 from level1c4pps.calibration_coefs import get_calibration_for_time, CALIB_MODE
 from level1c4pps import make_azidiff_angle
 
@@ -63,10 +65,6 @@ PPS_TAGNAMES = {'VIS006': 'ch_r06',
                 'IR_097': 'ch_tb97',
                 'WV_062': 'ch_tb67',
                 'WV_073': 'ch_tb73'}
-PLATFORM_SHORTNAMES = {"MSG1": "Meteosat-8",
-                       "MSG2": "Meteosat-9",
-                       "MSG3": "Meteosat-10",
-                       "MSG4": "Meteosat-11"}
 
 # H-000-MSG3__-MSG3________-IR_120___-000003___-201410051115-__:
 hrit_file_pattern = '{rate:1s}-000-{hrit_format:_<6s}-{platform_shortname:_<12s}-{channel:_<8s}_-{segment:_<9s}-{start_time:%Y%m%d%H%M}-__'
@@ -82,75 +80,33 @@ def rotate_band(scene, band):
         area_extent=[urx, ury, llx, lly])
 
 
-def process_one_scan(tslot_files, out_path,
-                     process_buggy_satellite_zenith_angles=False):
-    """Make level 1c files in PPS-format."""
-    tic = time.time()
-    image_num = 0  # name of first dataset is image0
-    # if len(tslot_files) != 8 * len(BANDNAMES) + 2:
-    #    raise Exception("Some data is missing")
-    platform_shortname = p__.parse(
-        os.path.basename(tslot_files[0]))['platform_shortname']
-    start_time = p__.parse(
-        os.path.basename(tslot_files[0]))['start_time']
-    platform_name = PLATFORM_SHORTNAMES[platform_shortname]
-    # Load channel data for one scene and set some attributes
-    coefs = get_calibration_for_time(platform=platform_shortname,
-                                     time=start_time)
+def get_lonlats(dataset):
+    """Get lat/lon coordinates."""
+    lons, lats = dataset.attrs['area'].get_lonlats()
+    lons[np.fabs(lons) > 360] = -999.0
+    lats[np.fabs(lons) > 90] = -999.0
+    return lons, lats
 
-    scn_ = Scene(
-        reader='seviri_l1b_hrit',
-        filenames=tslot_files,
-        reader_kwargs={
-            'calib_mode': CALIB_MODE,
-            'ext_calib_coefs': coefs})
-    scn_.attrs['platform_name'] = platform_name
 
-    # SEVIRI data only
-    if scn_.attrs['sensor'] == {'seviri'}:
-        sensor = 'seviri'
-        scn_.load(BANDNAMES)
-    for band in BANDNAMES:
-        idtag = PPS_TAGNAMES[band]
-        scn_[band].attrs['id_tag'] = idtag
-        scn_[band].attrs['description'] = 'SEVIRI ' + str(band)
-        scn_[band].attrs['sun_earth_distance_correction_applied'] = 'False'
-        scn_[band].attrs['sun_earth_distance_correction_factor'] = 1.0
-        scn_[band].attrs['sun_zenith_angle_correction_applied'] = 'False'
-        scn_[band].attrs['name'] = "image{:d}".format(image_num)
-        scn_[band].attrs['coordinates'] = 'lon lat'
-        image_num += 1
+def get_solar_angles(dataset, lons, lats):
+    """Compute solar angles.
 
-    # By default pixel (0,0) is S-E. Rotate bands so that (0,0) is N-W.
-    for band in BANDNAMES:
-        rotate_band(scn_, band)
-
-    # Set som header attributes:
-    scn_.attrs['platform'] = platform_name
-    scn_.attrs['instrument'] = sensor.upper()
-    scn_.attrs['source'] = "seviri2pps.py"
-    scn_.attrs['orbit_number'] = "99999"
-    # scn_.attrs['orbit'] = "99999"
-    nowutc = datetime.utcnow()
-    scn_.attrs['date_created'] = nowutc.strftime("%Y-%m-%dT%H:%M:%SZ")
-    # Find lat/lon data
-    irch = scn_['IR_108']
-    lons, lats = irch.attrs['area'].get_lonlats()
-    lons[lons > 360] = -999.0
-    lons[lons < -360] = -999.0
-    lats[lats > 360] = -999.0
-    lats[lats < -360] = -999.0
-
-    # Find angles data
-    sunalt, suna = get_alt_az(
-        irch.attrs['start_time'], *irch.attrs['area'].get_lonlats())
+    Returns:
+        Solar azimuth angle, Solar zenith angle in degrees
+    """
+    _, suna = get_alt_az(dataset.attrs['start_time'], lons, lats)
     suna = np.rad2deg(suna)
-    sunz = sun_zenith_angle(
-        irch.attrs['start_time'], *irch.attrs['area'].get_lonlats())
+    sunz = sun_zenith_angle(dataset.attrs['start_time'], lons, lats)
+    return suna, sunz
 
+
+def get_satellite_angles(dataset, lons, lats):
+    """Compute satellite angles.
+
+    Returns:
+        Satellite azimuth angle, Satellite zenith angle in degrees
+    """
     # if:
-    #   Buggy data is requested buggy data is prepared!
-    # elif:
     #   1) get_observer_look() gives wrong answer ...
     #   ... for satellite altitude in m. AND
     #   2) get_observer_look() gives correct answer ...
@@ -160,101 +116,151 @@ def process_one_scan(tslot_files, out_path,
     # else:
     #    => There have been updates to SatPy and this script
     #       need to be modified.
-    if process_buggy_satellite_zenith_angles:
-        print(" Making buggy satellite zenith angels on purpose!")
-        sata, satel = get_observer_look(
-            irch.attrs['orbital_parameters']['satellite_actual_longitude'],
-            irch.attrs['orbital_parameters']['satellite_actual_latitude'],
-            irch.attrs['orbital_parameters']['satellite_actual_altitude'],
-            irch.attrs['start_time'],
-            lons, lats, 0)
-    elif (get_observer_look(0, 0, 36000*1000,
-                            datetime.utcnow(), np.array([16]),
-                            np.array([58]), np.array([0]))[1] > 30 and
-          get_observer_look(0, 0, 36000,
-                            datetime.utcnow(), np.array([16]),
-                            np.array([58]), np.array([0]))[1] < 23 and
-          irch.attrs['orbital_parameters']['satellite_actual_altitude'] > 38000):
-        sata, satel = get_observer_look(
-            irch.attrs['orbital_parameters']['satellite_actual_longitude'],
-            irch.attrs['orbital_parameters']['satellite_actual_latitude'],
-            0.001*irch.attrs['orbital_parameters']['satellite_actual_altitude'],
-            irch.attrs['start_time'],
-            lons, lats, 0)
-    else:
+    sat_lon, sat_lat, sat_alt = satpy.utils.get_satpos(dataset)
+    # Double check that pyorbital/satpy behave as expected (satpy returning
+    # altitude in meters and pyorbital expecting km)
+    if not (get_observer_look(0, 0, 36000*1000,
+                              datetime.utcnow(), np.array([16]),
+                              np.array([58]), np.array([0]))[1] > 30 and
+            get_observer_look(0, 0, 36000,
+                              datetime.utcnow(), np.array([16]),
+                              np.array([58]), np.array([0]))[1] < 23 and
+            sat_alt > 38000):
         raise UnexpectedSatpyVersion(
-            "You might have a newer version of satpy/pyorbital that"
-            "handles units. In that case the m => km conversion might"
-            "be unneeded and wrong.")
+            'Unexpected handling of satellite altitude in pyorbital/'
+            'satpy. Conversion to km is probably unneeded and wrong.')
 
+    # Convert altitude from meters to kilometers, as expected by the
+    # current version of pyorbital
+    sat_alt *= 0.001
+
+    # Compute angles
+    sata, satel = get_observer_look(
+        sat_lon,
+        sat_lat,
+        sat_alt,
+        dataset.attrs['start_time'],
+        lons, lats, 0)
     satz = 90 - satel
-    azidiff = make_azidiff_angle(sata, suna, -32767)
-    # Add lat/lon  and angles datasets to the scen object
-    my_coords = scn_['IR_108'].coords
-    my_coords['time'] = irch.attrs['start_time']
-    scn_['lat'] = xr.DataArray(
-        da.from_array(lats, chunks=(53, 3712)),
-        dims=['y', 'x'],
-        coords={'y': scn_['IR_108']['y'], 'x': scn_['IR_108']['x']})
-    scn_['lat'].attrs['long_name'] = 'latitude coordinate'
-    scn_['lat'].attrs['standard_name'] = 'latitude'
-    scn_['lat'].attrs['units'] = 'degrees_north'
-    scn_['lat'].attrs['start_time'] = irch.attrs['start_time']
-    scn_['lat'].attrs['end_time'] = irch.attrs['end_time']
-    scn_['lon'] = xr.DataArray(
-        da.from_array(lons, chunks=(53, 3712)),
-        dims=['y', 'x'],
-        coords={'y': scn_['IR_108']['y'], 'x': scn_['IR_108']['x']})
-    scn_['lon'].attrs['long_name'] = 'longitude coordinate'
-    scn_['lon'].attrs['standard_name'] = 'longitude'
-    scn_['lon'].attrs['units'] = 'degrees_east'
-    scn_['lon'].attrs['start_time'] = irch.attrs['start_time']
-    scn_['lon'].attrs['end_time'] = irch.attrs['end_time']
-    # sunzenith
-    scn_['sunzenith'] = xr.DataArray(
-        da.from_array(sunz[:, :], chunks=(53, 3712)),
-        dims=['y', 'x'], coords=my_coords)
-    scn_['sunzenith'].attrs['id_tag'] = 'sunzenith'
-    scn_['sunzenith'].attrs['long_name'] = 'sun zenith angle'
-    scn_['sunzenith'].attrs['standard_name'] = 'solar_zenith_angle'
-    scn_['sunzenith'].attrs['valid_range'] = [0, 18000]
-    scn_['sunzenith'].attrs['name'] = "image{:d}".format(image_num)
-    image_num += 1
-    # satzenith
-    scn_['satzenith'] = xr.DataArray(
-        da.from_array(satz[:, :], chunks=(53, 3712)),
-        dims=['y', 'x'], coords=my_coords)
-    scn_['satzenith'].attrs['id_tag'] = 'satzenith'
-    scn_['satzenith'].attrs['long_name'] = 'satellite zenith angle'
-    scn_['satzenith'].attrs['standard_name'] = 'platform_zenith_angle'
-    scn_['satzenith'].attrs['valid_range'] = [0, 9000]
-    scn_['satzenith'].attrs['name'] = "image{:d}".format(image_num)
-    image_num += 1
-    # azidiff
-    scn_['azimuthdiff'] = xr.DataArray(
-        da.from_array(azidiff[:, :], chunks=(53, 3712)),
-        dims=['y', 'x'], coords=my_coords)
-    scn_['azimuthdiff'].attrs['id_tag'] = 'azimuthdiff'
-    # scn_['azimuthdiff'].attrs['standard_name'] = (
-    #    'angle_of_rotation_from_solar_azimuth_to_platform_azimuth')
-    scn_['azimuthdiff'].attrs['long_name'] = 'absoulte azimuth difference angle'
-    scn_['azimuthdiff'].attrs['valid_range'] = [0, 18000]
-    scn_['azimuthdiff'].attrs['name'] = "image{:d}".format(image_num)
-    image_num += 1
-    for angle in ['azimuthdiff', 'satzenith', 'sunzenith']:
-        scn_[angle].attrs['units'] = 'degree'
-        for attr in irch.attrs.keys():
-            if attr in ["start_time",
-                        "end_time",
-                        "navigation",
-                        "georef_offset_corrected",
-                        "projection"
-                        ]:
-                scn_[angle].attrs[attr] = irch.attrs[attr]
 
-    # Get filename
-    start_time = scn_['IR_108'].attrs['start_time']
-    end_time = scn_['IR_108'].attrs['end_time']
+    return sata, satz
+
+
+def set_attrs(scene):
+    """Set global and band attributes."""
+    # Global
+    scene.attrs['platform'] = scene['IR_108'].attrs['platform_name']
+    scene.attrs['instrument'] = 'SEVIRI'
+    scene.attrs['source'] = "seviri2pps.py"
+    scene.attrs['orbit_number'] = "99999"
+    nowutc = datetime.utcnow()
+    scene.attrs['date_created'] = nowutc.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    # For each band
+    for image_num, band in enumerate(BANDNAMES):
+        idtag = PPS_TAGNAMES[band]
+        scene[band].attrs['id_tag'] = idtag
+        scene[band].attrs['description'] = 'SEVIRI ' + str(band)
+        scene[band].attrs['sun_earth_distance_correction_applied'] = 'False'
+        scene[band].attrs['sun_earth_distance_correction_factor'] = 1.0
+        scene[band].attrs['sun_zenith_angle_correction_applied'] = 'False'
+        scene[band].attrs['name'] = "image{:d}".format(image_num)
+
+
+def set_coords(scene):
+    """Set band coordinates."""
+    for band in BANDNAMES:
+        # Remove area, set lat/lon as coordinates
+        scene[band].attrs.pop('area', None)
+        scene[band].attrs['coordinates'] = 'lon lat'
+
+        # Add time coordinate to make cfwriter aware that we want 3D data
+        scene[band].coords['time'] = scene[band].attrs['start_time']
+        scene[band] = scene[band].drop(['acq_time'])
+
+
+def add_ancillary_dataset(scene, lons, lats, sunz, satz, azidiff, chunks=(53, 3712)):
+    """Add ancillary datasets to the scene.
+
+    Args:
+        lons: Longitude coordinates
+        lats: Latitude coordinates
+        sunz: Solar zenith angle
+        satz: Satellite zenith angle
+        azidiff: Absoulte azimuth difference angle
+        chunks: Chunksize
+    """
+    start_time = scene['IR_108'].attrs['start_time']
+    end_time = scene['IR_108'].attrs['end_time']
+    angle_coords = scene['IR_108'].coords
+    angle_coords['time'] = start_time
+
+    # Latitude
+    scene['lat'] = xr.DataArray(
+        da.from_array(lats, chunks=chunks),
+        dims=['y', 'x'],
+        coords={'y': scene['IR_108']['y'], 'x': scene['IR_108']['x']})
+    scene['lat'].attrs['long_name'] = 'latitude coordinate'
+    scene['lat'].attrs['standard_name'] = 'latitude'
+    scene['lat'].attrs['units'] = 'degrees_north'
+    scene['lat'].attrs['start_time'] = start_time
+    scene['lat'].attrs['end_time'] = end_time
+
+    # Longitude
+    scene['lon'] = xr.DataArray(
+        da.from_array(lons, chunks=chunks),
+        dims=['y', 'x'],
+        coords={'y': scene['IR_108']['y'], 'x': scene['IR_108']['x']})
+    scene['lon'].attrs['long_name'] = 'longitude coordinate'
+    scene['lon'].attrs['standard_name'] = 'longitude'
+    scene['lon'].attrs['units'] = 'degrees_east'
+    scene['lon'].attrs['start_time'] = start_time
+    scene['lon'].attrs['end_time'] = end_time
+
+    # Sunzenith
+    scene['sunzenith'] = xr.DataArray(
+        da.from_array(sunz[:, :], chunks=chunks),
+        dims=['y', 'x'], coords=angle_coords)
+    scene['sunzenith'].attrs['id_tag'] = 'sunzenith'
+    scene['sunzenith'].attrs['long_name'] = 'sun zenith angle'
+    scene['sunzenith'].attrs['standard_name'] = 'solar_zenith_angle'
+    scene['sunzenith'].attrs['valid_range'] = [0, 18000]
+    scene['sunzenith'].attrs['name'] = "image11"
+
+    # Satzenith
+    scene['satzenith'] = xr.DataArray(
+        da.from_array(satz[:, :], chunks=chunks),
+        dims=['y', 'x'], coords=angle_coords)
+    scene['satzenith'].attrs['id_tag'] = 'satzenith'
+    scene['satzenith'].attrs['long_name'] = 'satellite zenith angle'
+    scene['satzenith'].attrs['standard_name'] = 'platform_zenith_angle'
+    scene['satzenith'].attrs['valid_range'] = [0, 9000]
+    scene['satzenith'].attrs['name'] = "image12"
+
+    # Azidiff
+    scene['azimuthdiff'] = xr.DataArray(
+        da.from_array(azidiff[:, :], chunks=chunks),
+        dims=['y', 'x'], coords=angle_coords)
+    scene['azimuthdiff'].attrs['id_tag'] = 'azimuthdiff'
+    # scene['azimuthdiff'].attrs['standard_name'] = (
+    #    'angle_of_rotation_from_solar_azimuth_to_platform_azimuth')  # FIXME
+    scene['azimuthdiff'].attrs['long_name'] = 'absoulte azimuth difference angle'
+    scene['azimuthdiff'].attrs['valid_range'] = [0, 18000]
+    scene['azimuthdiff'].attrs['name'] = "image13"
+
+    # Some common attributes
+    for angle in ['azimuthdiff', 'satzenith', 'sunzenith']:
+        scene[angle].attrs['units'] = 'degree'
+        for attr in ["start_time", "end_time", "orbital_parameters",
+                     "georef_offset_corrected"]:
+            scene[angle].attrs[attr] = scene['IR_108'].attrs[attr]
+
+
+def compose_filename(scene, out_path):
+    """Compose output filename."""
+    start_time = scene['IR_108'].attrs['start_time']  # FIXME: scene.attrs['start_time'] ?
+    end_time = scene['IR_108'].attrs['end_time']
+    platform_name = scene.attrs['platform']
     filename = os.path.join(
         out_path,
         "S_NWC_seviri_{:s}_{:s}_{:s}Z_{:s}Z.nc".format(
@@ -262,34 +268,35 @@ def process_one_scan(tslot_files, out_path,
             "99999",
             start_time.strftime('%Y%m%dT%H%M%S%f')[:-5],
             end_time.strftime('%Y%m%dT%H%M%S%f')[:-5]))
+    return filename
 
-    # Encoding for channels
-    save_info = {}
+
+def get_encoding(scene):
+    """Get netcdf encoding for all datasets."""
+    encoding = {}
+
+    # Bands
     for band in BANDNAMES:
         idtag = PPS_TAGNAMES[band]
-        name = scn_[band].attrs['name']
-        scn_[band].attrs.pop('area', None)
-        # Add time coordinate. To make cfwriter aware that we want 3D data.
-        my_coords = scn_[band].coords
-        my_coords['time'] = irch.attrs['start_time']
-
+        name = scene[band].attrs['name']
         if 'tb' in idtag:
-            save_info[name] = {'dtype': 'int16',
-                               'scale_factor': 0.01,
-                               '_FillValue': -32767,
-                               'zlib': True,
-                               'complevel': 4,
-                               'add_offset': 273.15}
+            encoding[name] = {'dtype': 'int16',
+                              'scale_factor': 0.01,
+                              '_FillValue': -32767,
+                              'zlib': True,
+                              'complevel': 4,
+                              'add_offset': 273.15}
         else:
-            save_info[name] = {'dtype': 'int16',
-                               'scale_factor': 0.01,
-                               'zlib': True,
-                               'complevel': 4,
-                               '_FillValue': -32767,
-                               'add_offset': 0.0}
-    # Encoding for angles and lat/lon
+            encoding[name] = {'dtype': 'int16',
+                              'scale_factor': 0.01,
+                              'zlib': True,
+                              'complevel': 4,
+                              '_FillValue': -32767,
+                              'add_offset': 0.0}
+
+    # Angles and lat/lon
     for name in ['image11', 'image12', 'image13']:
-        save_info[name] = {
+        encoding[name] = {
             'dtype': 'int16',
             'scale_factor': 0.01,
             'zlib': True,
@@ -298,23 +305,76 @@ def process_one_scan(tslot_files, out_path,
             'add_offset': 0.0}
 
     for name in ['lon', 'lat']:
-        save_info[name] = {'dtype': 'float32',    'zlib': True,
-                           'complevel': 4, '_FillValue': -999.0}
-    header_attrs = scn_.attrs.copy()
+        encoding[name] = {'dtype': 'float32',
+                          'zlib': True,
+                          'complevel': 4,
+                          '_FillValue': -999.0}
+
+    return encoding
+
+
+def get_header_attrs(scene):
+    """Get global netcdf attributes."""
+    header_attrs = scene.attrs.copy()
     header_attrs['start_time'] = time.strftime(
         "%Y-%m-%d %H:%M:%S",
-        irch.attrs['start_time'].timetuple())
+        scene.attrs['start_time'].timetuple())
     header_attrs['end_time'] = time.strftime(
         "%Y-%m-%d %H:%M:%S",
-        irch.attrs['end_time'].timetuple())
-    header_attrs['sensor'] = sensor.lower()
-    header_attrs.pop('platform_name', None)
+        scene.attrs['end_time'].timetuple())
+    header_attrs['sensor'] = 'seviri'
+    return header_attrs
 
+
+def process_one_scan(tslot_files, out_path):
+    """Make level 1c files in PPS-format."""
+    tic = time.time()
+    platform_shortname = p__.parse(
+        os.path.basename(tslot_files[0]))['platform_shortname']
+    start_time = p__.parse(
+        os.path.basename(tslot_files[0]))['start_time']
+
+    # Load and calibrate data using inter-calibration coefficients from
+    # Meirink et al
+    coefs = get_calibration_for_time(platform=platform_shortname,
+                                     time=start_time)
+    scn_ = Scene(reader='seviri_l1b_hrit',
+                 filenames=tslot_files,
+                 reader_kwargs={'calib_mode': CALIB_MODE,
+                                'ext_calib_coefs': coefs})
+    if not scn_.attrs['sensor'] == {'seviri'}:
+        raise ValueError('Not SEVIRI data')
+    scn_.load(BANDNAMES)
+
+    # By default pixel (0,0) is S-E. Rotate bands so that (0,0) is N-W.
+    for band in BANDNAMES:
+        rotate_band(scn_, band)
+
+    # Find lat/lon data
+    lons, lats = get_lonlats(scn_['IR_108'])
+
+    # Compute angles
+    suna, sunz = get_solar_angles(scn_['IR_108'], lons=lons, lats=lats)
+    sata, satz = get_satellite_angles(scn_['IR_108'], lons=lons, lats=lats)
+    azidiff = make_azidiff_angle(sata, suna)
+
+    # Update coordinates
+    set_coords(scn_)
+
+    # Add ancillary datasets to the scen
+    add_ancillary_dataset(scn_, lons=lons, lats=lats, sunz=sunz, satz=satz,
+                          azidiff=azidiff)
+
+    # Set attributes. This changes SEVIRI band names to PPS band names.
+    set_attrs(scn_)
+
+    # Write datasets to netcdf
+    filename = compose_filename(scene=scn_, out_path=out_path)
     scn_.save_datasets(writer='cf',
                        filename=filename,
-                       header_attrs=header_attrs,
+                       header_attrs=get_header_attrs(scn_),
                        engine='netcdf4',
-                       encoding=save_info,
+                       encoding=get_encoding(scn_),
                        include_lonlats=False,
                        pretty=True,
                        flatten_attrs=True,
