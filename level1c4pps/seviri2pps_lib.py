@@ -83,8 +83,8 @@ def rotate_band(scene, band):
 def get_lonlats(dataset):
     """Get lat/lon coordinates."""
     lons, lats = dataset.attrs['area'].get_lonlats()
-    lons[np.fabs(lons) > 360] = -999.0
-    lats[np.fabs(lons) > 90] = -999.0
+    lons[np.fabs(lons) > 360] = np.nan
+    lats[np.fabs(lons) > 90] = np.nan
     return lons, lats
 
 
