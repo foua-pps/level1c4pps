@@ -337,6 +337,10 @@ def get_header_attrs(scene):
 
 def process_one_scan(tslot_files, out_path):
     """Make level 1c files in PPS-format."""
+    for fname in tslot_files:
+        if not os.path.isfile(fname):
+            raise FileNotFoundError('No such file: {}'.format(fname))
+
     tic = time.time()
     parser = Parser(HRIT_FILE_PATTERN)
     platform_shortname = parser.parse(
