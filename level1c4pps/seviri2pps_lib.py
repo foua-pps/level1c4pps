@@ -67,7 +67,9 @@ PPS_TAGNAMES = {'VIS006': 'ch_r06',
                 'WV_073': 'ch_tb73'}
 
 # H-000-MSG3__-MSG3________-IR_120___-000003___-201410051115-__:
-HRIT_FILE_PATTERN = '{rate:1s}-000-{hrit_format:_<6s}-{platform_shortname:_<12s}-{channel:_<8s}_-{segment:_<9s}-{start_time:%Y%m%d%H%M}-__'
+HRIT_FILE_PATTERN = ('{rate:1s}-000-{hrit_format:_<6s}-'
+                     '{platform_shortname:_<12s}-{channel:_<8s}_-'
+                     '{segment:_<9s}-{start_time:%Y%m%d%H%M}-__')
 
 
 def rotate_band(scene, band):
@@ -411,5 +413,5 @@ def process_all_scans_in_dname(dname, out_path, ok_dates=None):
             os.path.basename(f))['start_time'] == uqdate]
         try:
             process_one_scan(tslot_files, out_path)
-        except:
+        except Exception:
             pass

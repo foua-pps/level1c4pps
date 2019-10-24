@@ -61,7 +61,8 @@ def calib_meirink(platform, channel, time):
     :returns: gain, offset [mW m-2 sr-1 (cm-1)-1]
     """
     if time < REF_TIME:
-        raise ValueError('Given time ({0}) is < reference time ({1})'.format(time, REF_TIME))
+        raise ValueError('Given time ({0}) is < reference time ({1})'.format(
+            time, REF_TIME))
 
     a = COEFS_MEIRINK[platform][channel]['a']
     b = COEFS_MEIRINK[platform][channel]['b']
@@ -80,7 +81,8 @@ def calib_meirink_date(platform, channel, date):
     :returns: gain, offset [mW m-2 sr-1 (cm-1)-1]
     """
     if date < REF_DATE:
-        raise ValueError('Given date ({0}) is < reference date ({1})'.format(date, REF_DATE))
+        raise ValueError('Given date ({0}) is < reference date ({1})'.format(
+            date, REF_DATE))
 
     a = COEFS_MEIRINK[platform][channel]['a']
     b = COEFS_MEIRINK[platform][channel]['b']
@@ -94,7 +96,8 @@ def get_calibration_for_time(platform, time):
     """Get MODIS-intercalibrated gain and offset for specific time."""
     coefs = {}
     for channel in ('VIS006', 'VIS008', 'IR_016'):
-        gain, offset = calib_meirink(platform=platform, channel=channel, time=time)
+        gain, offset = calib_meirink(platform=platform, channel=channel,
+                                     time=time)
         coefs[channel] = {'gain': gain, 'offset': offset}
 
     return coefs
@@ -104,7 +107,8 @@ def get_calibration_for_date(platform, date):
     """Get MODIS-intercalibrated gain and offset for specific date."""
     coefs = {}
     for channel in ('VIS006', 'VIS008', 'IR_016'):
-        gain, offset = calib_meirink_date(platform=platform, channel=channel, date=date)
+        gain, offset = calib_meirink_date(platform=platform, channel=channel,
+                                          date=date)
         coefs[channel] = {'gain': gain, 'offset': offset}
 
     return coefs
@@ -116,7 +120,8 @@ if __name__ == '__main__':
 
     coefs = {}
     for channel in ('VIS006', 'VIS008', 'IR_016'):
-        gain, offset = calib_meirink(platform=platform, channel=channel, time=time)
+        gain, offset = calib_meirink(platform=platform, channel=channel,
+                                     time=time)
         coefs[channel] = {'gain': gain, 'offset': offset}
 
     print(coefs)
