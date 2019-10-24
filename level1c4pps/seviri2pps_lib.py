@@ -84,7 +84,7 @@ def get_lonlats(dataset):
     """Get lat/lon coordinates."""
     lons, lats = dataset.attrs['area'].get_lonlats()
     lons[np.fabs(lons) > 360] = np.nan
-    lats[np.fabs(lons) > 90] = np.nan
+    lats[np.fabs(lats) > 90] = np.nan
     return lons, lats
 
 
@@ -106,6 +106,11 @@ def get_satellite_angles(dataset, lons, lats):
     Returns:
         Satellite azimuth angle, Satellite zenith angle in degrees
     """
+    sat_lon, sat_lat, sat_alt = satpy.utils.get_satpos(dataset)
+
+    # Double check that pyorbital/satpy behave as expected (satpy returning
+    # altitude in meters and pyorbital expecting km).
+    #
     # if:
     #   1) get_observer_look() gives wrong answer ...
     #   ... for satellite altitude in m. AND
@@ -116,9 +121,6 @@ def get_satellite_angles(dataset, lons, lats):
     # else:
     #    => There have been updates to SatPy and this script
     #       need to be modified.
-    sat_lon, sat_lat, sat_alt = satpy.utils.get_satpos(dataset)
-    # Double check that pyorbital/satpy behave as expected (satpy returning
-    # altitude in meters and pyorbital expecting km)
     if not (get_observer_look(0, 0, 36000*1000,
                               datetime.utcnow(), np.array([16]),
                               np.array([58]), np.array([0]))[1] > 30 and
@@ -179,7 +181,8 @@ def set_coords(scene):
         scene[band] = scene[band].drop(['acq_time'])
 
 
-def add_ancillary_dataset(scene, lons, lats, sunz, satz, azidiff, chunks=(53, 3712)):
+def add_ancillary_datasets(scene, lons, lats, sunz, satz, azidiff,
+                           chunks=(53, 3712)):
     """Add ancillary datasets to the scene.
 
     Args:
@@ -362,8 +365,8 @@ def process_one_scan(tslot_files, out_path):
     set_coords(scn_)
 
     # Add ancillary datasets to the scen
-    add_ancillary_dataset(scn_, lons=lons, lats=lats, sunz=sunz, satz=satz,
-                          azidiff=azidiff)
+    add_ancillary_datasets(scn_, lons=lons, lats=lats, sunz=sunz, satz=satz,
+                           azidiff=azidiff)
 
     # Set attributes. This changes SEVIRI band names to PPS band names.
     set_attrs(scn_)
