@@ -182,7 +182,7 @@ def set_coords(scene):
 
 
 def add_ancillary_datasets(scene, lons, lats, sunz, satz, azidiff,
-                           chunks=(53, 3712)):
+                           chunks=(512, 3712)):
     """Add ancillary datasets to the scene.
 
     Args:
@@ -279,6 +279,7 @@ def get_encoding(scene):
     encoding = {}
 
     # Bands
+    chunks = (1, 512, 3712)
     for band in BANDNAMES:
         idtag = PPS_TAGNAMES[band]
         name = scene[band].attrs['name']
@@ -288,14 +289,16 @@ def get_encoding(scene):
                               '_FillValue': -32767,
                               'zlib': True,
                               'complevel': 4,
-                              'add_offset': 273.15}
+                              'add_offset': 273.15,
+                              'chunksizes': chunks}
         else:
             encoding[name] = {'dtype': 'int16',
                               'scale_factor': 0.01,
                               'zlib': True,
                               'complevel': 4,
                               '_FillValue': -32767,
-                              'add_offset': 0.0}
+                              'add_offset': 0.0,
+                              'chunksizes': chunks}
 
     # Angles and lat/lon
     for name in ['image11', 'image12', 'image13']:
@@ -305,13 +308,15 @@ def get_encoding(scene):
             'zlib': True,
             'complevel': 4,
             '_FillValue': -32767,
-            'add_offset': 0.0}
+            'add_offset': 0.0,
+            'chunksizes': chunks}
 
     for name in ['lon', 'lat']:
         encoding[name] = {'dtype': 'float32',
                           'zlib': True,
                           'complevel': 4,
-                          '_FillValue': -999.0}
+                          '_FillValue': -999.0,
+                          'chunksizes': (chunks[1], chunks[2])}
 
     return encoding
 
