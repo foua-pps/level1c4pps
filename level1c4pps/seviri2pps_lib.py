@@ -92,12 +92,24 @@ def get_lonlats(dataset):
 def get_solar_angles(dataset, lons, lats):
     """Compute solar angles.
 
+    Compute angles for each scanline using their acquisition time to account for
+    the earth's rotation over the course of one scan.
+
     Returns:
         Solar azimuth angle, Solar zenith angle in degrees
     """
-    _, suna = get_alt_az(dataset.attrs['start_time'], lons, lats)
-    suna = np.rad2deg(suna)
-    sunz = sun_zenith_angle(dataset.attrs['start_time'], lons, lats)
+    suna = np.full(lons.shape, np.nan)
+    sunz = np.full(lons.shape, np.nan)
+    for line, acq_time in enumerate(dataset.coords['acq_time'].values):
+        if acq_time is np.datetime64('NaT'):
+            # No acquisition time available, use nominal timestamp. Pixels
+            # outside the disc don't have an acquisition time but there the
+            # coordinates are invalid anyway.
+            acq_time = dataset.attrs['start_time']
+        _, suna_line = get_alt_az(acq_time, lons[line, :], lats[line, :])
+        suna_line = np.rad2deg(suna_line)
+        suna[line, :] = suna_line
+        sunz[line, :] = sun_zenith_angle(acq_time, lons[line, :], lats[line, :])
     return suna, sunz
 
 

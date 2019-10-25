@@ -86,14 +86,35 @@ class TestSeviri2PPS(unittest.TestCase):
     @mock.patch('level1c4pps.seviri2pps_lib.get_alt_az')
     def test_get_solar_angles(self, get_alt_az, sun_zenith_angle):
         """Test getting solar angles."""
-        get_alt_az.return_value = None, np.pi
-        sun_zenith_angle.return_value = 'sunz'
-        ds = mock.MagicMock(attrs={'start_time': 'start_time'})
-        suna, sunz = seviri2pps.get_solar_angles(ds, lons='lons', lats='lats')
-        self.assertEqual(suna, 180.0)
-        self.assertEqual(sunz, 'sunz')
-        get_alt_az.assert_called_with('start_time', 'lons', 'lats')
-        sun_zenith_angle.assert_called_with('start_time', 'lons', 'lats')
+        def sunz_patched(time, lon, lat):
+            return time + lon + lat
+
+        def alt_az_patched(time, lon, lat):
+            return (time + lon + lat) * np.pi / 2
+
+        get_alt_az.side_effect = alt_az_patched
+        sun_zenith_angle.side_effect = sunz_patched
+
+        ds = xr.DataArray(data=[0, 0, 0],
+                          dims=('y', ),
+                          coords={'acq_time': ('y', [3, 2, 1])},
+                          attrs={'start_time': 'start_time'})
+        lons = np.array([[1, 2],
+                         [3, 4],
+                         [5, 6]])
+        lats = np.array([[-1, -2],
+                         [-3, -4],
+                         [-5, -6]])
+        suna_exp = np.array([[270, 270],
+                             [180, 180],
+                             [90, 90]])
+        sunz_exp = np.array([[3, 3],
+                             [2, 2],
+                             [1, 1]])
+
+        suna, sunz = seviri2pps.get_solar_angles(ds, lons=lons, lats=lats)
+        np.testing.assert_array_equal(suna, suna_exp)
+        np.testing.assert_array_equal(sunz, sunz_exp)
 
     @mock.patch('level1c4pps.seviri2pps_lib.get_observer_look')
     @mock.patch('level1c4pps.seviri2pps_lib.satpy.utils.get_satpos')
