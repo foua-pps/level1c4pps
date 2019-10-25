@@ -46,5 +46,8 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--out_dir', type=str, default='.',
                         required=False,
                         help="Output directory where to store level1c file.")
+    parser.add_argument('--no-rotation', action='store_true',
+                        help="Don't rotate images")
     options = parser.parse_args()
-    process_one_scan(options.files, options.out_dir)
+    process_one_scan(options.files, out_path=options.out_dir,
+                     rotate=not options.no_rotation)

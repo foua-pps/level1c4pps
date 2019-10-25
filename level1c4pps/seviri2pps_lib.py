@@ -382,7 +382,7 @@ def get_header_attrs(scene):
     return header_attrs
 
 
-def process_one_scan(tslot_files, out_path):
+def process_one_scan(tslot_files, out_path, rotate=True):
     """Make level 1c files in PPS-format."""
     for fname in tslot_files:
         if not os.path.isfile(fname):
@@ -408,8 +408,12 @@ def process_one_scan(tslot_files, out_path):
     scn_.load(BANDNAMES)
 
     # By default pixel (0,0) is S-E. Rotate bands so that (0,0) is N-W.
-    for band in BANDNAMES:
-        rotate_band(scn_, band)
+    if rotate:
+        scn_.attrs['image_rotated'] = "True"
+        for band in BANDNAMES:
+            rotate_band(scn_, band)
+    else:
+        scn_.attrs['image_rotated'] = "False"
 
     # Find lat/lon data
     lons, lats = get_lonlats(scn_['IR_108'])
