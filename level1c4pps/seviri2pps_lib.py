@@ -164,6 +164,9 @@ def get_satellite_angles(dataset, lons, lats):
 def set_attrs(scene):
     """Set global and band attributes."""
     # Global
+    scene.attrs.update(scene['IR_108'].attrs['orbital_parameters'])
+    scene.attrs['georef_offset_corrected'] = str(scene['IR_108'].attrs[
+        'georef_offset_corrected'])
     scene.attrs['platform'] = scene['IR_108'].attrs['platform_name']
     scene.attrs['instrument'] = 'SEVIRI'
     scene.attrs['source'] = "seviri2pps.py"
@@ -180,6 +183,12 @@ def set_attrs(scene):
         scene[band].attrs['sun_earth_distance_correction_factor'] = 1.0
         scene[band].attrs['sun_zenith_angle_correction_applied'] = 'False'
         scene[band].attrs['name'] = "image{:d}".format(image_num)
+
+        # Cosmetics
+        for attr in ['orbital_parameters', 'satellite_longitude',
+                     'satellite_latitude', 'satellite_altitude',
+                     'platform_name', 'sensor']:
+            scene[band].attrs.pop(attr, None)
 
 
 def get_mean_acq_time(scene):
@@ -291,15 +300,17 @@ def add_ancillary_datasets(scene, lons, lats, sunz, satz, azidiff,
     # Some common attributes
     for angle in ['azimuthdiff', 'satzenith', 'sunzenith']:
         scene[angle].attrs['units'] = 'degree'
-        for attr in ["start_time", "end_time", "orbital_parameters",
-                     "georef_offset_corrected"]:
+        for attr in ["start_time", "end_time"]:
             scene[angle].attrs[attr] = scene['IR_108'].attrs[attr]
 
 
 def compose_filename(scene, out_path):
-    """Compose output filename."""
-    start_time = scene['IR_108'].attrs['start_time']  # FIXME: scene.attrs['start_time'] ?
-    end_time = scene['IR_108'].attrs['end_time']
+    """Compose output filename.
+
+    Use nominal timestamp of the scan (as in the HRIT files).
+    """
+    start_time = scene.attrs['start_time']
+    end_time = scene.attrs['end_time']
     platform_name = scene.attrs['platform']
     filename = os.path.join(
         out_path,
@@ -361,13 +372,13 @@ def get_encoding(scene):
 def get_header_attrs(scene):
     """Get global netcdf attributes."""
     header_attrs = scene.attrs.copy()
+    header_attrs.pop('sensor', None)
     header_attrs['start_time'] = time.strftime(
         "%Y-%m-%d %H:%M:%S",
         scene.attrs['start_time'].timetuple())
     header_attrs['end_time'] = time.strftime(
         "%Y-%m-%d %H:%M:%S",
         scene.attrs['end_time'].timetuple())
-    header_attrs['sensor'] = 'seviri'
     return header_attrs
 
 

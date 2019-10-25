@@ -283,12 +283,10 @@ class TestSeviri2PPS(unittest.TestCase):
     def test_compose_filename(self):
         start_time = dt.datetime(2009, 7, 1, 12, 15)
         end_time = dt.datetime(2009, 7, 1, 12, 30)
-        scene_dict = {'IR_108': mock.MagicMock(attrs={'start_time': start_time,
-                                                      'end_time': end_time})}
-        scene = mock.MagicMock(attrs={'platform': 'Meteosat-9'})
-        scene.__getitem__.side_effect = scene_dict.__getitem__
+        scene = mock.MagicMock(attrs={'start_time': start_time,
+                                      'end_time': end_time,
+                                      'platform': 'Meteosat-9'})
         fname_exp = '/out/path/S_NWC_seviri_meteosat9_99999_20090701T1215000Z_20090701T1230000Z.nc'
-
         fname = seviri2pps.compose_filename(scene, '/out/path')
         self.assertEqual(fname, fname_exp)
 
