@@ -182,16 +182,40 @@ def set_attrs(scene):
         scene[band].attrs['name'] = "image{:d}".format(image_num)
 
 
-def set_coords(scene):
-    """Set band coordinates."""
+def get_mean_acq_time(scene):
+    """Compute mean scanline acquisition time over all bands."""
+    dtype = scene['IR_108'].coords['acq_time'].dtype
+
+    # Convert timestamps to float to facilitate averaging. Caveat: NaT is
+    # not converted to NaN, but to -9.22E18. So we have to set these elements
+    # to NaN manually
+    acq_times = []
     for band in BANDNAMES:
+        acq_time = scene[band].coords['acq_time'].drop('acq_time')
+        is_nat = np.isnat(acq_time.values)
+        acq_time = acq_time.astype(int).where(np.logical_not(is_nat))
+        acq_times.append(acq_time)
+
+    # Compute average over all bands (skip NaNs)
+    acq_times = xr.concat(acq_times, 'bands')
+    return acq_times.mean(dim='bands', skipna=True).astype(dtype)
+
+
+def update_coords(scene):
+    """Update band coordinates."""
+    mean_acq_time = get_mean_acq_time(scene)
+    for band in BANDNAMES:
+        # Override channel-specific scanline timestamps with mean acquisition
+        # time. The differences are not very large and the resulting nc file
+        # is much simpler.
+        scene[band]['acq_time'] = mean_acq_time
+
         # Remove area, set lat/lon as coordinates
         scene[band].attrs.pop('area', None)
         scene[band].attrs['coordinates'] = 'lon lat'
 
         # Add time coordinate to make cfwriter aware that we want 3D data
         scene[band].coords['time'] = scene[band].attrs['start_time']
-        scene[band] = scene[band].drop(['acq_time'])
 
 
 def add_ancillary_datasets(scene, lons, lats, sunz, satz, azidiff,
@@ -385,7 +409,7 @@ def process_one_scan(tslot_files, out_path):
     azidiff = make_azidiff_angle(sata, suna)
 
     # Update coordinates
-    set_coords(scn_)
+    update_coords(scn_)
 
     # Add ancillary datasets to the scen
     add_ancillary_datasets(scn_, lons=lons, lats=lats, sunz=sunz, satz=satz,

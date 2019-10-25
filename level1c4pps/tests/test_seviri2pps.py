@@ -164,29 +164,58 @@ class TestSeviri2PPS(unittest.TestCase):
         self.assertEqual(scene['IR_108'].attrs['name'], 'image1')
         self.assertEqual(scene['IR_108'].attrs['id_tag'], 'ch_tb11')
 
-    def test_set_coords(self):
-        seviri2pps.BANDNAMES = ['band1', 'band2']
-        band1 = xr.DataArray(data=[1, 2, 3],
-                             dims=('x',),
-                             coords={'acq_time': ('x', [0, 0, 0])},
-                             attrs={'area': 'myarea',
-                                    'start_time': dt.datetime(2009, 7, 1)})
-        band2 = xr.DataArray(data=[4, 5, 6],
-                             dims=('x',),
-                             coords={'acq_time': ('x', [0, 0, 0])},
-                             attrs={'start_time': dt.datetime(2009, 7, 1)})
-        scene = {'band1': band1, 'band2': band2}
-        seviri2pps.set_coords(scene)
+    def test_get_mean_acq_time(self):
+        """Test computation of mean scanline acquisition time."""
+        seviri2pps.BANDNAMES = ['VIS006', 'IR_108']
+        vis006 = xr.DataArray(
+            data=[0, 0, 0],
+            dims=('y', ),
+            coords={'acq_time': ('y', [None,
+                                       None,
+                                       dt.datetime(2009, 7, 1, 12, 1, 0)])})
+        ir_108 = xr.DataArray(
+            data=[0, 0, 0],
+            dims=('y', ),
+            coords={'acq_time': ('y', [None,
+                                       dt.datetime(2009, 7, 1, 12, 0, 30),
+                                       dt.datetime(2009, 7, 1, 12, 1, 30)])})
+        scene = {'VIS006': vis006, 'IR_108': ir_108}
+        acq_exp = np.array(['NaT',
+                            '2009-07-01 12:00:30',
+                            '2009-07-01 12:01:15'], dtype='datetime64[s]')
+        acq = seviri2pps.get_mean_acq_time(scene)
+        np.testing.assert_array_equal(acq, acq_exp)
+
+    @mock.patch('level1c4pps.seviri2pps_lib.get_mean_acq_time')
+    def test_update_coords(self, get_mean_acq_time):
+        """Test updating coordinates."""
+        get_mean_acq_time.return_value = xr.DataArray([7, 8, 9], dims=('x',))
+        seviri2pps.BANDNAMES = ['VIS006', 'IR_108']
+        vis006 = xr.DataArray(data=[1, 2, 3],
+                              dims=('x',),
+                              coords={'acq_time': ('x', [0, 0, 0])},
+                              attrs={'area': 'myarea',
+                                     'start_time': dt.datetime(2009, 7, 1, 0)})
+        ir_108 = xr.DataArray(data=[4, 5, 6],
+                              dims=('x',),
+                              coords={'acq_time': ('x', [0, 0, 0])},
+                              attrs={'start_time': dt.datetime(2009, 7, 1, 1)})
+        scene = {'VIS006': vis006.copy(), 'IR_108': ir_108.copy()}
+
+        seviri2pps.update_coords(scene)
 
         for band in seviri2pps.BANDNAMES:
-            self.assertNotIn('acq_time', scene[band].coords)
             self.assertEqual(scene[band].attrs['coordinates'], 'lon lat')
-            np.testing.assert_array_equal(
-                scene[band].coords['time'].data,
-                np.datetime64(dt.datetime(2009, 7, 1)))
+            np.testing.assert_array_equal(scene[band].coords['acq_time'].data,
+                                          [7, 8, 9])
 
-        np.testing.assert_array_equal(scene['band1'].data, band1.data)
-        np.testing.assert_array_equal(scene['band2'].data, band2.data)
+        np.testing.assert_array_equal(scene['VIS006'].data, vis006.data)
+        np.testing.assert_array_equal(scene['IR_108'].data, ir_108.data)
+
+        np.testing.assert_array_equal(scene['VIS006'].coords['time'].data,
+                                      np.datetime64(dt.datetime(2009, 7, 1, 0)))
+        np.testing.assert_array_equal(scene['IR_108'].coords['time'].data,
+                                      np.datetime64(dt.datetime(2009, 7, 1, 1)))
 
     def test_add_ancillary_datasets(self):
         """Test adding ancillary datasets"""
