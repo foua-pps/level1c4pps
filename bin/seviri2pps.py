@@ -21,6 +21,7 @@
 #   Martin Raspaud <martin.raspaud@smhi.se>
 #   Nina Hakansson <nina.hakansson@smhi.se>
 #   Adam.Dybbroe <adam.dybbroe@smhi.se>
+#   Stephan Finkensieper <stephan.finkensieper@dwd.de>
 
 # This program was developed by CMSAF to be used for the processing of
 # CLAAS3.
