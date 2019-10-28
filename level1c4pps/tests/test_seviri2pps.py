@@ -153,7 +153,10 @@ class TestSeviri2PPS(unittest.TestCase):
         """Test setting scene attributes."""
         seviri2pps.BANDNAMES = ['VIS006', 'IR_108']
         vis006 = mock.MagicMock(attrs={})
-        ir108 = mock.MagicMock(attrs={'platform_name': 'myplatform'})
+        ir108 = mock.MagicMock(attrs={'platform_name': 'myplatform',
+                                      'orbital_parameters': {'orb_a': 1,
+                                                             'orb_b': 2},
+                                      'georef_offset_corrected': True})
         scene_dict = {'VIS006': vis006, 'IR_108': ir108}
         scene = mock.MagicMock(attrs={})
         scene.__getitem__.side_effect = scene_dict.__getitem__
@@ -163,6 +166,9 @@ class TestSeviri2PPS(unittest.TestCase):
         self.assertEqual(scene['VIS006'].attrs['id_tag'], 'ch_r06')
         self.assertEqual(scene['IR_108'].attrs['name'], 'image1')
         self.assertEqual(scene['IR_108'].attrs['id_tag'], 'ch_tb11')
+        self.assertEqual(scene.attrs['orb_a'], 1)
+        self.assertEqual(scene.attrs['orb_b'], 2)
+        self.assertEqual(scene.attrs['georef_offset_corrected'], True)
 
     def test_get_mean_acq_time(self):
         """Test computation of mean scanline acquisition time."""
@@ -267,10 +273,6 @@ class TestSeviri2PPS(unittest.TestCase):
             np.testing.assert_array_equal(scene[angle].coords['time'].data,
                                           np.datetime64(start_time))
             self.assertEqual(scene[angle].attrs['units'], 'degree')
-            self.assertEqual(scene[angle].attrs['orbital_parameters'],
-                             'orb_params')
-            self.assertEqual(scene[angle].attrs['georef_offset_corrected'],
-                             True)
 
         # Test common properties
         for name in ['lon', 'lat', 'azimuthdiff', 'satzenith', 'sunzenith']:
@@ -336,12 +338,12 @@ class TestSeviri2PPS(unittest.TestCase):
         end_time = dt.datetime(2009, 7, 1, 12, 30)
         scene = mock.MagicMock(attrs={'foo': 'bar',
                                       'start_time': start_time,
-                                      'end_time': end_time})
+                                      'end_time': end_time,
+                                      'sensor': 'SEVIRI'})
         header_attrs_exp = {
             'foo': 'bar',
-            'start_time': '2009-07-01 12:15:00',
-            'end_time': '2009-07-01 12:30:00',
-            'sensor': 'seviri'
+            'start_time': start_time,
+            'end_time': end_time,
         }
         header_attrs = seviri2pps.get_header_attrs(scene)
         self.assertDictEqual(header_attrs, header_attrs_exp)

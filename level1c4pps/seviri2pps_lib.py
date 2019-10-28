@@ -165,8 +165,8 @@ def set_attrs(scene):
     """Set global and band attributes."""
     # Global
     scene.attrs.update(scene['IR_108'].attrs['orbital_parameters'])
-    scene.attrs['georef_offset_corrected'] = str(scene['IR_108'].attrs[
-        'georef_offset_corrected'])
+    scene.attrs['georef_offset_corrected'] = scene['IR_108'].attrs[
+        'georef_offset_corrected']
     scene.attrs['platform'] = scene['IR_108'].attrs['platform_name']
     scene.attrs['instrument'] = 'SEVIRI'
     scene.attrs['source'] = "seviri2pps.py"
@@ -179,15 +179,15 @@ def set_attrs(scene):
         idtag = PPS_TAGNAMES[band]
         scene[band].attrs['id_tag'] = idtag
         scene[band].attrs['description'] = 'SEVIRI ' + str(band)
-        scene[band].attrs['sun_earth_distance_correction_applied'] = 'False'
+        scene[band].attrs['sun_earth_distance_correction_applied'] = False
         scene[band].attrs['sun_earth_distance_correction_factor'] = 1.0
-        scene[band].attrs['sun_zenith_angle_correction_applied'] = 'False'
+        scene[band].attrs['sun_zenith_angle_correction_applied'] = False
         scene[band].attrs['name'] = "image{:d}".format(image_num)
 
         # Cosmetics
         for attr in ['orbital_parameters', 'satellite_longitude',
                      'satellite_latitude', 'satellite_altitude',
-                     'platform_name', 'sensor']:
+                     'platform_name', 'sensor', 'georef_offset_corrected']:
             scene[band].attrs.pop(attr, None)
 
 
@@ -373,12 +373,6 @@ def get_header_attrs(scene):
     """Get global netcdf attributes."""
     header_attrs = scene.attrs.copy()
     header_attrs.pop('sensor', None)
-    header_attrs['start_time'] = time.strftime(
-        "%Y-%m-%d %H:%M:%S",
-        scene.attrs['start_time'].timetuple())
-    header_attrs['end_time'] = time.strftime(
-        "%Y-%m-%d %H:%M:%S",
-        scene.attrs['end_time'].timetuple())
     return header_attrs
 
 
@@ -409,11 +403,9 @@ def process_one_scan(tslot_files, out_path, rotate=True):
 
     # By default pixel (0,0) is S-E. Rotate bands so that (0,0) is N-W.
     if rotate:
-        scn_.attrs['image_rotated'] = "True"
         for band in BANDNAMES:
             rotate_band(scn_, band)
-    else:
-        scn_.attrs['image_rotated'] = "False"
+    scn_.attrs['image_rotated'] = rotate
 
     # Find lat/lon data
     lons, lats = get_lonlats(scn_['IR_108'])
