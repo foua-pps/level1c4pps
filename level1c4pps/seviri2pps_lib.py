@@ -219,8 +219,10 @@ def update_coords(scene):
         scene[band]['acq_time'] = mean_acq_time
 
         # Remove area, set lat/lon as coordinates
-        scene[band].attrs.pop('area', None)
         scene[band].attrs['coordinates'] = 'lon lat'
+        area = scene[band].attrs.pop('area', None)
+        if area:
+            scene.attrs['projection_area_extent'] = area.area_extent
 
         # Add time coordinate to make cfwriter aware that we want 3D data
         scene[band].coords['time'] = scene[band].attrs['start_time']
