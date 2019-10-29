@@ -27,7 +27,7 @@
 
 """
 
-from setuptools import find_packages, setup
+from setuptools import setup
 
 try:
     # HACK: https://github.com/pypa/setuptools_scm/issues/190#issuecomment-351181286
