@@ -90,7 +90,7 @@ def get_lonlats(dataset):
     return lons, lats
 
 
-def get_solar_angles(dataset, lons, lats):
+def get_solar_angles(scene, lons, lats):
     """Compute solar angles.
 
     Compute angles for each scanline using their acquisition time to account for
@@ -101,12 +101,10 @@ def get_solar_angles(dataset, lons, lats):
     """
     suna = np.full(lons.shape, np.nan)
     sunz = np.full(lons.shape, np.nan)
-    for line, acq_time in enumerate(dataset.coords['acq_time'].values):
-        if acq_time is np.datetime64('NaT'):
-            # No acquisition time available, use nominal timestamp. Pixels
-            # outside the disc don't have an acquisition time but there the
-            # coordinates are invalid anyway.
-            acq_time = dataset.attrs['start_time']
+    mean_acq_time = get_mean_acq_time(scene)
+    for line, acq_time in enumerate(mean_acq_time.values):
+        if np.isnat(acq_time):
+            continue
         _, suna_line = get_alt_az(acq_time, lons[line, :], lats[line, :])
         suna_line = np.rad2deg(suna_line)
         suna[line, :] = suna_line
@@ -412,7 +410,7 @@ def process_one_scan(tslot_files, out_path, rotate=True):
     lons, lats = get_lonlats(scn_['IR_108'])
 
     # Compute angles
-    suna, sunz = get_solar_angles(scn_['IR_108'], lons=lons, lats=lats)
+    suna, sunz = get_solar_angles(scn_, lons=lons, lats=lats)
     sata, satz = get_satellite_angles(scn_['IR_108'], lons=lons, lats=lats)
     azidiff = make_azidiff_angle(sata, suna)
 

@@ -82,37 +82,44 @@ class TestSeviri2PPS(unittest.TestCase):
         np.testing.assert_array_equal(lons_m, np.array([1, 2, np.nan, np.nan]))
         np.testing.assert_array_equal(lats_m, np.array([np.nan, np.nan, 1, 2]))
 
+    @mock.patch('level1c4pps.seviri2pps_lib.get_mean_acq_time')
     @mock.patch('level1c4pps.seviri2pps_lib.sun_zenith_angle')
     @mock.patch('level1c4pps.seviri2pps_lib.get_alt_az')
-    def test_get_solar_angles(self, get_alt_az, sun_zenith_angle):
+    def test_get_solar_angles(self, get_alt_az, sun_zenith_angle,
+                              get_mean_acq_time):
         """Test getting solar angles."""
         def sunz_patched(time, lon, lat):
-            return time + lon + lat
+            return time.astype(int) + lon + lat
 
         def alt_az_patched(time, lon, lat):
-            return (time + lon + lat) * np.pi / 2
+            return (time.astype(int) + lon + lat) * np.pi / 2
 
         get_alt_az.side_effect = alt_az_patched
         sun_zenith_angle.side_effect = sunz_patched
+        get_mean_acq_time.return_value = xr.DataArray(np.array(
+            ['1970-01-01 00:00:00.000000003',
+             '1970-01-01 00:00:00.000000002',
+             '1970-01-01 00:00:00.000000001',
+             'NaT'], dtype='datetime64[ns]'))  # [3, 2, 1, -9E18] as int
 
-        ds = xr.DataArray(data=[0, 0, 0],
-                          dims=('y', ),
-                          coords={'acq_time': ('y', [3, 2, 1])},
-                          attrs={'start_time': 'start_time'})
         lons = np.array([[1, 2],
                          [3, 4],
-                         [5, 6]])
+                         [5, 6],
+                         [0, 0]])
         lats = np.array([[-1, -2],
                          [-3, -4],
-                         [-5, -6]])
+                         [-5, -6],
+                         [0, 0]])
         suna_exp = np.array([[270, 270],
                              [180, 180],
-                             [90, 90]])
+                             [90, 90],
+                             [np.nan, np.nan]])
         sunz_exp = np.array([[3, 3],
                              [2, 2],
-                             [1, 1]])
+                             [1, 1],
+                             [np.nan, np.nan]])
 
-        suna, sunz = seviri2pps.get_solar_angles(ds, lons=lons, lats=lats)
+        suna, sunz = seviri2pps.get_solar_angles('scene', lons=lons, lats=lats)
         np.testing.assert_array_equal(suna, suna_exp)
         np.testing.assert_array_equal(sunz, sunz_exp)
 
