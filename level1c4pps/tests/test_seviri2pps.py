@@ -26,7 +26,10 @@ import datetime as dt
 import numpy as np
 from pyresample.geometry import AreaDefinition
 import unittest
-from unittest import mock
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 import xarray as xr
 
 import level1c4pps.seviri2pps_lib as seviri2pps
@@ -207,16 +210,19 @@ class TestSeviri2PPS(unittest.TestCase):
         vis006 = xr.DataArray(data=[1, 2, 3],
                               dims=('x',),
                               coords={'acq_time': ('x', [0, 0, 0])},
-                              attrs={'area': 'myarea',
+                              attrs={'area': mock.MagicMock(area_extent='aex'),
                                      'start_time': dt.datetime(2009, 7, 1, 0)})
         ir_108 = xr.DataArray(data=[4, 5, 6],
                               dims=('x',),
                               coords={'acq_time': ('x', [0, 0, 0])},
                               attrs={'start_time': dt.datetime(2009, 7, 1, 1)})
-        scene = {'VIS006': vis006.copy(), 'IR_108': ir_108.copy()}
+        scene_dict = {'VIS006': vis006.copy(), 'IR_108': ir_108.copy()}
+        scene = mock.MagicMock(attrs={})
+        scene.__getitem__.side_effect = scene_dict.__getitem__
 
         seviri2pps.update_coords(scene)
 
+        self.assertEqual(scene.attrs['projection_area_extent'], 'aex')
         for band in seviri2pps.BANDNAMES:
             self.assertEqual(scene[band].attrs['coordinates'], 'lon lat')
             np.testing.assert_array_equal(scene[band].coords['acq_time'].data,
