@@ -36,7 +36,6 @@ import level1c4pps.seviri2pps_lib as seviri2pps
 import level1c4pps.calibration_coefs as calib
 
 
-
 class TestSeviri2PPS(unittest.TestCase):
     def test_rotate_band(self):
         """Test rotation of bands."""
@@ -331,12 +330,12 @@ class TestSeviri2PPS(unittest.TestCase):
                        'add_offset': 0.0,
                        'chunksizes': (1, 512, 3712)},
             'image1': {'dtype': 'int16',
-                        'scale_factor': 0.01,
-                        '_FillValue': -32767,
-                        'zlib': True,
-                        'complevel': 4,
-                        'add_offset': 273.15,
-                        'chunksizes': (1, 512, 3712)},
+                       'scale_factor': 0.01,
+                       '_FillValue': -32767,
+                       'zlib': True,
+                       'complevel': 4,
+                       'add_offset': 273.15,
+                       'chunksizes': (1, 512, 3712)},
             'image11': enc_exp_angles,
             'image12': enc_exp_angles,
             'image13': enc_exp_angles,

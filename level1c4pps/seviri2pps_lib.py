@@ -46,6 +46,13 @@ from level1c4pps.calibration_coefs import get_calibration_for_time, CALIB_MODE
 from level1c4pps import make_azidiff_angle
 
 
+try:
+    FileNotFoundError
+except NameError:
+    # Python 2
+    FileNotFoundError = IOError
+
+
 class UnexpectedSatpyVersion(Exception):
     """Exception if unexpected satpy version."""
 

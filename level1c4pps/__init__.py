@@ -34,6 +34,7 @@ except DistributionNotFound:
     # package is not installed
     pass
 
+
 def make_azidiff_angle(sata, suna):
     """Calculate azimuth difference angle."""
     daz = abs(sata - suna)
@@ -45,6 +46,7 @@ def make_azidiff_angle(sata, suna):
         return daz.where(daz < 180, 360 - daz)
     else:
         raise ValueError("Azimuth difference is neither a Numpy nor an Xarray object! Type = %s", type(daz))
+
 
 def dt64_to_datetime(dt64):
     """Conversion of numpy.datetime64 to datetime objects."""
