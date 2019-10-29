@@ -28,24 +28,24 @@ import datetime
 CALIB_MODE = 'Nominal'
 COEFS_MEIRINK = dict(
     MSG1=dict(
-        VIS006=dict(b=24.346, a=0.0003739),
-        VIS008=dict(b=30.989, a=0.0003111),
-        IR_016=dict(b=22.869, a=0.0000065)
+        VIS006=dict(b=24.346, a=0.3739E-3),
+        VIS008=dict(b=30.989, a=0.3111E-3),
+        IR_016=dict(b=22.869, a=0.0065E-3)
     ),
     MSG2=dict(
-        VIS006=dict(b=21.026, a=0.0002556),
-        VIS008=dict(b=26.875, a=0.0001835),
-        IR_016=dict(b=21.394, a=0.0000498)
+        VIS006=dict(b=21.026, a=0.2556E-3),
+        VIS008=dict(b=26.875, a=0.1835E-3),
+        IR_016=dict(b=21.394, a=0.0498E-3)
     ),
     MSG3=dict(
-        VIS006=dict(b=19.829, a=0.0005856),
-        VIS008=dict(b=25.284, a=0.0006787),
-        IR_016=dict(b=23.066, a=-0.0000286)
+        VIS006=dict(b=19.829, a=0.5856E-3),
+        VIS008=dict(b=25.284, a=0.6787E-3),
+        IR_016=dict(b=23.066, a=-0.0286E-3)
     ),
     MSG4=dict(
-        VIS006=dict(b=22.960, a=0),
-        VIS008=dict(b=28.885, a=0),
-        IR_016=dict(b=22.151, a=0)
+        VIS006=dict(b=21.490, a=0.2222E-3),
+        VIS008=dict(b=22.277, a=0.9959E-3),
+        IR_016=dict(b=22.535, a=-0.0496E-3)
     )
 )
 
