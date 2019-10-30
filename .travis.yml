@@ -29,7 +29,7 @@ install:
     - git clone --depth 1 git://github.com/astropy/ci-helpers.git
     - source ci-helpers/travis/setup_conda.sh
 script:
-  - pytest --cov=./
+  - pytest --cov=level1c4pps level1c4pps
 after_success:
 - if [[ $PYTHON_VERSION == 3.6 ]]; then coveralls; fi
 deploy:

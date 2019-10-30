@@ -21,6 +21,7 @@
 #   Martin Raspaud <martin.raspaud@smhi.se>
 #   Nina Hakansson <nina.hakansson@smhi.se>
 #   Adam.Dybbroe <adam.dybbroe@smhi.se>
+#   Stephan Finkensieper <stephan.finkensieper@dwd.de>
 
 # This program was developed by CMSAF to be used for the processing of
 # CLAAS3.
@@ -43,15 +44,11 @@ if __name__ == "__main__":
                      'SEVIRI hrit files.'))
     parser.add_argument('files', metavar='fileN', type=str, nargs='+',
                         help='List of hrit files to process for one scan')
-    parser.add_argument('-o', '--out_dir', type=str, nargs='?',
+    parser.add_argument('-o', '--out_dir', type=str, default='.',
                         required=False,
                         help="Output directory where to store level1c file.")
-    parser.add_argument('-b', '--buggy_satz', const=True, nargs='?',
-                        required=False,
-                        help="Create buggy satellite zenith angle data")
+    parser.add_argument('--no-rotation', action='store_true',
+                        help="Don't rotate images")
     options = parser.parse_args()
-    process_buggy_satellite_zenith_angles = False
-    if options.buggy_satz:
-        process_buggy_satellite_zenith_angles = True
-    process_one_scan(options.files, options.out_dir,
-                     process_buggy_satellite_zenith_angles)
+    process_one_scan(options.files, out_path=options.out_dir,
+                     rotate=not options.no_rotation)
