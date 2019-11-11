@@ -1,6 +1,6 @@
 import unittest
 
-from level1c4pps.tests import (test_angles, test_seviri2pps)
+from level1c4pps.tests import (test_angles, test_seviri2pps, test_gac2pps)
 
 
 def suite():
@@ -9,6 +9,7 @@ def suite():
     mysuite = unittest.TestSuite()
     mysuite.addTests(test_angles.suite())
     mysuite.addTests(test_seviri2pps.suite())
+    mysuite.addTests(test_gac2pps.suite())
     return mysuite
 
 

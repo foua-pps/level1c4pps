@@ -111,10 +111,10 @@ def get_encoding(scene, bandnames, pps_tagnames, angle_names, chunks=None):
         if chunks is not None:
             encoding[name]['chunksizes'] = (chunks[1], chunks[2])
     # pygac    
-    if hasattr(scene, 'qual_flags'):
+    if 'qual_flags' in scene:
         encoding['qual_flags'] = {'dtype': 'int16', 'zlib': True,
                                   'complevel': 4, '_FillValue': -32001.0}
-    if hasattr(scene, 'scanline_timestamps'):
+    if 'scanline_timestamps' in scene:
         encoding['scanline_timestamps'] = {'dtype': 'int64', 'zlib': True,
                                            'complevel': 4, '_FillValue': -1.0}
     return encoding
