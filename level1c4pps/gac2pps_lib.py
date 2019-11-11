@@ -81,7 +81,7 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
             idtag = PPS_TAGNAMES.get(band, band)
             scn_[band].attrs['id_tag'] = idtag
             scn_[band].attrs['description'] = 'AVHRR ' + str(band)
-            scn_[band].attrs['sun_earth_distance_correction_applied'] = 'False'
+            scn_[band].attrs['sun_earth_distance_correction_applied'] = 'True'
             scn_[band].attrs['sun_earth_distance_correction_factor'] = 1.0
             scn_[band].attrs['sun_zenith_angle_correction_applied'] = 'False'
             scn_[band].attrs['name'] = "image{:d}".format(image_num)
