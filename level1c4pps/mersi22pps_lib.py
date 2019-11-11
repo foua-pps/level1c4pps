@@ -192,28 +192,13 @@ def process_one_scene(scene_files, out_path):
         irch.attrs['end_time'].timetuple())
     header_attrs['sensor'] = sensor_name.lower()
 
-    for band in BANDNAMES:
-        idtag = PPS_TAGNAMES[band]
-        try:
-            to_pop = []
-            for attr in scn_[band].attrs.keys():
-                if hasattr(scn_[band].attrs[attr], 'keys'):
-                    print("found dict", attr)
-                    to_pop.append(attr)
-            for attr in to_pop:
-                attr_dict = scn_[band].attrs[attr]
-                scn_[band].attrs.pop(attr)
-                for key in attr_dict.keys():
-                    scn_[band].attrs[attr+str(key)] = attr_dict[key]
-        except KeyError:
-            continue
-
     filename = compose_filename(scn_, out_path, instrument='mersi2', channel=irch)
     scn_.save_datasets(writer='cf', 
                        filename=filename,
                        header_attrs=header_attrs, 
                        engine='netcdf4',
                        include_lonlats=False,
+                       flatten_attrs=True,
                        encoding=get_encoding_mersi2(scn_, angle_names))
     print("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),
