@@ -32,7 +32,7 @@ import dask.array as da
 import numpy as np
 from datetime import datetime
 from satpy.scene import Scene
-from level1c4pps import dt64_to_datetime
+from level1c4pps import dt64_to_datetime, get_encoding, compose_filename
 import logging
 
 logger = logging.getLogger('gac2pps')
@@ -61,6 +61,14 @@ INSTRUMENTS = {'tirosn': 'avhrr',
                'noaa18': 'avhrr/3',
                'noaa19': 'avhrr/3'}
 
+
+def get_encoding_gac(scene, angle_names):
+    """Get netcdf encoding for all datasets."""
+    return get_encoding(scene, 
+                        BANDNAMES, 
+                        PPS_TAGNAMES,
+                        angle_names, 
+                        chunks=None)
 
 def process_one_file(gac_file, out_path='.', reader_kwargs=None):
     """Make level 1c files in PPS-format."""
@@ -201,63 +209,6 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
     scn_['qual_flags'].coords['time'] = irch.attrs['start_time']
     del scn_['qual_flags'].coords['acq_time']
 
-    # Get filename
-    start_time = irch.attrs['start_time']
-    end_time = irch.attrs['end_time']
-    platform_name = irch.attrs['platform_name']
-    orbit_number = int(scn_.attrs['orbit_number'])
-    filename = os.path.join(
-        out_path,
-        "S_NWC_avhrr_{:s}_{:05d}_{:s}Z_{:s}Z.nc".format(
-            platform_name.lower().replace('-', ''),
-            orbit_number,
-            datetime.strftime(dt64_to_datetime(start_time), '%Y%m%dT%H%M%S%f')[:-5],
-
-            datetime.strftime(dt64_to_datetime(end_time), '%Y%m%dT%H%M%S%f')[:-5]))
-
-    # Encoding for channels
-    save_info = {}
-    for band in BANDNAMES:
-        idtag = PPS_TAGNAMES[band]
-        try:
-            name = scn_[band].attrs['name']
-        except KeyError:
-            logger.debug("No band named %s", band)
-            continue
-        # Add time coordinate. To make cfwriter aware that we want 3D data.
-        scn_[band].coords['time'] = irch.attrs['start_time']
-        del scn_[band].coords['acq_time']
-
-        if 'tb' in idtag:
-            save_info[name] = {'dtype': 'int16',
-                               'scale_factor': 0.01,
-                               '_FillValue': -32767,
-                               'zlib': True,
-                               'complevel': 4,
-                               'add_offset': 273.15}
-        else:
-            save_info[name] = {'dtype': 'int16',
-                               'scale_factor': 0.01,
-                               'zlib': True,
-                               'complevel': 4,
-                               '_FillValue': -32767,
-                               'add_offset': 0.0}
-    # Encoding for angles and lat/lon
-    for name in angle_names:
-        save_info[name] = {'dtype': 'int16',
-                           'scale_factor': 0.01,
-                           'zlib': True,
-                           'complevel': 4,
-                           '_FillValue': -32767,
-                           'add_offset': 0.0}
-    for name in ['lon', 'lat']:
-        save_info[name] = {'dtype': 'float32',    'zlib': True,
-                           'complevel': 4, '_FillValue': -999.0}
-    save_info['qual_flags'] = {'dtype': 'int16', 'zlib': True,
-                               'complevel': 4, '_FillValue': -32001.0}
-    save_info['scanline_timestamps'] = {'dtype': 'int64', 'zlib': True,
-                                        'complevel': 4, '_FillValue': -1.0}
-
     header_attrs = scn_.attrs.copy()
     header_attrs['start_time'] = datetime.strftime(dt64_to_datetime(irch.attrs['start_time']),
                                                    "%Y-%m-%d %H:%M:%S")
@@ -280,9 +231,13 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
                     scn_[band].attrs[attr+str(key)] = attr_dict[key]
         except KeyError:
             continue
-    scn_.save_datasets(writer='cf', filename=filename,
-                       header_attrs=header_attrs, engine='netcdf4',
-                       encoding=save_info)
+
+    filename = compose_filename(scn_, out_path, instrument='avhrr', channel=irch)
+    scn_.save_datasets(writer='cf', 
+                       filename=filename,
+                       header_attrs=header_attrs, 
+                       engine='netcdf4',
+                       encoding=get_encoding_gac(scn_, angle_names))
 
     print("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),

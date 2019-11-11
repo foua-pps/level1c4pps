@@ -43,7 +43,7 @@ from pyorbital.astronomy import get_alt_az, sun_zenith_angle
 from pyorbital.orbital import get_observer_look
 
 from level1c4pps.calibration_coefs import get_calibration_for_time, CALIB_MODE
-from level1c4pps import make_azidiff_angle
+from level1c4pps import make_azidiff_angle, get_encoding
 
 
 try:
@@ -330,51 +330,15 @@ def compose_filename(scene, out_path):
     return filename
 
 
-def get_encoding(scene):
+def get_encoding_seviri(scene):
     """Get netcdf encoding for all datasets."""
-    encoding = {}
-
     # Bands
     chunks = (1, 512, 3712)
-    for band in BANDNAMES:
-        idtag = PPS_TAGNAMES[band]
-        name = scene[band].attrs['name']
-        if 'tb' in idtag:
-            encoding[name] = {'dtype': 'int16',
-                              'scale_factor': 0.01,
-                              '_FillValue': -32767,
-                              'zlib': True,
-                              'complevel': 4,
-                              'add_offset': 273.15,
-                              'chunksizes': chunks}
-        else:
-            encoding[name] = {'dtype': 'int16',
-                              'scale_factor': 0.01,
-                              'zlib': True,
-                              'complevel': 4,
-                              '_FillValue': -32767,
-                              'add_offset': 0.0,
-                              'chunksizes': chunks}
-
-    # Angles and lat/lon
-    for name in ['image11', 'image12', 'image13']:
-        encoding[name] = {
-            'dtype': 'int16',
-            'scale_factor': 0.01,
-            'zlib': True,
-            'complevel': 4,
-            '_FillValue': -32767,
-            'add_offset': 0.0,
-            'chunksizes': chunks}
-
-    for name in ['lon', 'lat']:
-        encoding[name] = {'dtype': 'float32',
-                          'zlib': True,
-                          'complevel': 4,
-                          '_FillValue': -999.0,
-                          'chunksizes': (chunks[1], chunks[2])}
-
-    return encoding
+    return get_encoding(scene, 
+                        bandnames=BANDNAMES, 
+                        pps_tagnames=PPS_TAGNAMES,
+                        angle_names=['image11', 'image12', 'image13'], 
+                        chunks=chunks)
 
 
 def get_header_attrs(scene):
@@ -439,7 +403,7 @@ def process_one_scan(tslot_files, out_path, rotate=True):
                        filename=filename,
                        header_attrs=get_header_attrs(scn_),
                        engine='netcdf4',
-                       encoding=get_encoding(scn_),
+                       encoding=get_encoding_seviri(scn_),
                        include_lonlats=False,
                        pretty=True,
                        flatten_attrs=True,

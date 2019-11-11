@@ -25,8 +25,11 @@
 
 import numpy as np
 import xarray as xr
-import datetime
+from datetime import datetime
+import os
+import logging
 
+logger = logging.getLogger('level1c4pps')
 from pkg_resources import get_distribution, DistributionNotFound
 try:
     __version__ = get_distribution(__name__).version
@@ -55,6 +58,84 @@ def dt64_to_datetime(dt64):
         unix_epoch = np.datetime64(0, 's')
         one_second = np.timedelta64(1, 's')
         seconds_since_epoch = (dt64 - unix_epoch) / one_second
-        dt = datetime.datetime.utcfromtimestamp(seconds_since_epoch)
+        dt = datetime.utcfromtimestamp(seconds_since_epoch)
         return dt
     return dt64
+
+def get_encoding(scene, bandnames, pps_tagnames, angle_names, chunks=None):
+    """Get netcdf encoding for all datasets."""
+    encoding = {}
+
+    # Bands
+    for band in bandnames:
+        idtag = pps_tagnames[band]
+        try:
+            name = scene[band].attrs['name']
+        except KeyError:
+            logger.debug("No band named %s", band)
+            continue
+        if 'tb' in idtag:
+            encoding[name] = {'dtype': 'int16',
+                              'scale_factor': 0.01,
+                              '_FillValue': -32767,
+                              'zlib': True,
+                              'complevel': 4,
+                              'add_offset': 273.15}
+        else:
+            encoding[name] = {'dtype': 'int16',
+                              'scale_factor': 0.01,
+                              'zlib': True,
+                              'complevel': 4,
+                              '_FillValue': -32767,
+                              'add_offset': 0.0}
+        if chunks is not None:
+            encoding[name]['chunksizes'] = chunks 
+
+    # Angles and lat/lon
+    for name in angle_names:
+        encoding[name] = {
+            'dtype': 'int16',
+            'scale_factor': 0.01,
+            'zlib': True,
+            'complevel': 4,
+            '_FillValue': -32767,
+            'add_offset': 0.0}
+        if chunks is not None:
+            encoding[name]['chunksizes'] = chunks 
+    # lat/lon
+    for name in ['lon', 'lat']:
+        encoding[name] = {'dtype': 'float32',
+                          'zlib': True,
+                          'complevel': 4,
+                          '_FillValue': -999.0}
+        if chunks is not None:
+            encoding[name]['chunksizes'] = (chunks[1], chunks[2])
+    # pygac    
+    if hasattr(scene, 'qual_flags'):
+        encoding['qual_flags'] = {'dtype': 'int16', 'zlib': True,
+                                  'complevel': 4, '_FillValue': -32001.0}
+    if hasattr(scene, 'scanline_timestamps'):
+        encoding['scanline_timestamps'] = {'dtype': 'int64', 'zlib': True,
+                                           'complevel': 4, '_FillValue': -1.0}
+    return encoding
+
+
+def compose_filename(scene, out_path, instrument, channel=None):
+    """Compose output filename."""
+    start_time = scene.attrs['start_time']
+    end_time = scene.attrs['end_time']
+    if channel is not None:
+        start_time = channel.attrs['start_time']
+        end_time = channel.attrs['end_time']  
+    platform_name = scene.attrs['platform_name']
+    orbit_number = int(scene.attrs['orbit_number'])
+    filename = os.path.join(
+        out_path,
+        "S_NWC_{:s}_{:s}_{:05d}_{:s}Z_{:s}Z.nc".format(
+            instrument,
+            platform_name.lower().replace('-', ''),
+            orbit_number,
+            datetime.strftime(dt64_to_datetime(start_time), '%Y%m%dT%H%M%S%f')[:-5],
+
+            datetime.strftime(dt64_to_datetime(end_time), '%Y%m%dT%H%M%S%f')[:-5]))
+    return filename

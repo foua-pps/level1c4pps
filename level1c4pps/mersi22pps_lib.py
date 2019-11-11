@@ -35,7 +35,7 @@ from satpy.scene import Scene
 from trollsift.parser import globify, Parser
 from pyorbital.astronomy import get_alt_az, sun_zenith_angle
 from pyorbital.orbital import get_observer_look
-from level1c4pps import make_azidiff_angle
+from level1c4pps import make_azidiff_angle, get_encoding, compose_filename
 import pyresample
 import logging
 
@@ -67,6 +67,13 @@ MERSI2_LEVEL1_FILE_PATTERN = 'tf{start_time:%Y%j%H%M%S}.{platform_shortname:4s}-
 
 p__ = Parser(MERSI2_LEVEL1_FILE_PATTERN)
 
+def get_encoding_mersi2(scene, angle_names):
+    """Get netcdf encoding for all datasets."""
+    return get_encoding(scene, 
+                        BANDNAMES, 
+                        PPS_TAGNAMES,
+                        angle_names, 
+                        chunks=None)
 
 def process_one_scene(scene_files, out_path):
     """Make level 1c files in PPS-format."""
@@ -176,64 +183,6 @@ def process_one_scene(scene_files, out_path):
     scn_['azimuthdiff'].coords['time'] = irch.attrs['start_time']
     nimg += 1
 
-    # Get filename
-    start_time = irch.attrs['start_time']
-    end_time = irch.attrs['end_time']
-    platform_name = irch.attrs['platform_name']
-    orbit_number = int(scn_.attrs['orbit_number'])
-
-    filename = os.path.join(
-        out_path,
-        "S_NWC_mersi2_{:s}_{:05d}_{:s}Z_{:s}Z.nc".format(
-            platform_name.lower().replace('-', ''),
-            orbit_number,
-            start_time.strftime('%Y%m%dT%H%M%S%f')[:-5],
-            end_time.strftime('%Y%m%dT%H%M%S%f')[:-5]))
-
-    for dataset in scn_.keys():
-        if hasattr(scn_[dataset], 'attrs'):
-            if hasattr(scn_[dataset].attrs, 'modifiers'):
-                scn_[dataset].attrs['modifiers'] = 0.0
-
-    # Encoding for channels
-    save_info = {}
-    for band in BANDNAMES:
-        idtag = PPS_TAGNAMES[band]
-        try:
-            name = scn_[band].attrs['name']
-        except KeyError:
-            logger.debug("No band named %s", band)
-            continue
-        # Add time coordinate. To make cfwriter aware that we want 3D data.
-        scn_[band].coords['time'] = irch.attrs['start_time']
-
-        if 'tb' in idtag:
-            save_info[name] = {'dtype': 'int16',
-                               'scale_factor': 0.01,
-                               '_FillValue': -32767,
-                               'zlib': True,
-                               'complevel': 4,
-                               'add_offset': 273.15}
-        else:
-            save_info[name] = {'dtype': 'int16',
-                               'scale_factor': 0.01,
-                               'zlib': True,
-                               'complevel': 4,
-                               '_FillValue': -32767,
-                               'add_offset': 0.0}
-
-    # Encoding for angles and lat/lon
-    for name in angle_names:
-        save_info[name] = {'dtype': 'int16',
-                           'scale_factor': 0.01,
-                           'zlib': True,
-                           'complevel': 4,
-                           '_FillValue': -32767,
-                           'add_offset': 0.0}
-
-    for name in ['lon', 'lat']:
-        save_info[name] = {'dtype': 'float32',    'zlib': True,
-                           'complevel': 4, '_FillValue': -999.0}
     header_attrs = scn_.attrs.copy()
     header_attrs['start_time'] = time.strftime(
         "%Y-%m-%d %H:%M:%S",
@@ -259,10 +208,13 @@ def process_one_scene(scene_files, out_path):
         except KeyError:
             continue
 
-    scn_.save_datasets(writer='cf', filename=filename,
-                       header_attrs=header_attrs, engine='netcdf4',
+    filename = compose_filename(scn_, out_path, instrument='mersi2', channel=irch)
+    scn_.save_datasets(writer='cf', 
+                       filename=filename,
+                       header_attrs=header_attrs, 
+                       engine='netcdf4',
                        include_lonlats=False,
-                       encoding=save_info)
+                       encoding=get_encoding_mersi2(scn_, angle_names))
     print("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),
         time.time()-tic))

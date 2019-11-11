@@ -342,7 +342,7 @@ class TestSeviri2PPS(unittest.TestCase):
             'lon': enc_exp_coords,
             'lat': enc_exp_coords
         }
-        encoding = seviri2pps.get_encoding(scene)
+        encoding = seviri2pps.get_encoding_seviri(scene)
         self.assertDictEqual(encoding, encoding_exp)
 
     def test_get_header_attrs(self):
