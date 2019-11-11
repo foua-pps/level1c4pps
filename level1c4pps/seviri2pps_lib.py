@@ -316,10 +316,10 @@ def get_encoding_seviri(scene):
     """Get netcdf encoding for all datasets."""
     # Bands
     chunks = (1, 512, 3712)
-    return get_encoding(scene, 
-                        bandnames=BANDNAMES, 
+    return get_encoding(scene,
+                        bandnames=BANDNAMES,
                         pps_tagnames=PPS_TAGNAMES,
-                        angle_names=['image11', 'image12', 'image13'], 
+                        angle_names=['image11', 'image12', 'image13'],
                         chunks=chunks)
 
 

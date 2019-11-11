@@ -23,6 +23,7 @@
 
 """Package Initializer for level1c4pps."""
 
+from pkg_resources import get_distribution, DistributionNotFound
 import numpy as np
 import xarray as xr
 from datetime import datetime
@@ -30,7 +31,6 @@ import os
 import logging
 
 logger = logging.getLogger('level1c4pps')
-from pkg_resources import get_distribution, DistributionNotFound
 try:
     __version__ = get_distribution(__name__).version
 except DistributionNotFound:
@@ -90,7 +90,7 @@ def get_encoding(scene, bandnames, pps_tagnames, angle_names, chunks=None):
                               '_FillValue': -32767,
                               'add_offset': 0.0}
         if chunks is not None:
-            encoding[name]['chunksizes'] = chunks 
+            encoding[name]['chunksizes'] = chunks
 
     # Angles and lat/lon
     for name in angle_names:
@@ -102,7 +102,7 @@ def get_encoding(scene, bandnames, pps_tagnames, angle_names, chunks=None):
             '_FillValue': -32767,
             'add_offset': 0.0}
         if chunks is not None:
-            encoding[name]['chunksizes'] = chunks 
+            encoding[name]['chunksizes'] = chunks
 
     # lat/lon
     for name in ['lon', 'lat']:
@@ -113,7 +113,7 @@ def get_encoding(scene, bandnames, pps_tagnames, angle_names, chunks=None):
         if chunks is not None:
             encoding[name]['chunksizes'] = (chunks[1], chunks[2])
 
-    # pygac    
+    # pygac
     if 'qual_flags' in scene:
         encoding['qual_flags'] = {'dtype': 'int16', 'zlib': True,
                                   'complevel': 4, '_FillValue': -32001.0}
@@ -129,7 +129,7 @@ def compose_filename(scene, out_path, instrument, channel=None):
     As default use the start and end time of the scene. 
     For SEVIRI this is the nominal timestamp of the scan (as in the HRIT files).
     If a scene channel is supplied use that for start/end time.
-    
+
     Args:
         scene: satpy scene
         outpath: output directory (string)
@@ -140,7 +140,7 @@ def compose_filename(scene, out_path, instrument, channel=None):
     end_time = scene.attrs['end_time']
     if channel is not None:
         start_time = channel.attrs['start_time']
-        end_time = channel.attrs['end_time']  
+        end_time = channel.attrs['end_time']
     platform_name = scene.attrs['platform']
     orbit_number = int(scene.attrs['orbit_number'])
     filename = os.path.join(

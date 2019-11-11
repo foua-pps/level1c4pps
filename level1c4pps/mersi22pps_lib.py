@@ -67,13 +67,15 @@ MERSI2_LEVEL1_FILE_PATTERN = 'tf{start_time:%Y%j%H%M%S}.{platform_shortname:4s}-
 
 p__ = Parser(MERSI2_LEVEL1_FILE_PATTERN)
 
+
 def get_encoding_mersi2(scene, angle_names):
     """Get netcdf encoding for all datasets."""
-    return get_encoding(scene, 
-                        BANDNAMES, 
+    return get_encoding(scene,
+                        BANDNAMES,
                         PPS_TAGNAMES,
-                        angle_names, 
+                        angle_names,
                         chunks=None)
+
 
 def process_one_scene(scene_files, out_path):
     """Make level 1c files in PPS-format."""
@@ -193,9 +195,9 @@ def process_one_scene(scene_files, out_path):
     header_attrs['sensor'] = sensor_name.lower()
 
     filename = compose_filename(scn_, out_path, instrument='mersi2', channel=irch)
-    scn_.save_datasets(writer='cf', 
+    scn_.save_datasets(writer='cf',
                        filename=filename,
-                       header_attrs=header_attrs, 
+                       header_attrs=header_attrs,
                        engine='netcdf4',
                        include_lonlats=False,
                        flatten_attrs=True,

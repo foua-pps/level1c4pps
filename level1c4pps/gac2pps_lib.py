@@ -64,11 +64,12 @@ INSTRUMENTS = {'tirosn': 'avhrr',
 
 def get_encoding_gac(scene, angle_names):
     """Get netcdf encoding for all datasets."""
-    return get_encoding(scene, 
-                        BANDNAMES, 
+    return get_encoding(scene,
+                        BANDNAMES,
                         PPS_TAGNAMES,
-                        angle_names, 
+                        angle_names,
                         chunks=None)
+
 
 def process_one_file(gac_file, out_path='.', reader_kwargs=None):
     """Make level 1c files in PPS-format."""
@@ -217,9 +218,9 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
     header_attrs['sensor'] = sensor.lower()
 
     filename = compose_filename(scn_, out_path, instrument='avhrr', channel=irch)
-    scn_.save_datasets(writer='cf', 
+    scn_.save_datasets(writer='cf',
                        filename=filename,
-                       header_attrs=header_attrs, 
+                       header_attrs=header_attrs,
                        engine='netcdf4',
                        flatten_attrs=True,
                        encoding=get_encoding_gac(scn_, angle_names))

@@ -71,7 +71,7 @@ class TestGac2PPS(unittest.TestCase):
             'qual_flags':  {'dtype': 'int16', 'zlib': True,
                             'complevel': 4, '_FillValue': -32001.0},
             'scanline_timestamps': {'dtype': 'int64', 'zlib': True,
-                                           'complevel': 4, '_FillValue': -1.0},
+                                    'complevel': 4, '_FillValue': -1.0},
             'image11': enc_exp_angles,
             'lon': enc_exp_coords,
             'lat': enc_exp_coords
@@ -93,6 +93,7 @@ class TestGac2PPS(unittest.TestCase):
         fname_exp = '/out/path/S_NWC_avhrr_noaa19_99999_20090701T1216000Z_20090701T1227000Z.nc'
         fname = gac2pps.compose_filename(scene, '/out/path', 'avhrr', channel=channel)
         self.assertEqual(fname, fname_exp)
+
 
 def suite():
     """Create the test suite for test_gac2pps."""
