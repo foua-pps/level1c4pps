@@ -299,9 +299,10 @@ class TestSeviri2PPS(unittest.TestCase):
         end_time = dt.datetime(2009, 7, 1, 12, 30)
         scene = mock.MagicMock(attrs={'start_time': start_time,
                                       'end_time': end_time,
+                                      'orbit_number': '99999',
                                       'platform': 'Meteosat-9'})
         fname_exp = '/out/path/S_NWC_seviri_meteosat9_99999_20090701T1215000Z_20090701T1230000Z.nc'
-        fname = seviri2pps.compose_filename(scene, '/out/path')
+        fname = seviri2pps.compose_filename(scene, '/out/path', 'seviri')
         self.assertEqual(fname, fname_exp)
 
     def test_get_encoding(self):

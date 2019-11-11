@@ -43,7 +43,7 @@ from pyorbital.astronomy import get_alt_az, sun_zenith_angle
 from pyorbital.orbital import get_observer_look
 
 from level1c4pps.calibration_coefs import get_calibration_for_time, CALIB_MODE
-from level1c4pps import make_azidiff_angle, get_encoding
+from level1c4pps import make_azidiff_angle, get_encoding, compose_filename
 
 
 try:
@@ -312,24 +312,6 @@ def add_ancillary_datasets(scene, lons, lats, sunz, satz, azidiff,
             scene[angle].attrs[attr] = scene['IR_108'].attrs[attr]
 
 
-def compose_filename(scene, out_path):
-    """Compose output filename.
-
-    Use nominal timestamp of the scan (as in the HRIT files).
-    """
-    start_time = scene.attrs['start_time']
-    end_time = scene.attrs['end_time']
-    platform_name = scene.attrs['platform']
-    filename = os.path.join(
-        out_path,
-        "S_NWC_seviri_{:s}_{:s}_{:s}Z_{:s}Z.nc".format(
-            platform_name.lower().replace('-', ''),
-            "99999",
-            start_time.strftime('%Y%m%dT%H%M%S%f')[:-5],
-            end_time.strftime('%Y%m%dT%H%M%S%f')[:-5]))
-    return filename
-
-
 def get_encoding_seviri(scene):
     """Get netcdf encoding for all datasets."""
     # Bands
@@ -398,7 +380,7 @@ def process_one_scan(tslot_files, out_path, rotate=True):
     set_attrs(scn_)
 
     # Write datasets to netcdf
-    filename = compose_filename(scene=scn_, out_path=out_path)
+    filename = compose_filename(scene=scn_, out_path=out_path, instrument='seviri')
     scn_.save_datasets(writer='cf',
                        filename=filename,
                        header_attrs=get_header_attrs(scn_),

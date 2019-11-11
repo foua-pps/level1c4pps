@@ -77,8 +77,22 @@ class TestGac2PPS(unittest.TestCase):
             'lat': enc_exp_coords
         }
         encoding = gac2pps.get_encoding_gac(scene, angle_names=['image11'])
-        print(encoding)
         self.assertDictEqual(encoding, encoding_exp)
+
+    def test_compose_filename(self):
+        start_time = dt.datetime(2009, 7, 1, 12, 15)
+        end_time = dt.datetime(2009, 7, 1, 12, 30)
+        scene = mock.MagicMock(attrs={'start_time': start_time,
+                                      'end_time': end_time,
+                                      'orbit_number': '99999',
+                                      'platform': 'Noaa19'})
+        start_time = dt.datetime(2009, 7, 1, 12, 16)
+        end_time = dt.datetime(2009, 7, 1, 12, 27)
+        channel = mock.MagicMock(attrs={'start_time': start_time,
+                                        'end_time': end_time})
+        fname_exp = '/out/path/S_NWC_avhrr_noaa19_99999_20090701T1216000Z_20090701T1227000Z.nc'
+        fname = gac2pps.compose_filename(scene, '/out/path', 'avhrr', channel=channel)
+        self.assertEqual(fname, fname_exp)
 
 def suite():
     """Create the test suite for test_gac2pps."""

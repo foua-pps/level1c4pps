@@ -62,6 +62,7 @@ def dt64_to_datetime(dt64):
         return dt
     return dt64
 
+
 def get_encoding(scene, bandnames, pps_tagnames, angle_names, chunks=None):
     """Get netcdf encoding for all datasets."""
     encoding = {}
@@ -102,6 +103,7 @@ def get_encoding(scene, bandnames, pps_tagnames, angle_names, chunks=None):
             'add_offset': 0.0}
         if chunks is not None:
             encoding[name]['chunksizes'] = chunks 
+
     # lat/lon
     for name in ['lon', 'lat']:
         encoding[name] = {'dtype': 'float32',
@@ -110,6 +112,7 @@ def get_encoding(scene, bandnames, pps_tagnames, angle_names, chunks=None):
                           '_FillValue': -999.0}
         if chunks is not None:
             encoding[name]['chunksizes'] = (chunks[1], chunks[2])
+
     # pygac    
     if 'qual_flags' in scene:
         encoding['qual_flags'] = {'dtype': 'int16', 'zlib': True,
@@ -121,13 +124,24 @@ def get_encoding(scene, bandnames, pps_tagnames, angle_names, chunks=None):
 
 
 def compose_filename(scene, out_path, instrument, channel=None):
-    """Compose output filename."""
+    """Compose output filename.
+
+    As default use the start and end time of the scene. 
+    For SEVIRI this is the nominal timestamp of the scan (as in the HRIT files).
+    If a scene channel is supplied use that for start/end time.
+    
+    Args:
+        scene: satpy scene
+        outpath: output directory (string)
+        instrument: lower case instrument (string)
+        channel: use start and end time from channel if supplied
+    """
     start_time = scene.attrs['start_time']
     end_time = scene.attrs['end_time']
     if channel is not None:
         start_time = channel.attrs['start_time']
         end_time = channel.attrs['end_time']  
-    platform_name = scene.attrs['platform_name']
+    platform_name = scene.attrs['platform']
     orbit_number = int(scene.attrs['orbit_number'])
     filename = os.path.join(
         out_path,
@@ -136,6 +150,5 @@ def compose_filename(scene, out_path, instrument, channel=None):
             platform_name.lower().replace('-', ''),
             orbit_number,
             datetime.strftime(dt64_to_datetime(start_time), '%Y%m%dT%H%M%S%f')[:-5],
-
             datetime.strftime(dt64_to_datetime(end_time), '%Y%m%dT%H%M%S%f')[:-5]))
     return filename
