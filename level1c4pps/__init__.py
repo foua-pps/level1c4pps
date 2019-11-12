@@ -38,6 +38,34 @@ except DistributionNotFound:
     pass
 
 PPS_ANGLE_TAGS = ['sunzenith', 'satzenith', 'azimuthdiff', 'sunazimuth', 'satazimuth']
+ANGLE_ATTRIBUTES = {
+    'long_name' : {
+        'sunzenith': 'sun zenith angle',
+        'satzenith': 'satellite zenith angle',
+        'azimuthdiff': 'absolute azimuth difference angle',
+        'sunazimuth': 'sun azimuth angle degree clockwise from north',
+        'satazimuth': 'satellite azimuth angle degree clockwise from north',
+    },     
+    'valid_range' : {
+        'sunzenith': [0, 18000],
+        'satzenith': [0, 9000],
+        'azimuthdiff': [0, 18000],
+        'sunazimuth': [-18000, 18000],
+        'satazimuth': [-18000, 18000],
+    },
+    'mersi2_file_key':  {
+        'sunzenith': 'Geolocation/SolarZenithAngle',
+        'satzenith': 'Geolocation/SensorZenithAngle',
+        'azimuthdiff': 'Geolocation/SensorSolarAzimuthDifference',
+    },
+    'standard_name':  {
+        'sunzenith': 'solar_zenith_angle',
+        'satzenith': 'platform_zenith_angle',  # or sensor?
+        'azimuthdiff': 'absolute_angle_of_rotation_from_solar_azimuth_to_platform_azimuth',
+        'sunazimuth': 'solar_azimuth_angle',
+        'satazimuth': 'platform_azimuth_angle',  # or sensor?
+    }
+}
 
 def make_azidiff_angle(sata, suna):
     """Calculate azimuth difference angle."""
@@ -122,6 +150,43 @@ def get_band_encoding(dataset, bandnames, pps_tagnames, chunks=None):
     return name, enc
 
 
+def rename_latitude_longitude(scene):
+    """Rename latitude longitude to lat lon."""
+    scene['lat'] = scene['latitude']
+    scene['lon'] = scene['longitude']
+    del scene['latitude']
+    del scene['longitude']
+    # Update attributes
+    scene['lat'].attrs['long_name'] = 'latitude coordinate'
+    scene['lon'].attrs['long_name'] = 'longitude coordinate'
+    try:
+        del scene['lat'].coords['acq_time']
+        del scene['lon'].coords['acq_time']
+    except KeyError:
+        pass
+
+
+def update_angle_attributes(scene, start_time, image_num=20):
+    # Set angle attributes
+    for angle in ['sunzenith', 'satzenith', 'azimuthdiff', 'sunazimuth', 'satazimuth']:
+        if angle not in scene.keys() and angle in ['sunazimuth', 'satazimuth']:
+            continue
+        scene[angle].attrs['id_tag'] = angle
+        scene[angle].attrs['name'] = "image{:d}".format(image_num)
+        image_num += 1
+        scene[angle].attrs['coordinates'] = 'lon lat'
+        scene[angle].attrs['long_name'] = ANGLE_ATTRIBUTES['long_name'][angle] 
+        scene[angle].attrs['valid_range'] = ANGLE_ATTRIBUTES['valid_range'][angle] 
+        scene[angle].attrs['standard_name'] = ANGLE_ATTRIBUTES['standard_name'][angle] 
+        scene[angle].coords['time'] =  start_time
+        # delete some attributes
+        del scene[angle].attrs['area']
+        try:
+            del scene[angle].coords['acq_time']
+        except KeyError:
+            pass
+
+
 def compose_filename(scene, out_path, instrument, band=None):
     """Compose output filename.
 
@@ -151,3 +216,15 @@ def compose_filename(scene, out_path, instrument, band=None):
             datetime.strftime(dt64_to_datetime(start_time), '%Y%m%dT%H%M%S%f')[:-5],
             datetime.strftime(dt64_to_datetime(end_time), '%Y%m%dT%H%M%S%f')[:-5]))
     return filename
+
+
+def get_header_attrs(scene, band, sensor='avhrr'):
+    """Get global netcdf attributes."""
+    header_attrs = scene.attrs.copy()
+    header_attrs['start_time'] = datetime.strftime(dt64_to_datetime(band.attrs['start_time']),
+                                                   "%Y-%m-%d %H:%M:%S")
+    header_attrs['end_time'] = datetime.strftime(dt64_to_datetime(band.attrs['end_time']),
+                                                 "%Y-%m-%d %H:%M:%S")  
+    header_attrs['sensor'] = sensor
+    return header_attrs
+

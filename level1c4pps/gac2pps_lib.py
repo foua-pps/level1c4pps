@@ -32,7 +32,9 @@ import dask.array as da
 import numpy as np
 from datetime import datetime
 from satpy.scene import Scene
-from level1c4pps import dt64_to_datetime, get_encoding, compose_filename
+from level1c4pps import (dt64_to_datetime, get_encoding, compose_filename, 
+                         rename_latitude_longitude, update_angle_attributes, 
+                         get_header_attrs)
 import logging
 
 logger = logging.getLogger('gac2pps')
@@ -60,7 +62,12 @@ INSTRUMENTS = {'tirosn': 'avhrr',
                'noaa17': 'avhrr/3',
                'noaa18': 'avhrr/3',
                'noaa19': 'avhrr/3'}
-
+SATPY_ANGLE_NAMES = {
+    'sunzenith':'solar_zenith_angle',
+    'satzenith':'sensor_zenith_angle',
+    'azimuthdiff': 'sun_sensor_azimuth_difference_angle',
+    'sunazimuth': 'solar_azimuth_angle',
+    'satazimuth': 'sensor_azimuth_angle'}
 
 def get_encoding_gac(scene):
     """Get netcdf encoding for all datasets."""
@@ -73,17 +80,6 @@ def get_encoding_gac(scene):
 def update_ancilliary_datasets(scene, image_num):
     """Rename, delete and add some datasets and attributes."""
     irch = scene['4']
-
-    # Rename latitude longitude
-    scene['lat'] = scene['latitude']
-    scene['lon'] = scene['longitude']
-    del scene['latitude']
-    del scene['longitude']
-    # Update attributes
-    scene['lat'].attrs['long_name'] = 'latitude coordinate'
-    scene['lon'].attrs['long_name'] = 'longitude coordinate'
-    del scene['lat'].coords['acq_time']
-    del scene['lon'].coords['acq_time']
 
     # Create new data set scanline timestamps
     first_jan_1970 = np.array([datetime(1970, 1, 1, 0, 0, 0)]).astype('datetime64[ns]')
@@ -99,41 +95,16 @@ def update_ancilliary_datasets(scene, image_num):
     scene['qual_flags'].coords['time'] = irch.attrs['start_time']
     del scene['qual_flags'].coords['acq_time']
 
-    # Rename angle datasets
-    scene['sunzenith'] = scene['solar_zenith_angle']
-    scene['satzenith'] = scene['sensor_zenith_angle']
-    # PPS need absolute azimuth angle differences
-    scene['azimuthdiff'] = abs(scene['sun_sensor_azimuth_difference_angle'])
-    scene['azimuthdiff'].attrs = scene['sun_sensor_azimuth_difference_angle'].attrs
-    scene['sunazimuth'] = scene['solar_azimuth_angle']
-    scene['satazimuth'] = scene['sensor_azimuth_angle']
-    del scene['solar_zenith_angle']
-    del scene['sensor_zenith_angle']
-    del scene['sun_sensor_azimuth_difference_angle']
-    del scene['solar_azimuth_angle']
-    del scene['sensor_azimuth_angle']
 
-    # Set angle specific attributes
-    scene['sunzenith'].attrs['long_name'] = 'sun zenith angle'
-    scene['sunzenith'].attrs['valid_range'] = [0, 18000]
-    scene['satzenith'].attrs['long_name'] = 'satellite zenith angle'
-    scene['satzenith'].attrs['valid_range'] = [0, 9000]
-    scene['azimuthdiff'].attrs['long_name'] = 'absolute azimuth difference angle'
-    scene['azimuthdiff'].attrs['valid_range'] = [0, 18000]
-    scene['sunazimuth'].attrs['long_name'] = 'sun azimuth angle degree clockwise from north'
-    scene['sunazimuth'].attrs['valid_range'] = [-18000, 18000]
-    scene['satazimuth'].attrs['long_name'] = 'satellite azimuth angle degree clockwise from north'
-    scene['satazimuth'].attrs['valid_range'] = [-18000, 18000]
-
-    for angle in ['sunzenith', 'satzenith', 'azimuthdiff', 'sunazimuth', 'satazimuth']:
-        scene[angle].attrs['id_tag'] = angle
-        scene[angle].attrs['name'] = "image{:d}".format(image_num)
-        image_num += 1
-        scene[angle].attrs['coordinates'] = 'lon lat'
-        scene[angle].coords['time'] = irch.attrs['start_time']
-        # delete some attributes
-        del scene[angle].coords['acq_time']
-        del scene[angle].attrs['area']
+def convert_angles(scene, satpy_angle_names):
+    """Convert angles to pps format."""
+    for angle in ['sunzenith', 'satzenith', 'sunazimuth', 'satazimuth']:
+        scene[angle] =  scene[satpy_angle_names[angle]]
+        del scene[satpy_angle_names[angle]]
+    angle ='azimuthdiff'
+    scene[angle] =  abs(scene[satpy_angle_names[angle]])
+    scene[angle].attrs =  scene[satpy_angle_names[angle]].attrs
+    del scene[satpy_angle_names[angle]]
 
 
 def set_header_and_band_attrs(scene):
@@ -169,18 +140,6 @@ def set_header_and_band_attrs(scene):
     return image_num
 
 
-def get_header_attrs(scene):
-    """Get global netcdf attributes."""
-    header_attrs = scene.attrs.copy()
-    irch = scene['4']
-    header_attrs['start_time'] = datetime.strftime(dt64_to_datetime(irch.attrs['start_time']),
-                                                   "%Y-%m-%d %H:%M:%S")
-    header_attrs['end_time'] = datetime.strftime(dt64_to_datetime(irch.attrs['end_time']),
-                                                 "%Y-%m-%d %H:%M:%S")
-    header_attrs['sensor'] = 'avhrr'
-    return header_attrs
-
-
 def process_one_file(gac_file, out_path='.', reader_kwargs=None):
     """Make level 1c files in PPS-format."""
     tic = time.time()
@@ -193,17 +152,26 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
                                'sensor_zenith_angle', 'solar_zenith_angle',
                                'solar_azimuth_angle', 'sensor_azimuth_angle',
                                'sun_sensor_azimuth_difference_angle'])
+    # one ir channel
+    irch = scn_['4']
 
     # Set header and band attributes
     image_num = set_header_and_band_attrs(scn_)
 
-    # Rename and set att header and band attributes
+    # Rename longitude, latitude to lon, lat.
+    rename_latitude_longitude(scn_)
+
+    # Convert angles to PPS
+    convert_angles(scn_, SATPY_ANGLE_NAMES)
+    update_angle_attributes(scn_, start_time=irch.attrs['start_time'], image_num=image_num)
+
+    # Handle gac specific datasets qual_flags and scanline_timestamps
     update_ancilliary_datasets(scn_, image_num)
 
-    filename = compose_filename(scn_, out_path, instrument='avhrr', band=scn_['4'])
+    filename = compose_filename(scn_, out_path, instrument='avhrr', band=irch)
     scn_.save_datasets(writer='cf',
                        filename=filename,
-                       header_attrs=get_header_attrs(scn_),
+                       header_attrs=get_header_attrs(scn_, band=irch, sensor='avhrr'),
                        engine='netcdf4',
                        flatten_attrs=True,
                        encoding=get_encoding_gac(scn_))
