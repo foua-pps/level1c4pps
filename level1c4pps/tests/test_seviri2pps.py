@@ -31,6 +31,7 @@ try:
 except ImportError:
     import mock
 import xarray as xr
+from satpy import Scene
 
 import level1c4pps.seviri2pps_lib as seviri2pps
 import level1c4pps.calibration_coefs as calib
@@ -307,9 +308,26 @@ class TestSeviri2PPS(unittest.TestCase):
 
     def test_get_encoding(self):
         seviri2pps.BANDNAMES = ['VIS006', 'IR_108']
-        vis006 = mock.MagicMock(attrs={'name': 'image0'})
-        ir_108 = mock.MagicMock(attrs={'name': 'image1'})
-        scene = {'VIS006': vis006, 'IR_108': ir_108}
+        vis006 = mock.MagicMock(attrs={'name': 'image0',
+                                       'id_tag': 'ch_r06'})
+        ir_108 = mock.MagicMock(attrs={'name': 'image1',
+                                       'id_tag': 'ch_tb11'})
+        lat = mock.MagicMock(attrs={'name': 'lat'})
+        lon = mock.MagicMock(attrs={'name': 'lon'})
+        sunzenith = mock.MagicMock(attrs={'name': 'image11',
+                                          'id_tag': 'sunzenith'})
+        satzenith = mock.MagicMock(attrs={'name': 'image12',
+                                          'id_tag': 'satzenith'})
+        azimuthdiff = mock.MagicMock(attrs={'name': 'image13',
+                                            'id_tag': 'azimuthdiff'})
+        scene = Scene()
+        scene_dict = {'VIS006': vis006, 'IR_108': ir_108, 'lat': lat, 'lon': lon,
+                      'sunzenith': sunzenith, 'satzenith': satzenith,  'azimuthdiff': azimuthdiff}
+        for key in scene_dict:
+            pps_name = scene_dict[key].attrs['name']
+            scene[key] = scene_dict[key]
+            scene[key].attrs['name'] = pps_name
+
         enc_exp_angles = {'dtype': 'int16',
                           'scale_factor': 0.01,
                           'zlib': True,

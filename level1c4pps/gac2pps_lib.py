@@ -62,12 +62,11 @@ INSTRUMENTS = {'tirosn': 'avhrr',
                'noaa19': 'avhrr/3'}
 
 
-def get_encoding_gac(scene, angle_names):
+def get_encoding_gac(scene):
     """Get netcdf encoding for all datasets."""
     return get_encoding(scene,
                         BANDNAMES,
                         PPS_TAGNAMES,
-                        angle_names,
                         chunks=None)
 
 
@@ -126,18 +125,15 @@ def update_ancilliary_datasets(scene, image_num):
     scene['satazimuth'].attrs['long_name'] = 'satellite azimuth angle degree clockwise from north'
     scene['satazimuth'].attrs['valid_range'] = [-18000, 18000]
 
-    angle_names = []
-    for image_num, angle in enumerate(['sunzenith', 'satzenith', 'azimuthdiff', 'sunazimuth', 'satazimuth']):
+    for angle in ['sunzenith', 'satzenith', 'azimuthdiff', 'sunazimuth', 'satazimuth']:
         scene[angle].attrs['id_tag'] = angle
         scene[angle].attrs['name'] = "image{:d}".format(image_num)
-        angle_names.append("image{:d}".format(image_num))
         image_num += 1
         scene[angle].attrs['coordinates'] = 'lon lat'
         scene[angle].coords['time'] = irch.attrs['start_time']
         # delete some attributes
         del scene[angle].coords['acq_time']
         del scene[angle].attrs['area']
-    return angle_names
 
 
 def set_header_and_band_attrs(scene):
@@ -156,7 +152,7 @@ def set_header_and_band_attrs(scene):
 
     # bands
     image_num = 0 # name of first dataset is image0
-    for band in enumerate(BANDNAMES):
+    for band in BANDNAMES:
         try:
             idtag = PPS_TAGNAMES.get(band, band)
             scene[band].attrs['id_tag'] = idtag
@@ -202,7 +198,7 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
     image_num = set_header_and_band_attrs(scn_)
 
     # Rename and set att header and band attributes
-    angle_names = update_ancilliary_datasets(scn_, image_num)
+    update_ancilliary_datasets(scn_, image_num)
 
     filename = compose_filename(scn_, out_path, instrument='avhrr', band=scn_['4'])
     scn_.save_datasets(writer='cf',
@@ -210,7 +206,7 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
                        header_attrs=get_header_attrs(scn_),
                        engine='netcdf4',
                        flatten_attrs=True,
-                       encoding=get_encoding_gac(scn_, angle_names))
+                       encoding=get_encoding_gac(scn_))
 
     print("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),

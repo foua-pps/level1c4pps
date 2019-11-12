@@ -68,12 +68,11 @@ MERSI2_LEVEL1_FILE_PATTERN = 'tf{start_time:%Y%j%H%M%S}.{platform_shortname:4s}-
 p__ = Parser(MERSI2_LEVEL1_FILE_PATTERN)
 
 
-def get_encoding_mersi2(scene, angle_names):
+def get_encoding_mersi2(scene):
     """Get netcdf encoding for all datasets."""
     return get_encoding(scene,
                         BANDNAMES,
                         PPS_TAGNAMES,
-                        angle_names,
                         chunks=None)
 
 
@@ -133,7 +132,6 @@ def process_one_scene(scene_files, out_path):
     del scn_['longitude']
     scn_['lon'].attrs['long_name'] = 'longitude coordinate'
 
-    angle_names = []
     scn_['sunzenith'] = scn_['solar_zenith_angle']
     del scn_['solar_zenith_angle']
     scn_['sunzenith'].attrs['id_tag'] = 'sunzenith'
@@ -145,7 +143,6 @@ def process_one_scene(scene_files, out_path):
     # scn_['sunzenith'].attrs['scale_factor'] = 0.01
     # scn_['sunzenith'].attrs['add_offset'] = 0.0
     # scn_['sunzenith'].attrs['_FillValue'] = -32767
-    angle_names.append("image{:d}".format(nimg))
     scn_['sunzenith'].attrs['coordinates'] = 'lon lat'
     del scn_['sunzenith'].attrs['area']
     scn_['sunzenith'].coords['time'] = irch.attrs['start_time']
@@ -160,7 +157,6 @@ def process_one_scene(scene_files, out_path):
     scn_['satzenith'].attrs['standard_name'] = 'platform_zenith_angle'
     scn_['satzenith'].attrs['valid_range'] = [0, 9000]
     scn_['satzenith'].attrs['name'] = "image{:d}".format(nimg)
-    angle_names.append("image{:d}".format(nimg))
     scn_['satzenith'].attrs['coordinates'] = 'lon lat'
     del scn_['satzenith'].attrs['area']
     scn_['satzenith'].coords['time'] = irch.attrs['start_time']
@@ -179,7 +175,6 @@ def process_one_scene(scene_files, out_path):
                                                 ' the geolocated beam position center')
     scn_['azimuthdiff'].attrs['valid_range'] = [0, 18000]
     scn_['azimuthdiff'].attrs['name'] = "image{:d}".format(nimg)
-    angle_names.append("image{:d}".format(nimg))
     scn_['azimuthdiff'].attrs['coordinates'] = 'lon lat'
     del scn_['azimuthdiff'].attrs['area']
     scn_['azimuthdiff'].coords['time'] = irch.attrs['start_time']
@@ -194,14 +189,14 @@ def process_one_scene(scene_files, out_path):
         irch.attrs['end_time'].timetuple())
     header_attrs['sensor'] = sensor_name.lower()
 
-    filename = compose_filename(scn_, out_path, instrument='mersi2', channel=irch)
+    filename = compose_filename(scn_, out_path, instrument='mersi2', band=irch)
     scn_.save_datasets(writer='cf',
                        filename=filename,
                        header_attrs=header_attrs,
                        engine='netcdf4',
                        include_lonlats=False,
                        flatten_attrs=True,
-                       encoding=get_encoding_mersi2(scn_, angle_names))
+                       encoding=get_encoding_mersi2(scn_))
     print("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),
         time.time()-tic))

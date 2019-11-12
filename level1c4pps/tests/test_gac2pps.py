@@ -32,6 +32,7 @@ try:
 except ImportError:
     import mock
 import xarray as xr
+from satpy import Scene
 
 import level1c4pps.gac2pps_lib as gac2pps
 import level1c4pps.calibration_coefs as calib
@@ -42,16 +43,21 @@ class TestGac2PPS(unittest.TestCase):
     def setUp(self):
         """Create a test scene."""
         gac2pps.BANDNAMES = ['1', '4']
-        vis006 = mock.MagicMock(attrs={'name': 'image0'})
+        vis006 = mock.MagicMock(attrs={'name': 'image0',
+                                       'id_tag': 'ch_r06'})
         ir_108 = mock.MagicMock(attrs={'name': 'image1',
+                                       'id_tag': 'ch_tb11',
                                        'platform_name': 'tirosn',
                                        'orbit_number': 99999})
         qual_f = mock.MagicMock(attrs={'name': 'qual_flags'})
         scan_t = mock.MagicMock(attrs={'name': 'scanline_timestamps'})
+        self.scene = Scene()
         scene_dict = {'1': vis006, '4': ir_108, 'qual_flags': qual_f, 'scanline_timestamps': scan_t}
-        self.scene_dict = scene_dict
-        self.scene = mock.MagicMock(attrs={})
-        self.scene.__getitem__.side_effect = scene_dict.__getitem__
+        for key in scene_dict:
+            pps_name = scene_dict[key].attrs['name']
+            self.scene[key] = scene_dict[key]
+            self.scene[key].attrs['name'] = pps_name
+
     def test_get_encoding(self):
         enc_exp_angles = {'dtype': 'int16',
                           'scale_factor': 0.01,
@@ -80,11 +86,8 @@ class TestGac2PPS(unittest.TestCase):
                             'complevel': 4, '_FillValue': -32001.0},
             'scanline_timestamps': {'dtype': 'int64', 'zlib': True,
                                     'complevel': 4, '_FillValue': -1.0},
-            'image11': enc_exp_angles,
-            'lon': enc_exp_coords,
-            'lat': enc_exp_coords
         }
-        encoding = gac2pps.get_encoding_gac(self.scene, angle_names=['image11'])
+        encoding = gac2pps.get_encoding_gac(self.scene)
         self.assertDictEqual(encoding, encoding_exp)
 
     def test_compose_filename(self):

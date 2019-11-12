@@ -37,6 +37,8 @@ except DistributionNotFound:
     # package is not installed
     pass
 
+PPS_ANGLE_TAGS = ['sunzenith', 'satzenith', 'azimuthdiff', 'sunazimuth', 'satazimuth']
+
 def make_azidiff_angle(sata, suna):
     """Calculate azimuth difference angle."""
     daz = abs(sata - suna)
@@ -61,65 +63,63 @@ def dt64_to_datetime(dt64):
         return dt
     return dt64
 
-
-def get_encoding(scene, bandnames, pps_tagnames, angle_names, chunks=None):
+def get_encoding(scene, bandnames, pps_tagnames, chunks=None):
     """Get netcdf encoding for all datasets."""
     encoding = {}
+    for dataset in scene.keys():
+        name, enc = get_band_encoding(scene[dataset.name], bandnames, pps_tagnames, chunks=chunks)
+        encoding[name] = enc
+    return encoding   
 
-    # Bands
-    for band in bandnames:
-        idtag = pps_tagnames[band]
-        try:
-            name = scene[band].attrs['name']
-        except KeyError:
-            logger.debug("No band named %s", band)
-            continue
-        if 'tb' in idtag:
-            encoding[name] = {'dtype': 'int16',
-                              'scale_factor': 0.01,
-                              '_FillValue': -32767,
-                              'zlib': True,
-                              'complevel': 4,
-                              'add_offset': 273.15}
-        else:
-            encoding[name] = {'dtype': 'int16',
-                              'scale_factor': 0.01,
-                              'zlib': True,
-                              'complevel': 4,
-                              '_FillValue': -32767,
-                              'add_offset': 0.0}
+def get_band_encoding(dataset, bandnames, pps_tagnames, chunks=None):
+    """Get netcdf encoding for a datasets."""
+    name = dataset.attrs['name']
+    id_tag = dataset.attrs.get('id_tag', None)
+    if id_tag is not None: 
+        if 'ch_tb' in id_tag:
+            # IR channel
+            enc = {'dtype': 'int16',
+                   'scale_factor': 0.01,
+                   '_FillValue': -32767,
+                   'zlib': True,
+                   'complevel': 4,
+                   'add_offset': 273.15}
+        if 'ch_r' in id_tag:
+            # Refl channel
+            enc = {'dtype': 'int16',
+                   'scale_factor': 0.01,
+                   'zlib': True,
+                   'complevel': 4,
+                   '_FillValue': -32767,
+                   'add_offset': 0.0}
+        if id_tag in PPS_ANGLE_TAGS:
+            # Angle
+            enc = {
+                'dtype': 'int16',
+                'scale_factor': 0.01,
+                'zlib': True,
+                'complevel': 4,
+                '_FillValue': -32767,
+                'add_offset': 0.0}
         if chunks is not None:
-            encoding[name]['chunksizes'] = chunks
-
-    # Angles 
-    for name in angle_names:
-        encoding[name] = {
-            'dtype': 'int16',
-            'scale_factor': 0.01,
-            'zlib': True,
-            'complevel': 4,
-            '_FillValue': -32767,
-            'add_offset': 0.0}
+            enc['chunksizes'] = chunks                
+    if name in ['lon', 'lat']:
+        # Lat/Lon
+        enc = {'dtype': 'float32',
+               'zlib': True,
+               'complevel': 4,
+               '_FillValue': -999.0}
         if chunks is not None:
-            encoding[name]['chunksizes'] = chunks
-
-    # Lat/Lon
-    for name in ['lon', 'lat']:
-        encoding[name] = {'dtype': 'float32',
-                          'zlib': True,
-                          'complevel': 4,
-                          '_FillValue': -999.0}
-        if chunks is not None:
-            encoding[name]['chunksizes'] = (chunks[1], chunks[2])
-
-    # pygac
-    if hasattr(scene, 'qual_flags'):
-        encoding['qual_flags'] = {'dtype': 'int16', 'zlib': True,
-                                  'complevel': 4, '_FillValue': -32001.0}
-    if hasattr(scene, 'scanline_timestamps'):
-        encoding['scanline_timestamps'] = {'dtype': 'int64', 'zlib': True,
-                                           'complevel': 4, '_FillValue': -1.0}
-    return encoding
+            enc['chunksizes'] = (chunks[1], chunks[2])
+    if name in ['qual_flags']:
+        # pygac qual flags
+        enc = {'dtype': 'int16', 'zlib': True,
+               'complevel': 4, '_FillValue': -32001.0}
+    if name in ['scanline_timestamps']:
+        # pygac scanline_timestamps
+        enc = {'dtype': 'int64', 'zlib': True,
+               'complevel': 4, '_FillValue': -1.0}  
+    return name, enc
 
 
 def compose_filename(scene, out_path, instrument, band=None):
@@ -151,4 +151,3 @@ def compose_filename(scene, out_path, instrument, band=None):
             datetime.strftime(dt64_to_datetime(start_time), '%Y%m%dT%H%M%S%f')[:-5],
             datetime.strftime(dt64_to_datetime(end_time), '%Y%m%dT%H%M%S%f')[:-5]))
     return filename
-

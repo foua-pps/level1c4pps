@@ -319,7 +319,6 @@ def get_encoding_seviri(scene):
     return get_encoding(scene,
                         bandnames=BANDNAMES,
                         pps_tagnames=PPS_TAGNAMES,
-                        angle_names=['image11', 'image12', 'image13'],
                         chunks=chunks)
 
 
