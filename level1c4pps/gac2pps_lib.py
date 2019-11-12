@@ -128,7 +128,7 @@ def set_header_and_band_attrs(scene):
             idtag = PPS_TAGNAMES.get(band, band)
             scene[band].attrs['id_tag'] = idtag
             scene[band].attrs['description'] = 'AVHRR ' + str(band)
-            scene[band].attrs['sun_earth_distance_correction_applied'] = 'False'
+            scene[band].attrs['sun_earth_distance_correction_applied'] = 'True'
             scene[band].attrs['sun_earth_distance_correction_factor'] = 1.0
             scene[band].attrs['sun_zenith_angle_correction_applied'] = 'False'
             scene[band].attrs['name'] = "image{:d}".format(image_num)
