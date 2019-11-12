@@ -43,7 +43,7 @@ from pyorbital.astronomy import get_alt_az, sun_zenith_angle
 from pyorbital.orbital import get_observer_look
 
 from level1c4pps.calibration_coefs import get_calibration_for_time, CALIB_MODE
-from level1c4pps import make_azidiff_angle, get_encoding, compose_filename
+from level1c4pps import make_azidiff_angle, get_encoding, compose_filename,ANGLE_ATTRIBUTES
 
 
 try:
@@ -278,36 +278,27 @@ def add_ancillary_datasets(scene, lons, lats, sunz, satz, azidiff,
     scene['sunzenith'] = xr.DataArray(
         da.from_array(sunz[:, :], chunks=chunks),
         dims=['y', 'x'], coords=angle_coords)
-    scene['sunzenith'].attrs['id_tag'] = 'sunzenith'
-    scene['sunzenith'].attrs['long_name'] = 'sun zenith angle'
-    scene['sunzenith'].attrs['standard_name'] = 'solar_zenith_angle'
-    scene['sunzenith'].attrs['valid_range'] = [0, 18000]
     scene['sunzenith'].attrs['name'] = "image11"
 
     # Satzenith
     scene['satzenith'] = xr.DataArray(
         da.from_array(satz[:, :], chunks=chunks),
         dims=['y', 'x'], coords=angle_coords)
-    scene['satzenith'].attrs['id_tag'] = 'satzenith'
-    scene['satzenith'].attrs['long_name'] = 'satellite zenith angle'
-    scene['satzenith'].attrs['standard_name'] = 'platform_zenith_angle'
-    scene['satzenith'].attrs['valid_range'] = [0, 9000]
     scene['satzenith'].attrs['name'] = "image12"
 
     # Azidiff
     scene['azimuthdiff'] = xr.DataArray(
         da.from_array(azidiff[:, :], chunks=chunks),
         dims=['y', 'x'], coords=angle_coords)
-    scene['azimuthdiff'].attrs['id_tag'] = 'azimuthdiff'
-    # scene['azimuthdiff'].attrs['standard_name'] = (
-    #    'angle_of_rotation_from_solar_azimuth_to_platform_azimuth')  # FIXME
-    scene['azimuthdiff'].attrs['long_name'] = 'absoulte azimuth difference angle'
-    scene['azimuthdiff'].attrs['valid_range'] = [0, 18000]
     scene['azimuthdiff'].attrs['name'] = "image13"
 
     # Some common attributes
     for angle in ['azimuthdiff', 'satzenith', 'sunzenith']:
         scene[angle].attrs['units'] = 'degree'
+        scene[angle].attrs['id_tag'] = angle
+        scene[angle].attrs['long_name'] = ANGLE_ATTRIBUTES['long_name'][angle] 
+        scene[angle].attrs['valid_range'] = ANGLE_ATTRIBUTES['valid_range'][angle] 
+        scene[angle].attrs['standard_name'] = ANGLE_ATTRIBUTES['standard_name'][angle] 
         for attr in ["start_time", "end_time"]:
             scene[angle].attrs[attr] = scene['IR_108'].attrs[attr]
 
