@@ -71,13 +71,125 @@ def get_encoding_gac(scene, angle_names):
                         chunks=None)
 
 
+def update_ancilliary_datasets(scene, image_num):
+    """Rename, delete and add some datasets and attributes."""
+    irch = scene['4']
+
+    # Rename latitude longitude
+    scene['lat'] = scene['latitude']
+    scene['lon'] = scene['longitude']
+    del scene['latitude']
+    del scene['longitude']
+    # Update attributes
+    scene['lat'].attrs['long_name'] = 'latitude coordinate'
+    scene['lon'].attrs['long_name'] = 'longitude coordinate'
+    del scene['lat'].coords['acq_time']
+    del scene['lon'].coords['acq_time']
+
+    # Create new data set scanline timestamps
+    first_jan_1970 = np.array([datetime(1970, 1, 1, 0, 0, 0)]).astype('datetime64[ns]')
+    scanline_timestamps = np.array(scene['qual_flags'].coords['acq_time'] -
+                                   first_jan_1970).astype(dtype='timedelta64[ms]').astype(np.float64)
+    scene['scanline_timestamps'] = xr.DataArray(da.from_array(scanline_timestamps),
+                                               dims=['y'], coords={'y': scene['qual_flags']['y']})
+    scene['scanline_timestamps'].attrs['units'] = 'Milliseconds since 1970-01-01 00:00:00 UTC'
+
+    # Update qual_flags attrs
+    scene['qual_flags'].attrs['id_tag'] = 'qual_flags'
+    scene['qual_flags'].attrs['long_name'] = 'pygac quality flags'
+    scene['qual_flags'].coords['time'] = irch.attrs['start_time']
+    del scene['qual_flags'].coords['acq_time']
+
+    # Rename angle datasets
+    scene['sunzenith'] = scene['solar_zenith_angle']
+    scene['satzenith'] = scene['sensor_zenith_angle']
+    # PPS need absolute azimuth angle differences
+    scene['azimuthdiff'] = abs(scene['sun_sensor_azimuth_difference_angle'])
+    scene['azimuthdiff'].attrs = scene['sun_sensor_azimuth_difference_angle'].attrs
+    scene['sunazimuth'] = scene['solar_azimuth_angle']
+    scene['satazimuth'] = scene['sensor_azimuth_angle']
+    del scene['solar_zenith_angle']
+    del scene['sensor_zenith_angle']
+    del scene['sun_sensor_azimuth_difference_angle']
+    del scene['solar_azimuth_angle']
+    del scene['sensor_azimuth_angle']
+
+    # Set angle specific attributes
+    scene['sunzenith'].attrs['long_name'] = 'sun zenith angle'
+    scene['sunzenith'].attrs['valid_range'] = [0, 18000]
+    scene['satzenith'].attrs['long_name'] = 'satellite zenith angle'
+    scene['satzenith'].attrs['valid_range'] = [0, 9000]
+    scene['azimuthdiff'].attrs['long_name'] = 'absolute azimuth difference angle'
+    scene['azimuthdiff'].attrs['valid_range'] = [0, 18000]
+    scene['sunazimuth'].attrs['long_name'] = 'sun azimuth angle degree clockwise from north'
+    scene['sunazimuth'].attrs['valid_range'] = [-18000, 18000]
+    scene['satazimuth'].attrs['long_name'] = 'satellite azimuth angle degree clockwise from north'
+    scene['satazimuth'].attrs['valid_range'] = [-18000, 18000]
+
+    angle_names = []
+    for image_num, angle in enumerate(['sunzenith', 'satzenith', 'azimuthdiff', 'sunazimuth', 'satazimuth']):
+        scene[angle].attrs['id_tag'] = angle
+        scene[angle].attrs['name'] = "image{:d}".format(image_num)
+        angle_names.append("image{:d}".format(image_num))
+        image_num += 1
+        scene[angle].attrs['coordinates'] = 'lon lat'
+        scene[angle].coords['time'] = irch.attrs['start_time']
+        # delete some attributes
+        del scene[angle].coords['acq_time']
+        del scene[angle].attrs['area']
+    return angle_names
+
+
+def set_header_and_band_attrs(scene):
+    """Set and delete some attributes."""
+
+    # Set some header attributes:
+    scene.attrs['instrument'] = "AVHRR"
+    scene.attrs['source'] = "gac2pps.py"
+    nowutc = datetime.utcnow()
+    scene.attrs['date_created'] = nowutc.strftime("%Y-%m-%dT%H:%M:%SZ")
+    irch = scene['4']
+    scene.attrs['platform'] = irch.attrs['platform_name']
+    scene.attrs['platform_name'] = irch.attrs['platform_name']
+    scene.attrs['orbit_number'] = '{:05d}'.format(irch.attrs['orbit_number'])
+    scene.attrs['orbit'] = scene.attrs['orbit_number']
+
+    # bands
+    image_num = 0 # name of first dataset is image0
+    for band in enumerate(BANDNAMES):
+        try:
+            idtag = PPS_TAGNAMES.get(band, band)
+            scene[band].attrs['id_tag'] = idtag
+            scene[band].attrs['description'] = 'AVHRR ' + str(band)
+            scene[band].attrs['sun_earth_distance_correction_applied'] = 'False'
+            scene[band].attrs['sun_earth_distance_correction_factor'] = 1.0
+            scene[band].attrs['sun_zenith_angle_correction_applied'] = 'False'
+            scene[band].attrs['name'] = "image{:d}".format(image_num)
+            image_num += 1
+            scene[band].attrs['coordinates'] = 'lon lat'
+            del scene[band].attrs['area']
+        except KeyError:
+            continue
+    return image_num
+
+
+def get_header_attrs(scene):
+    """Get global netcdf attributes."""
+    header_attrs = scene.attrs.copy()
+    irch = scene['4']
+    header_attrs['start_time'] = datetime.strftime(dt64_to_datetime(irch.attrs['start_time']),
+                                                   "%Y-%m-%d %H:%M:%S")
+    header_attrs['end_time'] = datetime.strftime(dt64_to_datetime(irch.attrs['end_time']),
+                                                 "%Y-%m-%d %H:%M:%S")
+    header_attrs['sensor'] = 'avhrr'
+    return header_attrs
+
+
 def process_one_file(gac_file, out_path='.', reader_kwargs=None):
     """Make level 1c files in PPS-format."""
     tic = time.time()
-    image_num = 0  # name of first dataset is image0
     scn_ = Scene(reader='avhrr_l1b_gaclac',
                  filenames=[gac_file], reader_kwargs=reader_kwargs)
-
     if 'avhrr-3' in scn_.attrs['sensor']:
         sensor = 'avhrr'
         scn_.load(BANDNAMES + ['latitude', 'longitude',
@@ -85,142 +197,17 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
                                'sensor_zenith_angle', 'solar_zenith_angle',
                                'solar_azimuth_angle', 'sensor_azimuth_angle',
                                'sun_sensor_azimuth_difference_angle'])
-    for band in BANDNAMES:
-        try:
-            idtag = PPS_TAGNAMES.get(band, band)
-            scn_[band].attrs['id_tag'] = idtag
-            scn_[band].attrs['description'] = 'AVHRR ' + str(band)
-            scn_[band].attrs['sun_earth_distance_correction_applied'] = 'False'
-            scn_[band].attrs['sun_earth_distance_correction_factor'] = 1.0
-            scn_[band].attrs['sun_zenith_angle_correction_applied'] = 'False'
-            scn_[band].attrs['name'] = "image{:d}".format(image_num)
-            scn_[band].attrs['coordinates'] = 'lon lat'
-            del scn_[band].attrs['area']
-            image_num += 1
-        except KeyError:
-            continue
 
-    # Set some header attributes:
-    scn_.attrs['instrument'] = sensor.upper()
-    scn_.attrs['source'] = "gac2pps.py"
-    nowutc = datetime.utcnow()
-    scn_.attrs['date_created'] = nowutc.strftime("%Y-%m-%dT%H:%M:%SZ")
+    # Set header and band attributes
+    image_num = set_header_and_band_attrs(scn_)
 
-    # Find lat/lon data
-    irch = scn_['4']
-    scn_.attrs['platform'] = irch.attrs['platform_name']
-    scn_.attrs['platform_name'] = irch.attrs['platform_name']
-    scn_.attrs['orbit_number'] = '{:05d}'.format(irch.attrs['orbit_number'])
-    scn_.attrs['orbit'] = scn_.attrs['orbit_number']
+    # Rename and set att header and band attributes
+    angle_names = update_ancilliary_datasets(scn_, image_num)
 
-    scn_['lat'] = scn_['latitude']
-    del scn_['latitude']
-    scn_['lat'].attrs['long_name'] = 'latitude coordinate'
-    del scn_['lat'].coords['acq_time']
-
-    scn_['lon'] = scn_['longitude']
-    del scn_['longitude']
-    scn_['lon'].attrs['long_name'] = 'longitude coordinate'
-    del scn_['lon'].coords['acq_time']
-
-    angle_names = []
-    scn_['sunzenith'] = scn_['solar_zenith_angle']
-    del scn_['solar_zenith_angle']
-    scn_['sunzenith'].attrs['id_tag'] = 'sunzenith'
-    scn_['sunzenith'].attrs['long_name'] = 'sun zenith angle'
-    scn_['sunzenith'].attrs['valid_range'] = [0, 18000]
-    scn_['sunzenith'].attrs['name'] = "image{:d}".format(image_num)
-    angle_names.append("image{:d}".format(image_num))
-    scn_['sunzenith'].attrs['coordinates'] = 'lon lat'
-    del scn_['sunzenith'].attrs['area']
-    scn_['sunzenith'].coords['time'] = irch.attrs['start_time']
-    del scn_['sunzenith'].coords['acq_time']
-    image_num += 1
-
-    # satzenith
-    scn_['satzenith'] = scn_['sensor_zenith_angle']
-    del scn_['sensor_zenith_angle']
-    scn_['satzenith'].attrs['id_tag'] = 'satzenith'
-    scn_['satzenith'].attrs['long_name'] = 'satellite zenith angle'
-    scn_['satzenith'].attrs['valid_range'] = [0, 9000]
-    scn_['satzenith'].attrs['name'] = "image{:d}".format(image_num)
-    angle_names.append("image{:d}".format(image_num))
-    scn_['satzenith'].attrs['coordinates'] = 'lon lat'
-    del scn_['satzenith'].attrs['area']
-    scn_['satzenith'].coords['time'] = irch.attrs['start_time']
-    del scn_['satzenith'].coords['acq_time']
-    image_num += 1
-
-    # azidiff
-    scn_['azimuthdiff'] = abs(scn_['sun_sensor_azimuth_difference_angle'])
-    scn_['azimuthdiff'].attrs = scn_['sun_sensor_azimuth_difference_angle'].attrs
-    del scn_['sun_sensor_azimuth_difference_angle']
-    scn_['azimuthdiff'].attrs['id_tag'] = 'azimuthdiff'
-    # scn_['azimuthdiff'].attrs['standard_name'] = (
-    #     'angle_of_rotation_from_solar_azimuth_to_platform_azimuth')
-    scn_['azimuthdiff'].attrs['long_name'] = 'absolute azimuth difference angle'
-    scn_['azimuthdiff'].attrs['valid_range'] = [0, 18000]
-    scn_['azimuthdiff'].attrs['name'] = "image{:d}".format(image_num)
-    angle_names.append("image{:d}".format(image_num))
-    scn_['azimuthdiff'].attrs['coordinates'] = 'lon lat'
-    del scn_['azimuthdiff'].attrs['area']
-    scn_['azimuthdiff'].coords['time'] = irch.attrs['start_time']
-    del scn_['azimuthdiff'].coords['acq_time']
-    image_num += 1
-
-    # satazimuth
-    scn_['sunazimuth'] = scn_['solar_azimuth_angle']
-    del scn_['solar_azimuth_angle']
-    scn_['sunazimuth'].attrs['id_tag'] = 'sunazimuth'
-    scn_['sunazimuth'].attrs['long_name'] = 'sun azimuth angle degree clockwise from north'
-    scn_['sunazimuth'].attrs['valid_range'] = [-18000, 18000]
-    scn_['sunazimuth'].attrs['name'] = "image{:d}".format(image_num)
-    angle_names.append("image{:d}".format(image_num))
-    scn_['sunazimuth'].attrs['coordinates'] = 'lon lat'
-    del scn_['sunazimuth'].attrs['area']
-    scn_['sunazimuth'].coords['time'] = irch.attrs['start_time']
-    del scn_['sunazimuth'].coords['acq_time']
-    image_num += 1
-
-    # satazimuth
-    scn_['satazimuth'] = scn_['sensor_azimuth_angle']
-    del scn_['sensor_azimuth_angle']
-    scn_['satazimuth'].attrs['id_tag'] = 'satazimuth'
-    scn_['satazimuth'].attrs['long_name'] = 'satellite azimuth angle degree clockwise from north'
-    scn_['satazimuth'].attrs['valid_range'] = [-18000, 18000]
-    scn_['satazimuth'].attrs['name'] = "image{:d}".format(image_num)
-    angle_names.append("image{:d}".format(image_num))
-    scn_['satazimuth'].attrs['coordinates'] = 'lon lat'
-    del scn_['satazimuth'].attrs['area']
-    scn_['satazimuth'].coords['time'] = irch.attrs['start_time']
-    del scn_['satazimuth'].coords['acq_time']
-    image_num += 1
-
-    # scanline timestamps
-    first_jan_1970 = np.array([datetime(1970, 1, 1, 0, 0, 0)]).astype('datetime64[ns]')
-    scanline_timestamps = np.array(scn_['qual_flags'].coords['acq_time'] -
-                                   first_jan_1970).astype(dtype='timedelta64[ms]').astype(np.float64)
-    scn_['scanline_timestamps'] = xr.DataArray(da.from_array(scanline_timestamps),
-                                               dims=['y'], coords={'y': scn_['qual_flags']['y']})
-    scn_['scanline_timestamps'].attrs['units'] = 'Milliseconds since 1970-01-01 00:00:00 UTC'
-
-    # qual_flags
-    scn_['qual_flags'].attrs['id_tag'] = 'qual_flags'
-    scn_['qual_flags'].attrs['long_name'] = 'pygac quality flags'
-    scn_['qual_flags'].coords['time'] = irch.attrs['start_time']
-    del scn_['qual_flags'].coords['acq_time']
-
-    header_attrs = scn_.attrs.copy()
-    header_attrs['start_time'] = datetime.strftime(dt64_to_datetime(irch.attrs['start_time']),
-                                                   "%Y-%m-%d %H:%M:%S")
-    header_attrs['end_time'] = datetime.strftime(dt64_to_datetime(irch.attrs['end_time']),
-                                                 "%Y-%m-%d %H:%M:%S")
-    header_attrs['sensor'] = sensor.lower()
-
-    filename = compose_filename(scn_, out_path, instrument='avhrr', channel=irch)
+    filename = compose_filename(scn_, out_path, instrument='avhrr', band=scn_['4'])
     scn_.save_datasets(writer='cf',
                        filename=filename,
-                       header_attrs=header_attrs,
+                       header_attrs=get_header_attrs(scn_),
                        engine='netcdf4',
                        flatten_attrs=True,
                        encoding=get_encoding_gac(scn_, angle_names))

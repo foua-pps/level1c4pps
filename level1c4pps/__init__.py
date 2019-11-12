@@ -37,7 +37,6 @@ except DistributionNotFound:
     # package is not installed
     pass
 
-
 def make_azidiff_angle(sata, suna):
     """Calculate azimuth difference angle."""
     daz = abs(sata - suna)
@@ -92,7 +91,7 @@ def get_encoding(scene, bandnames, pps_tagnames, angle_names, chunks=None):
         if chunks is not None:
             encoding[name]['chunksizes'] = chunks
 
-    # Angles and lat/lon
+    # Angles 
     for name in angle_names:
         encoding[name] = {
             'dtype': 'int16',
@@ -104,7 +103,7 @@ def get_encoding(scene, bandnames, pps_tagnames, angle_names, chunks=None):
         if chunks is not None:
             encoding[name]['chunksizes'] = chunks
 
-    # lat/lon
+    # Lat/Lon
     for name in ['lon', 'lat']:
         encoding[name] = {'dtype': 'float32',
                           'zlib': True,
@@ -114,33 +113,33 @@ def get_encoding(scene, bandnames, pps_tagnames, angle_names, chunks=None):
             encoding[name]['chunksizes'] = (chunks[1], chunks[2])
 
     # pygac
-    if 'qual_flags' in scene:
+    if hasattr(scene, 'qual_flags'):
         encoding['qual_flags'] = {'dtype': 'int16', 'zlib': True,
                                   'complevel': 4, '_FillValue': -32001.0}
-    if 'scanline_timestamps' in scene:
+    if hasattr(scene, 'scanline_timestamps'):
         encoding['scanline_timestamps'] = {'dtype': 'int64', 'zlib': True,
                                            'complevel': 4, '_FillValue': -1.0}
     return encoding
 
 
-def compose_filename(scene, out_path, instrument, channel=None):
+def compose_filename(scene, out_path, instrument, band=None):
     """Compose output filename.
 
     As default use the start and end time of the scene. 
     For SEVIRI this is the nominal timestamp of the scan (as in the HRIT files).
-    If a scene channel is supplied use that for start/end time.
+    If a scene band is supplied use that for start/end time.
 
     Args:
         scene: satpy scene
         outpath: output directory (string)
         instrument: lower case instrument (string)
-        channel: use start and end time from channel if supplied
+        band: use start and end time from band if supplied
     """
     start_time = scene.attrs['start_time']
     end_time = scene.attrs['end_time']
-    if channel is not None:
-        start_time = channel.attrs['start_time']
-        end_time = channel.attrs['end_time']
+    if band is not None:
+        start_time = band.attrs['start_time']
+        end_time = band.attrs['end_time']
     platform_name = scene.attrs['platform']
     orbit_number = int(scene.attrs['orbit_number'])
     filename = os.path.join(
@@ -152,3 +151,4 @@ def compose_filename(scene, out_path, instrument, channel=None):
             datetime.strftime(dt64_to_datetime(start_time), '%Y%m%dT%H%M%S%f')[:-5],
             datetime.strftime(dt64_to_datetime(end_time), '%Y%m%dT%H%M%S%f')[:-5]))
     return filename
+

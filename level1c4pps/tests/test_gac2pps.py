@@ -38,13 +38,21 @@ import level1c4pps.calibration_coefs as calib
 
 
 class TestGac2PPS(unittest.TestCase):
-    def test_get_encoding(self):
+    """Test gac2pps_lib."""
+    def setUp(self):
+        """Create a test scene."""
         gac2pps.BANDNAMES = ['1', '4']
         vis006 = mock.MagicMock(attrs={'name': 'image0'})
-        ir_108 = mock.MagicMock(attrs={'name': 'image1'})
+        ir_108 = mock.MagicMock(attrs={'name': 'image1',
+                                       'platform_name': 'tirosn',
+                                       'orbit_number': 99999})
         qual_f = mock.MagicMock(attrs={'name': 'qual_flags'})
         scan_t = mock.MagicMock(attrs={'name': 'scanline_timestamps'})
-        scene = {'1': vis006, '4': ir_108, 'qual_flags': qual_f, 'scanline_timestamps': scan_t}
+        scene_dict = {'1': vis006, '4': ir_108, 'qual_flags': qual_f, 'scanline_timestamps': scan_t}
+        self.scene_dict = scene_dict
+        self.scene = mock.MagicMock(attrs={})
+        self.scene.__getitem__.side_effect = scene_dict.__getitem__
+    def test_get_encoding(self):
         enc_exp_angles = {'dtype': 'int16',
                           'scale_factor': 0.01,
                           'zlib': True,
@@ -76,7 +84,7 @@ class TestGac2PPS(unittest.TestCase):
             'lon': enc_exp_coords,
             'lat': enc_exp_coords
         }
-        encoding = gac2pps.get_encoding_gac(scene, angle_names=['image11'])
+        encoding = gac2pps.get_encoding_gac(self.scene, angle_names=['image11'])
         self.assertDictEqual(encoding, encoding_exp)
 
     def test_compose_filename(self):
@@ -88,11 +96,14 @@ class TestGac2PPS(unittest.TestCase):
                                       'platform': 'Noaa19'})
         start_time = dt.datetime(2009, 7, 1, 12, 16)
         end_time = dt.datetime(2009, 7, 1, 12, 27)
-        channel = mock.MagicMock(attrs={'start_time': start_time,
+        band = mock.MagicMock(attrs={'start_time': start_time,
                                         'end_time': end_time})
         fname_exp = '/out/path/S_NWC_avhrr_noaa19_99999_20090701T1216000Z_20090701T1227000Z.nc'
-        fname = gac2pps.compose_filename(scene, '/out/path', 'avhrr', channel=channel)
+        fname = gac2pps.compose_filename(scene, '/out/path', 'avhrr', band=band)
         self.assertEqual(fname, fname_exp)
+
+    def test_set_header_and_band_attrs(self):
+        gac2pps.set_header_and_band_attrs(self.scene)
 
 
 def suite():
