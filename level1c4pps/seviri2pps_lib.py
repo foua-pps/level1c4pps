@@ -296,6 +296,7 @@ def add_ancillary_datasets(scene, lons, lats, sunz, satz, azidiff,
     for angle in ['azimuthdiff', 'satzenith', 'sunzenith']:
         scene[angle].attrs['units'] = 'degree'
         scene[angle].attrs['id_tag'] = angle
+        scene[angle].attrs['name'] = angle
         scene[angle].attrs['long_name'] = ANGLE_ATTRIBUTES['long_name'][angle] 
         scene[angle].attrs['valid_range'] = ANGLE_ATTRIBUTES['valid_range'][angle] 
         scene[angle].attrs['standard_name'] = ANGLE_ATTRIBUTES['standard_name'][angle] 

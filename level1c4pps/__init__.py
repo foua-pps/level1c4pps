@@ -174,6 +174,7 @@ def update_angle_attributes(scene, start_time, image_num=20):
         scene[angle].attrs['id_tag'] = angle
         scene[angle].attrs['name'] = "image{:d}".format(image_num)
         image_num += 1
+        scene[angle].attrs['name'] = angle
         scene[angle].attrs['coordinates'] = 'lon lat'
         scene[angle].attrs['long_name'] = ANGLE_ATTRIBUTES['long_name'][angle] 
         scene[angle].attrs['valid_range'] = ANGLE_ATTRIBUTES['valid_range'][angle] 
