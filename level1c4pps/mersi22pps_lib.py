@@ -121,16 +121,6 @@ def set_header_and_band_attrs(scene):
         nimg += 1
     return nimg
 
-def get_header_attrs_in(scene):
-    """Get global netcdf attributes."""
-    header_attrs = scene.attrs.copy()
-    irch = scene['4']
-    header_attrs['start_time'] = datetime.strftime(dt64_to_datetime(irch.attrs['start_time']),
-                                                   "%Y-%m-%d %H:%M:%S")
-    header_attrs['end_time'] = datetime.strftime(dt64_to_datetime(irch.attrs['end_time']),
-                                                 "%Y-%m-%d %H:%M:%S")
-    header_attrs['sensor'] = 'avhrr'
-    return header_attrs
 
 def process_one_scene(scene_files, out_path):
     """Make level 1c files in PPS-format."""
@@ -160,7 +150,7 @@ def process_one_scene(scene_files, out_path):
     filename = compose_filename(scn_, out_path, instrument='mersi2', band=irch)
     scn_.save_datasets(writer='cf',
                        filename=filename,
-                       header_attrs=get_header_attrs(scn_, band=irch, sensor='mersi2'),
+                       header_attrs=get_header_attrs(scn_, band=irch, sensor='mersi-2'),
                        engine='netcdf4',
                        include_lonlats=False,
                        flatten_attrs=True,
