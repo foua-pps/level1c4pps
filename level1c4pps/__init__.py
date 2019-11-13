@@ -167,9 +167,10 @@ def rename_latitude_longitude(scene):
 
 
 def update_angle_attributes(scene, start_time):
-    # Set angle attributes
+    """Set and delete angle attributes."""
     for angle in ['sunzenith', 'satzenith', 'azimuthdiff', 'sunazimuth', 'satazimuth']:
         if angle not in scene.keys() and angle in ['sunazimuth', 'satazimuth']:
+            # azimuth angles not always there
             continue
         scene[angle].attrs['id_tag'] = angle
         scene[angle].attrs['name'] = angle
