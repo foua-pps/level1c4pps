@@ -32,6 +32,7 @@ import dask.array as da
 import numpy as np
 from datetime import datetime
 from satpy.scene import Scene
+import pygac  # testing that pygac is available # noqa: F401
 from level1c4pps import (dt64_to_datetime, get_encoding, compose_filename, 
                          rename_latitude_longitude, update_angle_attributes, 
                          get_header_attrs)
