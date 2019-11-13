@@ -151,11 +151,11 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
                  filenames=[gac_file], reader_kwargs=reader_kwargs)
     if 'avhrr-3' in scn_.attrs['sensor']:
         sensor = 'avhrr'
-        scn_.load(BANDNAMES + ['latitude', 'longitude',
-                               'qual_flags',
-                               'sensor_zenith_angle', 'solar_zenith_angle',
-                               'solar_azimuth_angle', 'sensor_azimuth_angle',
-                               'sun_sensor_azimuth_difference_angle'])
+    scn_.load(BANDNAMES + ['latitude', 'longitude',
+                           'qual_flags',
+                           'sensor_zenith_angle', 'solar_zenith_angle',
+                           'solar_azimuth_angle', 'sensor_azimuth_angle',
+                           'sun_sensor_azimuth_difference_angle'])
     # one ir channel
     irch = scn_['4']
 
