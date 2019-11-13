@@ -114,6 +114,7 @@ def set_header_and_band_attrs(scene):
     # Set some header attributes:
     scene.attrs['instrument'] = "AVHRR"
     scene.attrs['source'] = "gac2pps.py"
+    scene.attrs['history'] = "Created by level1c4pps."  # history attr missing in satpy=0.18.2
     nowutc = datetime.utcnow()
     scene.attrs['date_created'] = nowutc.strftime("%Y-%m-%dT%H:%M:%SZ")
     irch = scene['4']
