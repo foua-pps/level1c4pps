@@ -28,8 +28,6 @@ import datetime as dt
 import numpy as np
 import xarray as xr
 import sys
-import mock
-from copy import copy
 if sys.version_info < (2, 7):
     import unittest2 as unittest
 else:
@@ -87,6 +85,7 @@ class TestUpdateAnglesAttribute(unittest.TestCase):
     """Test setting of attributes for angles."""
 
     def test_update_angle_attributes(self):
+        """Test setting of attributes for angles."""
         start_time = dt.datetime(2009, 7, 1, 12, 15)
 
         class AngleObj(object):

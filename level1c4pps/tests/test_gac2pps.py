@@ -24,19 +24,15 @@
 """Unit tests for the gac2pps_lib module."""
 
 import datetime as dt
-import numpy as np
 import netCDF4
-from pyresample.geometry import AreaDefinition
 import unittest
 try:
     from unittest import mock
 except ImportError:
     import mock
-import xarray as xr
 from satpy import Scene
 
 import level1c4pps.gac2pps_lib as gac2pps
-import level1c4pps.calibration_coefs as calib
 
 
 class TestGac2PPS(unittest.TestCase):
@@ -60,16 +56,7 @@ class TestGac2PPS(unittest.TestCase):
             self.scene[key].attrs['name'] = pps_name
 
     def test_get_encoding(self):
-        enc_exp_angles = {'dtype': 'int16',
-                          'scale_factor': 0.01,
-                          'zlib': True,
-                          'complevel': 4,
-                          '_FillValue': -32767,
-                          'add_offset': 0.0}
-        enc_exp_coords = {'dtype': 'float32',
-                          'zlib': True,
-                          'complevel': 4,
-                          '_FillValue': -999.0}
+        """Test the encoding for GAC."""
         encoding_exp = {
             'image0': {'dtype': 'int16',
                        'scale_factor': 0.01,
@@ -92,6 +79,7 @@ class TestGac2PPS(unittest.TestCase):
         self.assertDictEqual(encoding, encoding_exp)
 
     def test_compose_filename(self):
+        """Test compose filename for GAC."""
         start_time = dt.datetime(2009, 7, 1, 12, 15)
         end_time = dt.datetime(2009, 7, 1, 12, 30)
         scene = mock.MagicMock(attrs={'start_time': start_time,
@@ -107,11 +95,13 @@ class TestGac2PPS(unittest.TestCase):
         self.assertEqual(fname, fname_exp)
 
     def test_set_header_and_band_attrs(self):
+        """Test to set header_and_band_attrs."""
         gac2pps.set_header_and_band_attrs(self.scene)
 
     def test_process_one_file(self):
-        print(gac2pps.process_one_file('./level1c4pps/tests/NSS.GHRR.TN.D80003.S1147.E1332.B0630506.GC',
-                                       out_path='./level1c4pps/tests/'))
+        """Test process one file for one example file."""
+        gac2pps.process_one_file('./level1c4pps/tests/NSS.GHRR.TN.D80003.S1147.E1332.B0630506.GC',
+                                 out_path='./level1c4pps/tests/')
         filename = './level1c4pps/tests/S_NWC_avhrr_tirosn_06305_19800103T1147154Z_19800103T1147229Z.nc'
         pps_nc = netCDF4.Dataset(filename, 'r', format='NETCDF4')
         self.assertEqual(sorted(pps_nc.__dict__.keys()),

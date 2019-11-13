@@ -105,6 +105,7 @@ def get_solar_angles(scene, lons, lats):
 
     Returns:
         Solar azimuth angle, Solar zenith angle in degrees
+
     """
     suna = np.full(lons.shape, np.nan)
     sunz = np.full(lons.shape, np.nan)
@@ -124,6 +125,7 @@ def get_satellite_angles(dataset, lons, lats):
 
     Returns:
         Satellite azimuth angle, Satellite zenith angle in degrees
+
     """
     sat_lon, sat_lat, sat_alt = satpy.utils.get_satpos(dataset)
 
@@ -246,6 +248,7 @@ def add_ancillary_datasets(scene, lons, lats, sunz, satz, azidiff,
         satz: Satellite zenith angle
         azidiff: Absoulte azimuth difference angle
         chunks: Chunksize
+
     """
     start_time = scene['IR_108'].attrs['start_time']
     end_time = scene['IR_108'].attrs['end_time']

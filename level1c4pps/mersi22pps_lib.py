@@ -25,20 +25,12 @@
 """Functions to convert MERSI-2 level-1 data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
 
 import os
-import numpy as np
-import xarray as xr
-import dask.array as da
-from glob import glob
 import time
 from datetime import datetime
 from satpy.scene import Scene
-from trollsift.parser import globify, Parser
-from pyorbital.astronomy import get_alt_az, sun_zenith_angle
-from pyorbital.orbital import get_observer_look
 from level1c4pps import (make_azidiff_angle, get_encoding, compose_filename,
                          ANGLE_ATTRIBUTES, rename_latitude_longitude,
                          update_angle_attributes, get_header_attrs)
-import pyresample
 import logging
 
 # Example:

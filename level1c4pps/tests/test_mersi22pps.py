@@ -24,14 +24,11 @@
 """Unit tests for the gac2pps_lib module."""
 
 import datetime as dt
-import numpy as np
-from pyresample.geometry import AreaDefinition
 import unittest
 try:
     from unittest import mock
 except ImportError:
     import mock
-import xarray as xr
 from satpy import Scene
 
 import level1c4pps.mersi22pps_lib as mersi22pps
@@ -61,16 +58,13 @@ class TestMersi22PPS(unittest.TestCase):
         self.scene.attrs['sensor'] = ['mersi2']
 
     def test_get_encoding(self):
+        """Test encoding for MERSI-2."""
         enc_exp_angles = {'dtype': 'int16',
                           'scale_factor': 0.01,
                           'zlib': True,
                           'complevel': 4,
                           '_FillValue': -32767,
                           'add_offset': 0.0}
-        enc_exp_coords = {'dtype': 'float32',
-                          'zlib': True,
-                          'complevel': 4,
-                          '_FillValue': -999.0}
         encoding_exp = {
             'image0': {'dtype': 'int16',
                        'scale_factor': 0.01,
@@ -90,6 +84,7 @@ class TestMersi22PPS(unittest.TestCase):
         self.assertDictEqual(encoding, encoding_exp)
 
     def test_compose_filename(self):
+        """Test compose filename for MERSI-2."""
         start_time = dt.datetime(2009, 7, 1, 12, 15)
         end_time = dt.datetime(2009, 7, 1, 12, 30)
         scene = mock.MagicMock(attrs={'start_time': start_time,
@@ -105,6 +100,7 @@ class TestMersi22PPS(unittest.TestCase):
         self.assertEqual(fname, fname_exp)
 
     def test_set_header_and_band_attrs(self):
+        """Test to set header_and_band_attrs."""
         mersi22pps.set_header_and_band_attrs(self.scene)
 
 

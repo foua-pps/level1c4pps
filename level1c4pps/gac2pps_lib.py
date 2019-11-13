@@ -33,7 +33,7 @@ import numpy as np
 from datetime import datetime
 from satpy.scene import Scene
 import pygac  # testing that pygac is available # noqa: F401
-from level1c4pps import (dt64_to_datetime, get_encoding, compose_filename,
+from level1c4pps import (get_encoding, compose_filename,
                          rename_latitude_longitude, update_angle_attributes,
                          get_header_attrs)
 import logging
@@ -111,8 +111,6 @@ def convert_angles(scene, satpy_angle_names):
 
 def set_header_and_band_attrs(scene):
     """Set and delete some attributes."""
-
-    # Set some header attributes:
     scene.attrs['instrument'] = "AVHRR"
     scene.attrs['source'] = "gac2pps.py"
     scene.attrs['history'] = "Created by level1c4pps."  # history attr missing in satpy=0.18.2
@@ -150,8 +148,7 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
     tic = time.time()
     scn_ = Scene(reader='avhrr_l1b_gaclac',
                  filenames=[gac_file], reader_kwargs=reader_kwargs)
-    if 'avhrr-3' in scn_.attrs['sensor']:
-        sensor = 'avhrr'
+
     scn_.load(BANDNAMES + ['latitude', 'longitude',
                            'qual_flags',
                            'sensor_zenith_angle', 'solar_zenith_angle',

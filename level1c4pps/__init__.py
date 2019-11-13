@@ -193,7 +193,7 @@ def update_angle_attributes(scene, start_time):
 def compose_filename(scene, out_path, instrument, band=None):
     """Compose output filename.
 
-    As default use the start and end time of the scene. 
+    As default use the start and end time of the scene.
     For SEVIRI this is the nominal timestamp of the scan (as in the HRIT files).
     If a scene band is supplied use that for start/end time.
 
@@ -202,6 +202,7 @@ def compose_filename(scene, out_path, instrument, band=None):
         outpath: output directory (string)
         instrument: lower case instrument (string)
         band: use start and end time from band if supplied
+
     """
     start_time = scene.attrs['start_time']
     end_time = scene.attrs['end_time']

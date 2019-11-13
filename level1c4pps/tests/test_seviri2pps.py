@@ -237,7 +237,7 @@ class TestSeviri2PPS(unittest.TestCase):
                                       np.datetime64(dt.datetime(2009, 7, 1, 1)))
 
     def test_add_ancillary_datasets(self):
-        """Test adding ancillary datasets"""
+        """Test adding ancillary datasets."""
         start_time = dt.datetime(2009, 7, 1, 0)
         end_time = dt.datetime(2009, 7, 1, 1)
         yvals = np.array([-1.0, 1.0])
@@ -296,6 +296,7 @@ class TestSeviri2PPS(unittest.TestCase):
             self.assertEqual(scene[name].attrs['end_time'], end_time)
 
     def test_compose_filename(self):
+        """Test compose filename for seviri."""
         start_time = dt.datetime(2009, 7, 1, 12, 15)
         end_time = dt.datetime(2009, 7, 1, 12, 30)
         scene = mock.MagicMock(attrs={'start_time': start_time,
@@ -307,6 +308,7 @@ class TestSeviri2PPS(unittest.TestCase):
         self.assertEqual(fname, fname_exp)
 
     def test_get_encoding(self):
+        """Test get encoding."""
         seviri2pps.BANDNAMES = ['VIS006', 'IR_108']
         vis006 = mock.MagicMock(attrs={'name': 'image0',
                                        'id_tag': 'ch_r06'})
@@ -365,6 +367,7 @@ class TestSeviri2PPS(unittest.TestCase):
         self.assertDictEqual(encoding, encoding_exp)
 
     def test_get_header_attrs(self):
+        """Test get the header attributes."""
         start_time = dt.datetime(2009, 7, 1, 12, 15)
         end_time = dt.datetime(2009, 7, 1, 12, 30)
         scene = mock.MagicMock(attrs={'foo': 'bar',
