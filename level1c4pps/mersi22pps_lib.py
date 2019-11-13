@@ -116,6 +116,8 @@ def set_header_and_band_attrs(scene):
         scene[band].attrs['sun_zenith_angle_correction_applied'] = 'False'
         scene[band].attrs['name'] = "image{:d}".format(nimg)
         scene[band].attrs['coordinates'] = 'lon lat'
+        # Add time coordinate. To make cfwriter aware that we want 3D data.
+        scene[band].coords['time'] = irch.attrs['start_time']
         nimg += 1
     return nimg
 
