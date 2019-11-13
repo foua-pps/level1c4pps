@@ -25,6 +25,7 @@
 
 import datetime as dt
 import numpy as np
+import netCDF4
 from pyresample.geometry import AreaDefinition
 import unittest
 try:
@@ -42,7 +43,6 @@ class TestGac2PPS(unittest.TestCase):
     """Test gac2pps_lib."""
     def setUp(self):
         """Create a test scene."""
-        gac2pps.BANDNAMES = ['1', '4']
         vis006 = mock.MagicMock(attrs={'name': 'image0',
                                        'id_tag': 'ch_r06'})
         ir_108 = mock.MagicMock(attrs={'name': 'image1',
@@ -107,6 +107,22 @@ class TestGac2PPS(unittest.TestCase):
 
     def test_set_header_and_band_attrs(self):
         gac2pps.set_header_and_band_attrs(self.scene)
+
+    def test_process_one_file(self):
+        print(gac2pps.process_one_file('./level1c4pps/tests/NSS.GHRR.TN.D80003.S1147.E1332.B0630506.GC',
+                                       out_path='./level1c4pps/tests/'))
+        filename = './level1c4pps/tests/S_NWC_avhrr_tirosn_06305_19800103T1147154Z_19800103T1147229Z.nc'
+        pps_nc = netCDF4.Dataset(filename, 'r', format='NETCDF4')  
+        self.assertEqual(sorted(pps_nc.__dict__.keys()), 
+                         sorted(['date_created', 'end_time', 'history', 'instrument', 
+                                 'orbit', 'orbit_number', 'platform', 'platform_name', 
+                                 'sensor', 'source', 'start_time', 'Conventions']))
+
+        self.assertEqual(sorted(pps_nc.variables.keys()), 
+                         sorted(['satzenith', 'azimuthdiff', 'satazimuth', 'sunazimuth', 'sunzenith', 
+                                 'time', 'y', 'num_flags', 'lon', 'lat', 'qual_flags', 
+                                 'image1', 'image3', 'image0', 'image2', 
+                                 'scanline_timestamps', 'time_bnds']))
 
 
 def suite():
