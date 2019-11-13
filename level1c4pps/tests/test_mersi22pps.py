@@ -39,6 +39,7 @@ import level1c4pps.mersi22pps_lib as mersi22pps
 
 class TestMersi22PPS(unittest.TestCase):
     """Test mersi22pps_lib."""
+
     def setUp(self):
         """Create a test scene."""
         mersi22pps.BANDNAMES = ['3', '24']
@@ -83,7 +84,7 @@ class TestMersi22PPS(unittest.TestCase):
                        'zlib': True,
                        'complevel': 4,
                        'add_offset': 273.15},
-             'satzenith': enc_exp_angles
+            'satzenith': enc_exp_angles
         }
         encoding = mersi22pps.get_encoding_mersi2(self.scene)
         self.assertDictEqual(encoding, encoding_exp)
@@ -98,7 +99,7 @@ class TestMersi22PPS(unittest.TestCase):
         start_time = dt.datetime(2009, 7, 1, 12, 16)
         end_time = dt.datetime(2009, 7, 1, 12, 27)
         band = mock.MagicMock(attrs={'start_time': start_time,
-                                        'end_time': end_time})
+                                     'end_time': end_time})
         fname_exp = '/out/path/S_NWC_mersi2_noaa19_99999_20090701T1216000Z_20090701T1227000Z.nc'
         fname = mersi22pps.compose_filename(scene, '/out/path', 'mersi2', band=band)
         self.assertEqual(fname, fname_exp)

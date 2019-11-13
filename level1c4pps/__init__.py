@@ -39,14 +39,14 @@ except DistributionNotFound:
 
 PPS_ANGLE_TAGS = ['sunzenith', 'satzenith', 'azimuthdiff', 'sunazimuth', 'satazimuth']
 ANGLE_ATTRIBUTES = {
-    'long_name' : {
+    'long_name': {
         'sunzenith': 'sun zenith angle',
         'satzenith': 'satellite zenith angle',
         'azimuthdiff': 'absolute azimuth difference angle',
         'sunazimuth': 'sun azimuth angle degree clockwise from north',
         'satazimuth': 'satellite azimuth angle degree clockwise from north',
-    },     
-    'valid_range' : {
+    },
+    'valid_range': {
         'sunzenith': [0, 18000],
         'satzenith': [0, 9000],
         'azimuthdiff': [0, 18000],
@@ -66,6 +66,7 @@ ANGLE_ATTRIBUTES = {
         'satazimuth': 'platform_azimuth_angle',  # or sensor?
     }
 }
+
 
 def make_azidiff_angle(sata, suna):
     """Calculate azimuth difference angle."""
@@ -91,19 +92,21 @@ def dt64_to_datetime(dt64):
         return dt
     return dt64
 
+
 def get_encoding(scene, bandnames, pps_tagnames, chunks=None):
     """Get netcdf encoding for all datasets."""
     encoding = {}
     for dataset in scene.keys():
         name, enc = get_band_encoding(scene[dataset.name], bandnames, pps_tagnames, chunks=chunks)
         encoding[name] = enc
-    return encoding   
+    return encoding
+
 
 def get_band_encoding(dataset, bandnames, pps_tagnames, chunks=None):
     """Get netcdf encoding for a datasets."""
     name = dataset.attrs['name']
     id_tag = dataset.attrs.get('id_tag', None)
-    if id_tag is not None: 
+    if id_tag is not None:
         if 'ch_tb' in id_tag:
             # IR channel
             enc = {'dtype': 'int16',
@@ -130,7 +133,7 @@ def get_band_encoding(dataset, bandnames, pps_tagnames, chunks=None):
                 '_FillValue': -32767,
                 'add_offset': 0.0}
         if chunks is not None:
-            enc['chunksizes'] = chunks                
+            enc['chunksizes'] = chunks
     if name in ['lon', 'lat']:
         # Lat/Lon
         enc = {'dtype': 'float32',
@@ -146,7 +149,7 @@ def get_band_encoding(dataset, bandnames, pps_tagnames, chunks=None):
     if name in ['scanline_timestamps']:
         # pygac scanline_timestamps
         enc = {'dtype': 'int64', 'zlib': True,
-               'complevel': 4, '_FillValue': -1.0}  
+               'complevel': 4, '_FillValue': -1.0}
     return name, enc
 
 
@@ -175,10 +178,10 @@ def update_angle_attributes(scene, start_time):
         scene[angle].attrs['id_tag'] = angle
         scene[angle].attrs['name'] = angle
         scene[angle].attrs['coordinates'] = 'lon lat'
-        scene[angle].attrs['long_name'] = ANGLE_ATTRIBUTES['long_name'][angle] 
-        scene[angle].attrs['valid_range'] = ANGLE_ATTRIBUTES['valid_range'][angle] 
-        scene[angle].attrs['standard_name'] = ANGLE_ATTRIBUTES['standard_name'][angle] 
-        scene[angle].coords['time'] =  start_time
+        scene[angle].attrs['long_name'] = ANGLE_ATTRIBUTES['long_name'][angle]
+        scene[angle].attrs['valid_range'] = ANGLE_ATTRIBUTES['valid_range'][angle]
+        scene[angle].attrs['standard_name'] = ANGLE_ATTRIBUTES['standard_name'][angle]
+        scene[angle].coords['time'] = start_time
         # delete some attributes
         del scene[angle].attrs['area']
         try:
@@ -224,7 +227,6 @@ def get_header_attrs(scene, band, sensor='avhrr'):
     header_attrs['start_time'] = datetime.strftime(dt64_to_datetime(band.attrs['start_time']),
                                                    "%Y-%m-%d %H:%M:%S")
     header_attrs['end_time'] = datetime.strftime(dt64_to_datetime(band.attrs['end_time']),
-                                                 "%Y-%m-%d %H:%M:%S")  
+                                                 "%Y-%m-%d %H:%M:%S")
     header_attrs['sensor'] = sensor
     return header_attrs
-

@@ -33,8 +33,8 @@ import numpy as np
 from datetime import datetime
 from satpy.scene import Scene
 import pygac  # testing that pygac is available # noqa: F401
-from level1c4pps import (dt64_to_datetime, get_encoding, compose_filename, 
-                         rename_latitude_longitude, update_angle_attributes, 
+from level1c4pps import (dt64_to_datetime, get_encoding, compose_filename,
+                         rename_latitude_longitude, update_angle_attributes,
                          get_header_attrs)
 import logging
 
@@ -64,11 +64,12 @@ INSTRUMENTS = {'tirosn': 'avhrr',
                'noaa18': 'avhrr/3',
                'noaa19': 'avhrr/3'}
 SATPY_ANGLE_NAMES = {
-    'sunzenith':'solar_zenith_angle',
-    'satzenith':'sensor_zenith_angle',
+    'sunzenith': 'solar_zenith_angle',
+    'satzenith': 'sensor_zenith_angle',
     'azimuthdiff': 'sun_sensor_azimuth_difference_angle',
     'sunazimuth': 'solar_azimuth_angle',
     'satazimuth': 'sensor_azimuth_angle'}
+
 
 def get_encoding_gac(scene):
     """Get netcdf encoding for all datasets."""
@@ -87,7 +88,7 @@ def update_ancilliary_datasets(scene):
     scanline_timestamps = np.array(scene['qual_flags'].coords['acq_time'] -
                                    first_jan_1970).astype(dtype='timedelta64[ms]').astype(np.float64)
     scene['scanline_timestamps'] = xr.DataArray(da.from_array(scanline_timestamps),
-                                               dims=['y'], coords={'y': scene['qual_flags']['y']})
+                                                dims=['y'], coords={'y': scene['qual_flags']['y']})
     scene['scanline_timestamps'].attrs['units'] = 'Milliseconds since 1970-01-01 00:00:00 UTC'
 
     # Update qual_flags attrs
@@ -100,11 +101,11 @@ def update_ancilliary_datasets(scene):
 def convert_angles(scene, satpy_angle_names):
     """Convert angles to pps format."""
     for angle in ['sunzenith', 'satzenith', 'sunazimuth', 'satazimuth']:
-        scene[angle] =  scene[satpy_angle_names[angle]]
+        scene[angle] = scene[satpy_angle_names[angle]]
         del scene[satpy_angle_names[angle]]
-    angle ='azimuthdiff'
-    scene[angle] =  abs(scene[satpy_angle_names[angle]])
-    scene[angle].attrs =  scene[satpy_angle_names[angle]].attrs
+    angle = 'azimuthdiff'
+    scene[angle] = abs(scene[satpy_angle_names[angle]])
+    scene[angle].attrs = scene[satpy_angle_names[angle]].attrs
     del scene[satpy_angle_names[angle]]
 
 
@@ -124,7 +125,7 @@ def set_header_and_band_attrs(scene):
     scene.attrs['orbit'] = scene.attrs['orbit_number']
 
     # bands
-    image_num = 0 # name of first dataset is image0
+    image_num = 0  # name of first dataset is image0
     for band in BANDNAMES:
         try:
             idtag = PPS_TAGNAMES.get(band, band)

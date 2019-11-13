@@ -82,10 +82,13 @@ class TestAzimuthDifferenceAngles(unittest.TestCase):
         xdaz = make_azidiff_angle(XSAT_AZ, XSUN_AZ)
         xr.testing.assert_allclose(xdaz, XRES, rtol=0.00001)
 
+
 class TestUpdateAnglesAttribute(unittest.TestCase):
     """Test setting of attributes for angles."""
+
     def test_update_angle_attributes(self):
         start_time = dt.datetime(2009, 7, 1, 12, 15)
+
         class AngleObj(object):
             def __init__(self):
                 self.attrs = {'area': 'xx'}
@@ -104,6 +107,7 @@ class TestUpdateAnglesAttribute(unittest.TestCase):
         self.assertIn('time', angle_dict['satzenith'].coords.keys())
         self.assertIn('long_name', angle_dict['satzenith'].attrs.keys())
         self.assertIn('standard_name', angle_dict['satzenith'].attrs.keys())
+
 
 def suite():
     """Create the test suite for test_atm_correction_ir."""

@@ -35,7 +35,7 @@ from satpy.scene import Scene
 from trollsift.parser import globify, Parser
 from pyorbital.astronomy import get_alt_az, sun_zenith_angle
 from pyorbital.orbital import get_observer_look
-from level1c4pps import (make_azidiff_angle, get_encoding, compose_filename, 
+from level1c4pps import (make_azidiff_angle, get_encoding, compose_filename,
                          ANGLE_ATTRIBUTES, rename_latitude_longitude,
                          update_angle_attributes, get_header_attrs)
 import pyresample
@@ -65,12 +65,13 @@ PPS_TAGNAMES = {'3': 'ch_r06',
                 '25': 'ch_tb12'}
 
 SATPY_ANGLE_NAMES = {
-    'sunzenith':'solar_zenith_angle',
-    'satzenith':'satellite_zenith_angle',
+    'sunzenith': 'solar_zenith_angle',
+    'satzenith': 'satellite_zenith_angle',
     'sunazimuth': 'solar_azimuth_angle',
     'satazimuth': 'satellite_azimuth_angle'}
 
 MERSI2_LEVEL1_FILE_PATTERN = 'tf{start_time:%Y%j%H%M%S}.{platform_shortname:4s}-X_MERSI_{dataset}_L1B.HDF'
+
 
 def get_encoding_mersi2(scene):
     """Get netcdf encoding for all datasets."""
@@ -79,15 +80,17 @@ def get_encoding_mersi2(scene):
                         PPS_TAGNAMES,
                         chunks=None)
 
+
 def convert_angles(scene, satpy_angle_names):
     """Convert angles to pps format."""
     for angle in ['sunzenith', 'satzenith', 'sunazimuth', 'satazimuth']:
-        scene[angle] =  scene[satpy_angle_names[angle]]
+        scene[angle] = scene[satpy_angle_names[angle]]
         del scene[satpy_angle_names[angle]]
-    scene['azimuthdiff'] = make_azidiff_angle(scene['satazimuth'] , scene['sunazimuth'])
-    scene['azimuthdiff'].attrs =  scene['sunazimuth'].attrs
+    scene['azimuthdiff'] = make_azidiff_angle(scene['satazimuth'], scene['sunazimuth'])
+    scene['azimuthdiff'].attrs = scene['sunazimuth'].attrs
     del scene['satazimuth']
     del scene['sunazimuth']
+
 
 def set_header_and_band_attrs(scene):
     """Set and delete some attributes."""
@@ -140,12 +143,12 @@ def process_one_scene(scene_files, out_path):
 
     # Rename longitude, latitude to lon, lat.
     rename_latitude_longitude(scn_)
-    
+
     # Convert angles to PPS
     convert_angles(scn_, SATPY_ANGLE_NAMES)
     update_angle_attributes(scn_, irch.attrs['start_time'])
     for angle in ['sunzenith', 'satzenith', 'azimuthdiff']:
-        scn_[angle].attrs['file_key'] = ANGLE_ATTRIBUTES['mersi2_file_key'][angle] 
+        scn_[angle].attrs['file_key'] = ANGLE_ATTRIBUTES['mersi2_file_key'][angle]
 
     filename = compose_filename(scn_, out_path, instrument='mersi2', band=irch)
     scn_.save_datasets(writer='cf',

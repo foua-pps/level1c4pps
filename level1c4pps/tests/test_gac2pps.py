@@ -41,6 +41,7 @@ import level1c4pps.calibration_coefs as calib
 
 class TestGac2PPS(unittest.TestCase):
     """Test gac2pps_lib."""
+
     def setUp(self):
         """Create a test scene."""
         vis006 = mock.MagicMock(attrs={'name': 'image0',
@@ -100,7 +101,7 @@ class TestGac2PPS(unittest.TestCase):
         start_time = dt.datetime(2009, 7, 1, 12, 16)
         end_time = dt.datetime(2009, 7, 1, 12, 27)
         band = mock.MagicMock(attrs={'start_time': start_time,
-                                        'end_time': end_time})
+                                     'end_time': end_time})
         fname_exp = '/out/path/S_NWC_avhrr_noaa19_99999_20090701T1216000Z_20090701T1227000Z.nc'
         fname = gac2pps.compose_filename(scene, '/out/path', 'avhrr', band=band)
         self.assertEqual(fname, fname_exp)
@@ -112,16 +113,16 @@ class TestGac2PPS(unittest.TestCase):
         print(gac2pps.process_one_file('./level1c4pps/tests/NSS.GHRR.TN.D80003.S1147.E1332.B0630506.GC',
                                        out_path='./level1c4pps/tests/'))
         filename = './level1c4pps/tests/S_NWC_avhrr_tirosn_06305_19800103T1147154Z_19800103T1147229Z.nc'
-        pps_nc = netCDF4.Dataset(filename, 'r', format='NETCDF4')  
-        self.assertEqual(sorted(pps_nc.__dict__.keys()), 
-                         sorted(['date_created', 'end_time', 'history', 'instrument', 
-                                 'orbit', 'orbit_number', 'platform', 'platform_name', 
+        pps_nc = netCDF4.Dataset(filename, 'r', format='NETCDF4')
+        self.assertEqual(sorted(pps_nc.__dict__.keys()),
+                         sorted(['date_created', 'end_time', 'history', 'instrument',
+                                 'orbit', 'orbit_number', 'platform', 'platform_name',
                                  'sensor', 'source', 'start_time', 'Conventions']))
 
-        self.assertEqual(sorted(pps_nc.variables.keys()), 
-                         sorted(['satzenith', 'azimuthdiff', 'satazimuth', 'sunazimuth', 'sunzenith', 
-                                 'time', 'y', 'num_flags', 'lon', 'lat', 'qual_flags', 
-                                 'image1', 'image3', 'image0', 'image2', 
+        self.assertEqual(sorted(pps_nc.variables.keys()),
+                         sorted(['satzenith', 'azimuthdiff', 'satazimuth', 'sunazimuth', 'sunzenith',
+                                 'time', 'y', 'num_flags', 'lon', 'lat', 'qual_flags',
+                                 'image1', 'image3', 'image0', 'image2',
                                  'scanline_timestamps', 'time_bnds']))
 
 
