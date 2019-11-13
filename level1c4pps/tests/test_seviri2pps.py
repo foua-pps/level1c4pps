@@ -271,13 +271,13 @@ class TestSeviri2PPS(unittest.TestCase):
 
         # Test angles
         np.testing.assert_array_equal(scene['sunzenith'].data, sunz)
-        self.assertEqual(scene['sunzenith'].attrs['name'], 'image11')
+        self.assertEqual(scene['sunzenith'].attrs['name'], 'sunzenith')
 
         np.testing.assert_array_equal(scene['satzenith'].data, satz)
-        self.assertEqual(scene['satzenith'].attrs['name'], 'image12')
+        self.assertEqual(scene['satzenith'].attrs['name'], 'satzenith')
 
         np.testing.assert_array_equal(scene['azimuthdiff'].data, azidiff)
-        self.assertEqual(scene['azimuthdiff'].attrs['name'], 'image13')
+        self.assertEqual(scene['azimuthdiff'].attrs['name'], 'azimuthdiff')
 
         for angle in ['azimuthdiff', 'satzenith', 'sunzenith']:
             self.assertTupleEqual(scene[angle].dims, ('y', 'x'))
