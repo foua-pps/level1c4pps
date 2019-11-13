@@ -278,19 +278,16 @@ def add_ancillary_datasets(scene, lons, lats, sunz, satz, azidiff,
     scene['sunzenith'] = xr.DataArray(
         da.from_array(sunz[:, :], chunks=chunks),
         dims=['y', 'x'], coords=angle_coords)
-    scene['sunzenith'].attrs['name'] = "image11"
 
     # Satzenith
     scene['satzenith'] = xr.DataArray(
         da.from_array(satz[:, :], chunks=chunks),
         dims=['y', 'x'], coords=angle_coords)
-    scene['satzenith'].attrs['name'] = "image12"
 
     # Azidiff
     scene['azimuthdiff'] = xr.DataArray(
         da.from_array(azidiff[:, :], chunks=chunks),
         dims=['y', 'x'], coords=angle_coords)
-    scene['azimuthdiff'].attrs['name'] = "image13"
 
     # Some common attributes
     for angle in ['azimuthdiff', 'satzenith', 'sunzenith']:

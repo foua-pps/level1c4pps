@@ -146,14 +146,14 @@ def process_one_scene(scene_files, out_path):
     irch = scn_['24']
 
     # Set header and band attributes
-    image_num = set_header_and_band_attrs(scn_)
+    set_header_and_band_attrs(scn_)
 
     # Rename longitude, latitude to lon, lat.
     rename_latitude_longitude(scn_)
     
     # Convert angles to PPS
     convert_angles(scn_, SATPY_ANGLE_NAMES)
-    update_angle_attributes(scn_, irch.attrs['start_time'], image_num=image_num)
+    update_angle_attributes(scn_, irch.attrs['start_time'])
     for angle in ['sunzenith', 'satzenith', 'azimuthdiff']:
         scn_[angle].attrs['file_key'] = ANGLE_ATTRIBUTES['mersi2_file_key'][angle] 
 

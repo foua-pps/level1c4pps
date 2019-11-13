@@ -166,14 +166,12 @@ def rename_latitude_longitude(scene):
         pass
 
 
-def update_angle_attributes(scene, start_time, image_num=20):
+def update_angle_attributes(scene, start_time):
     # Set angle attributes
     for angle in ['sunzenith', 'satzenith', 'azimuthdiff', 'sunazimuth', 'satazimuth']:
         if angle not in scene.keys() and angle in ['sunazimuth', 'satazimuth']:
             continue
         scene[angle].attrs['id_tag'] = angle
-        scene[angle].attrs['name'] = "image{:d}".format(image_num)
-        image_num += 1
         scene[angle].attrs['name'] = angle
         scene[angle].attrs['coordinates'] = 'lon lat'
         scene[angle].attrs['long_name'] = ANGLE_ATTRIBUTES['long_name'][angle] 

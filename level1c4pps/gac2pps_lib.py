@@ -78,7 +78,7 @@ def get_encoding_gac(scene):
                         chunks=None)
 
 
-def update_ancilliary_datasets(scene, image_num):
+def update_ancilliary_datasets(scene):
     """Rename, delete and add some datasets and attributes."""
     irch = scene['4']
 
@@ -141,7 +141,6 @@ def set_header_and_band_attrs(scene):
             del scene[band].attrs['area']
         except KeyError:
             continue
-    return image_num
 
 
 def process_one_file(gac_file, out_path='.', reader_kwargs=None):
@@ -160,17 +159,17 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
     irch = scn_['4']
 
     # Set header and band attributes
-    image_num = set_header_and_band_attrs(scn_)
+    set_header_and_band_attrs(scn_)
 
     # Rename longitude, latitude to lon, lat.
     rename_latitude_longitude(scn_)
 
     # Convert angles to PPS
     convert_angles(scn_, SATPY_ANGLE_NAMES)
-    update_angle_attributes(scn_, start_time=irch.attrs['start_time'], image_num=image_num)
+    update_angle_attributes(scn_, start_time=irch.attrs['start_time'])
 
     # Handle gac specific datasets qual_flags and scanline_timestamps
-    update_ancilliary_datasets(scn_, image_num)
+    update_ancilliary_datasets(scn_)
 
     filename = compose_filename(scn_, out_path, instrument='avhrr', band=irch)
     scn_.save_datasets(writer='cf',
