@@ -31,6 +31,7 @@ from satpy.scene import Scene
 from level1c4pps import (make_azidiff_angle, get_encoding, compose_filename,
                          ANGLE_ATTRIBUTES, rename_latitude_longitude,
                          update_angle_attributes, get_header_attrs)
+import pyspectral  # testing that pyspectral is available # noqa: F401
 import logging
 
 # Example:
