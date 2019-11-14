@@ -4,18 +4,18 @@
 #
 # This file is part of level1c4pps
 #
-# atrain_match is free software: you can redistribute it and/or modify it
+# level1c4pps is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# atrain_match is distributed in the hope that it will be useful, but
+# level1c4pps is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with atrain_match.  If not, see <http://www.gnu.org/licenses/>.
+# along with level1c4pps.  If not, see <http://www.gnu.org/licenses/>.
 # Author(s):
 
 #   Martin Raspaud <martin.raspaud@smhi.se>
@@ -43,7 +43,7 @@ from pyorbital.astronomy import get_alt_az, sun_zenith_angle
 from pyorbital.orbital import get_observer_look
 
 from level1c4pps.calibration_coefs import get_calibration_for_time, CALIB_MODE
-from level1c4pps import make_azidiff_angle
+from level1c4pps import make_azidiff_angle, get_encoding, compose_filename, update_angle_attributes
 
 
 try:
@@ -105,6 +105,7 @@ def get_solar_angles(scene, lons, lats):
 
     Returns:
         Solar azimuth angle, Solar zenith angle in degrees
+
     """
     suna = np.full(lons.shape, np.nan)
     sunz = np.full(lons.shape, np.nan)
@@ -124,6 +125,7 @@ def get_satellite_angles(dataset, lons, lats):
 
     Returns:
         Satellite azimuth angle, Satellite zenith angle in degrees
+
     """
     sat_lon, sat_lat, sat_alt = satpy.utils.get_satpos(dataset)
 
@@ -246,11 +248,11 @@ def add_ancillary_datasets(scene, lons, lats, sunz, satz, azidiff,
         satz: Satellite zenith angle
         azidiff: Absoulte azimuth difference angle
         chunks: Chunksize
+
     """
     start_time = scene['IR_108'].attrs['start_time']
     end_time = scene['IR_108'].attrs['end_time']
     angle_coords = scene['IR_108'].coords
-    angle_coords['time'] = start_time
 
     # Latitude
     scene['lat'] = xr.DataArray(
@@ -278,103 +280,29 @@ def add_ancillary_datasets(scene, lons, lats, sunz, satz, azidiff,
     scene['sunzenith'] = xr.DataArray(
         da.from_array(sunz[:, :], chunks=chunks),
         dims=['y', 'x'], coords=angle_coords)
-    scene['sunzenith'].attrs['id_tag'] = 'sunzenith'
-    scene['sunzenith'].attrs['long_name'] = 'sun zenith angle'
-    scene['sunzenith'].attrs['standard_name'] = 'solar_zenith_angle'
-    scene['sunzenith'].attrs['valid_range'] = [0, 18000]
-    scene['sunzenith'].attrs['name'] = "image11"
 
     # Satzenith
     scene['satzenith'] = xr.DataArray(
         da.from_array(satz[:, :], chunks=chunks),
         dims=['y', 'x'], coords=angle_coords)
-    scene['satzenith'].attrs['id_tag'] = 'satzenith'
-    scene['satzenith'].attrs['long_name'] = 'satellite zenith angle'
-    scene['satzenith'].attrs['standard_name'] = 'platform_zenith_angle'
-    scene['satzenith'].attrs['valid_range'] = [0, 9000]
-    scene['satzenith'].attrs['name'] = "image12"
 
     # Azidiff
     scene['azimuthdiff'] = xr.DataArray(
         da.from_array(azidiff[:, :], chunks=chunks),
         dims=['y', 'x'], coords=angle_coords)
-    scene['azimuthdiff'].attrs['id_tag'] = 'azimuthdiff'
-    # scene['azimuthdiff'].attrs['standard_name'] = (
-    #    'angle_of_rotation_from_solar_azimuth_to_platform_azimuth')  # FIXME
-    scene['azimuthdiff'].attrs['long_name'] = 'absoulte azimuth difference angle'
-    scene['azimuthdiff'].attrs['valid_range'] = [0, 18000]
-    scene['azimuthdiff'].attrs['name'] = "image13"
 
-    # Some common attributes
-    for angle in ['azimuthdiff', 'satzenith', 'sunzenith']:
-        scene[angle].attrs['units'] = 'degree'
-        for attr in ["start_time", "end_time"]:
-            scene[angle].attrs[attr] = scene['IR_108'].attrs[attr]
+    # Update the attributes
+    update_angle_attributes(scene, band=scene['IR_108'])
 
 
-def compose_filename(scene, out_path):
-    """Compose output filename.
-
-    Use nominal timestamp of the scan (as in the HRIT files).
-    """
-    start_time = scene.attrs['start_time']
-    end_time = scene.attrs['end_time']
-    platform_name = scene.attrs['platform']
-    filename = os.path.join(
-        out_path,
-        "S_NWC_seviri_{:s}_{:s}_{:s}Z_{:s}Z.nc".format(
-            platform_name.lower().replace('-', ''),
-            "99999",
-            start_time.strftime('%Y%m%dT%H%M%S%f')[:-5],
-            end_time.strftime('%Y%m%dT%H%M%S%f')[:-5]))
-    return filename
-
-
-def get_encoding(scene):
+def get_encoding_seviri(scene):
     """Get netcdf encoding for all datasets."""
-    encoding = {}
-
     # Bands
     chunks = (1, 512, 3712)
-    for band in BANDNAMES:
-        idtag = PPS_TAGNAMES[band]
-        name = scene[band].attrs['name']
-        if 'tb' in idtag:
-            encoding[name] = {'dtype': 'int16',
-                              'scale_factor': 0.01,
-                              '_FillValue': -32767,
-                              'zlib': True,
-                              'complevel': 4,
-                              'add_offset': 273.15,
-                              'chunksizes': chunks}
-        else:
-            encoding[name] = {'dtype': 'int16',
-                              'scale_factor': 0.01,
-                              'zlib': True,
-                              'complevel': 4,
-                              '_FillValue': -32767,
-                              'add_offset': 0.0,
-                              'chunksizes': chunks}
-
-    # Angles and lat/lon
-    for name in ['image11', 'image12', 'image13']:
-        encoding[name] = {
-            'dtype': 'int16',
-            'scale_factor': 0.01,
-            'zlib': True,
-            'complevel': 4,
-            '_FillValue': -32767,
-            'add_offset': 0.0,
-            'chunksizes': chunks}
-
-    for name in ['lon', 'lat']:
-        encoding[name] = {'dtype': 'float32',
-                          'zlib': True,
-                          'complevel': 4,
-                          '_FillValue': -999.0,
-                          'chunksizes': (chunks[1], chunks[2])}
-
-    return encoding
+    return get_encoding(scene,
+                        bandnames=BANDNAMES,
+                        pps_tagnames=PPS_TAGNAMES,
+                        chunks=chunks)
 
 
 def get_header_attrs(scene):
@@ -434,12 +362,12 @@ def process_one_scan(tslot_files, out_path, rotate=True):
     set_attrs(scn_)
 
     # Write datasets to netcdf
-    filename = compose_filename(scene=scn_, out_path=out_path)
+    filename = compose_filename(scene=scn_, out_path=out_path, instrument='seviri')
     scn_.save_datasets(writer='cf',
                        filename=filename,
                        header_attrs=get_header_attrs(scn_),
                        engine='netcdf4',
-                       encoding=get_encoding(scn_),
+                       encoding=get_encoding_seviri(scn_),
                        include_lonlats=False,
                        pretty=True,
                        flatten_attrs=True,

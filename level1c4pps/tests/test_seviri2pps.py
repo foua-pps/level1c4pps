@@ -4,18 +4,18 @@
 #
 # This file is part of level1c4pps
 #
-# atrain_match is free software: you can redistribute it and/or modify it
+# level1c4pps is free software: you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
 #
-# atrain_match is distributed in the hope that it will be useful, but
+# level1c4pps is distributed in the hope that it will be useful, but
 # WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 # General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with atrain_match.  If not, see <http://www.gnu.org/licenses/>.
+# along with level1c4pps.  If not, see <http://www.gnu.org/licenses/>.
 # Author(s):
 
 #   Stephan Finkensieper <stephan.finkensieper@dwd.de>
@@ -31,6 +31,7 @@ try:
 except ImportError:
     import mock
 import xarray as xr
+from satpy import Scene
 
 import level1c4pps.seviri2pps_lib as seviri2pps
 import level1c4pps.calibration_coefs as calib
@@ -236,7 +237,7 @@ class TestSeviri2PPS(unittest.TestCase):
                                       np.datetime64(dt.datetime(2009, 7, 1, 1)))
 
     def test_add_ancillary_datasets(self):
-        """Test adding ancillary datasets"""
+        """Test adding ancillary datasets."""
         start_time = dt.datetime(2009, 7, 1, 0)
         end_time = dt.datetime(2009, 7, 1, 1)
         yvals = np.array([-1.0, 1.0])
@@ -270,13 +271,13 @@ class TestSeviri2PPS(unittest.TestCase):
 
         # Test angles
         np.testing.assert_array_equal(scene['sunzenith'].data, sunz)
-        self.assertEqual(scene['sunzenith'].attrs['name'], 'image11')
+        self.assertEqual(scene['sunzenith'].attrs['name'], 'sunzenith')
 
         np.testing.assert_array_equal(scene['satzenith'].data, satz)
-        self.assertEqual(scene['satzenith'].attrs['name'], 'image12')
+        self.assertEqual(scene['satzenith'].attrs['name'], 'satzenith')
 
         np.testing.assert_array_equal(scene['azimuthdiff'].data, azidiff)
-        self.assertEqual(scene['azimuthdiff'].attrs['name'], 'image13')
+        self.assertEqual(scene['azimuthdiff'].attrs['name'], 'azimuthdiff')
 
         for angle in ['azimuthdiff', 'satzenith', 'sunzenith']:
             self.assertTupleEqual(scene[angle].dims, ('y', 'x'))
@@ -295,20 +296,40 @@ class TestSeviri2PPS(unittest.TestCase):
             self.assertEqual(scene[name].attrs['end_time'], end_time)
 
     def test_compose_filename(self):
+        """Test compose filename for seviri."""
         start_time = dt.datetime(2009, 7, 1, 12, 15)
         end_time = dt.datetime(2009, 7, 1, 12, 30)
         scene = mock.MagicMock(attrs={'start_time': start_time,
                                       'end_time': end_time,
+                                      'orbit_number': '99999',
                                       'platform': 'Meteosat-9'})
         fname_exp = '/out/path/S_NWC_seviri_meteosat9_99999_20090701T1215000Z_20090701T1230000Z.nc'
-        fname = seviri2pps.compose_filename(scene, '/out/path')
+        fname = seviri2pps.compose_filename(scene, '/out/path', 'seviri')
         self.assertEqual(fname, fname_exp)
 
     def test_get_encoding(self):
+        """Test get encoding."""
         seviri2pps.BANDNAMES = ['VIS006', 'IR_108']
-        vis006 = mock.MagicMock(attrs={'name': 'image0'})
-        ir_108 = mock.MagicMock(attrs={'name': 'image1'})
-        scene = {'VIS006': vis006, 'IR_108': ir_108}
+        vis006 = mock.MagicMock(attrs={'name': 'image0',
+                                       'id_tag': 'ch_r06'})
+        ir_108 = mock.MagicMock(attrs={'name': 'image1',
+                                       'id_tag': 'ch_tb11'})
+        lat = mock.MagicMock(attrs={'name': 'lat'})
+        lon = mock.MagicMock(attrs={'name': 'lon'})
+        sunzenith = mock.MagicMock(attrs={'name': 'image11',
+                                          'id_tag': 'sunzenith'})
+        satzenith = mock.MagicMock(attrs={'name': 'image12',
+                                          'id_tag': 'satzenith'})
+        azimuthdiff = mock.MagicMock(attrs={'name': 'image13',
+                                            'id_tag': 'azimuthdiff'})
+        scene = Scene()
+        scene_dict = {'VIS006': vis006, 'IR_108': ir_108, 'lat': lat, 'lon': lon,
+                      'sunzenith': sunzenith, 'satzenith': satzenith,  'azimuthdiff': azimuthdiff}
+        for key in scene_dict:
+            pps_name = scene_dict[key].attrs['name']
+            scene[key] = scene_dict[key]
+            scene[key].attrs['name'] = pps_name
+
         enc_exp_angles = {'dtype': 'int16',
                           'scale_factor': 0.01,
                           'zlib': True,
@@ -342,10 +363,11 @@ class TestSeviri2PPS(unittest.TestCase):
             'lon': enc_exp_coords,
             'lat': enc_exp_coords
         }
-        encoding = seviri2pps.get_encoding(scene)
+        encoding = seviri2pps.get_encoding_seviri(scene)
         self.assertDictEqual(encoding, encoding_exp)
 
     def test_get_header_attrs(self):
+        """Test get the header attributes."""
         start_time = dt.datetime(2009, 7, 1, 12, 15)
         end_time = dt.datetime(2009, 7, 1, 12, 30)
         scene = mock.MagicMock(attrs={'foo': 'bar',
@@ -393,12 +415,12 @@ class TestCalibration(unittest.TestCase):
                 'IR_016': {'gain': 0.021576766,
                            'offset': -1.100415066}},
             ('MSG3', dt.datetime(2018, 1, 18, 0, 0)): {
-                 'VIS006': {'gain': 0.023689275200000002,
-                            'offset': -1.2081530352},
-                 'VIS008': {'gain': 0.029757990399999996,
-                            'offset': -1.5176575103999999},
-                 'IR_016': {'gain': 0.0228774688,
-                            'offset': -1.1667509087999999}},
+                'VIS006': {'gain': 0.023689275200000002,
+                           'offset': -1.2081530352},
+                'VIS008': {'gain': 0.029757990399999996,
+                           'offset': -1.5176575103999999},
+                'IR_016': {'gain': 0.0228774688,
+                           'offset': -1.1667509087999999}},
             ('MSG4', dt.datetime(2019, 1, 18, 0, 0)): {
                 'VIS006': {'gain': 0.0230358454,
                            'offset': -1.1748281154},

@@ -22,10 +22,15 @@
 
 """Unit tests for angle computations."""
 
-from level1c4pps import make_azidiff_angle
+from level1c4pps import make_azidiff_angle, update_angle_attributes
 
+import datetime as dt
 import numpy as np
 import xarray as xr
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 import sys
 if sys.version_info < (2, 7):
     import unittest2 as unittest
@@ -80,10 +85,38 @@ class TestAzimuthDifferenceAngles(unittest.TestCase):
         xr.testing.assert_allclose(xdaz, XRES, rtol=0.00001)
 
 
+class TestUpdateAnglesAttribute(unittest.TestCase):
+    """Test setting of attributes for angles."""
+
+    def test_update_angle_attributes(self):
+        """Test setting of attributes for angles."""
+        band = mock.MagicMock(attrs={'start_time':  dt.datetime(2009, 7, 1, 12, 15),
+                                     'end_time':  dt.datetime(2009, 7, 1, 12, 16)})
+
+        class AngleObj(object):
+            def __init__(self):
+                self.attrs = {'area': 'xx'}
+                self.coords = {}
+        angle_obj = AngleObj()
+        setattr(angle_obj, 'attrs', {'area': 'xx'})
+        setattr(angle_obj, 'coords', {})
+        angle_dict = {'satzenith': AngleObj(),
+                      'sunzenith': AngleObj(),
+                      'azimuthdiff': AngleObj()}
+        update_angle_attributes(angle_dict, band)
+        self.assertEqual(angle_dict['satzenith'].attrs['name'], 'satzenith')
+        self.assertEqual(angle_dict['satzenith'].attrs['id_tag'], 'satzenith')
+        self.assertEqual(angle_dict['satzenith'].attrs['valid_range'], [0, 9000])
+        self.assertNotIn('area', angle_dict['satzenith'].attrs.keys())
+        self.assertIn('time', angle_dict['satzenith'].coords.keys())
+        self.assertIn('long_name', angle_dict['satzenith'].attrs.keys())
+        self.assertIn('standard_name', angle_dict['satzenith'].attrs.keys())
+
+
 def suite():
     """Create the test suite for test_atm_correction_ir."""
     loader = unittest.TestLoader()
     mysuite = unittest.TestSuite()
     mysuite.addTest(loader.loadTestsFromTestCase(TestAzimuthDifferenceAngles))
-
+    mysuite.addTest(loader.loadTestsFromTestCase(TestUpdateAnglesAttribute))
     return mysuite
