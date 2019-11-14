@@ -61,6 +61,6 @@ setup(name=NAME,
       zip_safe=False,
       use_scm_version=True,
       python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*',
-      install_requires=['satpy', 'pyorbital', 'trollsift', 'pyorbital', 'pygac'],
+      install_requires=['satpy', 'pyorbital', 'trollsift', 'pyspectral', 'pygac'],
       test_suite='level1c4pps.tests.suite',
       )
