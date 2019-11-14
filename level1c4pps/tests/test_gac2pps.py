@@ -101,13 +101,13 @@ class TestGac2PPS(unittest.TestCase):
     def test_process_one_file(self):
         """Test process one file for one example file."""
         # '1 11060U 78096A   80003.54792075  .00000937  00000-0  52481-3 0  2588\r\n',
-        # '2 11060  98.9783 332.1605 0012789  88.8047 271.4583 14.11682873 63073\r\n'] 
+        # '2 11060  98.9783 332.1605 0012789  88.8047 271.4583 14.11682873 63073\r\n']
         tle_dir = './level1c4pps/tests/'
         tle_name = 'TLE_tirosn.txt'
         gac2pps.process_one_file(
             './level1c4pps/tests/NSS.GHRR.TN.D80003.S1147.E1332.B0630506.GC',
-            out_path='./level1c4pps/tests/',      
-            reader_kwargs = {
+            out_path='./level1c4pps/tests/',
+            reader_kwargs={
                 'tle_dir': tle_dir,
                 'tle_name': tle_name
             })
