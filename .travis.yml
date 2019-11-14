@@ -28,6 +28,8 @@ matrix:
 install:
     - git clone --depth 1 git://github.com/astropy/ci-helpers.git
     - source ci-helpers/travis/setup_conda.sh
+    - pip install pygac pyspectral 
+    - pip install -e .
 script:
   - pytest --cov=level1c4pps level1c4pps
 after_success:
