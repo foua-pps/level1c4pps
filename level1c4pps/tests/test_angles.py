@@ -91,7 +91,8 @@ class TestUpdateAnglesAttribute(unittest.TestCase):
     def test_update_angle_attributes(self):
         """Test setting of attributes for angles."""
         band = mock.MagicMock(attrs={'start_time':  dt.datetime(2009, 7, 1, 12, 15),
-                                     'end_time':  dt.datetime(2009, 7, 1, 12, 16),})
+                                     'end_time':  dt.datetime(2009, 7, 1, 12, 16)})
+
         class AngleObj(object):
             def __init__(self):
                 self.attrs = {'area': 'xx'}
