@@ -162,6 +162,8 @@ def rename_latitude_longitude(scene):
     # Update attributes
     scene['lat'].attrs['long_name'] = 'latitude coordinate'
     scene['lon'].attrs['long_name'] = 'longitude coordinate'
+    scene['lat'].attrs['name'] = 'lat'
+    scene['lon'].attrs['name'] = 'lon'
     try:
         del scene['lat'].coords['acq_time']
         del scene['lon'].coords['acq_time']

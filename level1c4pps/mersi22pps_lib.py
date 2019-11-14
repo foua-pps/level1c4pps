@@ -114,6 +114,10 @@ def set_header_and_band_attrs(scene):
         scene[band].attrs['coordinates'] = 'lon lat'
         # Add time coordinate. To make cfwriter aware that we want 3D data.
         scene[band].coords['time'] = irch.attrs['start_time']
+        try:
+            del scene[band].attrs['area']
+        except KeyError:
+            pass
         nimg += 1
     return nimg
 
