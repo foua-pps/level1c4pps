@@ -60,10 +60,10 @@ ANGLE_ATTRIBUTES = {
     },
     'standard_name':  {
         'sunzenith': 'solar_zenith_angle',
-        'satzenith': 'platform_zenith_angle',  # or sensor?
+        'satzenith': 'sensor_zenith_angle',  # platform in ppsv2018
         'azimuthdiff': 'absolute_angle_of_rotation_from_solar_azimuth_to_platform_azimuth',
         'sunazimuth': 'solar_azimuth_angle',
-        'satazimuth': 'platform_azimuth_angle',  # or sensor?
+        'satazimuth': 'sensor_azimuth_angle',  # plaform in ppsv2018
     }
 }
 
