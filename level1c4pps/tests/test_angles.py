@@ -27,6 +27,10 @@ from level1c4pps import make_azidiff_angle, update_angle_attributes
 import datetime as dt
 import numpy as np
 import xarray as xr
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 import sys
 if sys.version_info < (2, 7):
     import unittest2 as unittest
@@ -86,8 +90,8 @@ class TestUpdateAnglesAttribute(unittest.TestCase):
 
     def test_update_angle_attributes(self):
         """Test setting of attributes for angles."""
-        start_time = dt.datetime(2009, 7, 1, 12, 15)
-
+        band = mock.MagicMock(attrs={'start_time':  dt.datetime(2009, 7, 1, 12, 15),
+                                     'end_time':  dt.datetime(2009, 7, 1, 12, 16),})
         class AngleObj(object):
             def __init__(self):
                 self.attrs = {'area': 'xx'}
@@ -98,7 +102,7 @@ class TestUpdateAnglesAttribute(unittest.TestCase):
         angle_dict = {'satzenith': AngleObj(),
                       'sunzenith': AngleObj(),
                       'azimuthdiff': AngleObj()}
-        update_angle_attributes(angle_dict, start_time)
+        update_angle_attributes(angle_dict, band)
         self.assertEqual(angle_dict['satzenith'].attrs['name'], 'satzenith')
         self.assertEqual(angle_dict['satzenith'].attrs['id_tag'], 'satzenith')
         self.assertEqual(angle_dict['satzenith'].attrs['valid_range'], [0, 9000])

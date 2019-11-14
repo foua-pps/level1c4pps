@@ -107,7 +107,7 @@ def get_band_encoding(dataset, bandnames, pps_tagnames, chunks=None):
     name = dataset.attrs['name']
     id_tag = dataset.attrs.get('id_tag', None)
     if id_tag is not None:
-        if 'ch_tb' in id_tag:
+        if id_tag.startswith('ch_tb'):
             # IR channel
             enc = {'dtype': 'int16',
                    'scale_factor': 0.01,
@@ -115,7 +115,7 @@ def get_band_encoding(dataset, bandnames, pps_tagnames, chunks=None):
                    'zlib': True,
                    'complevel': 4,
                    'add_offset': 273.15}
-        if 'ch_r' in id_tag:
+        if id_tag.startswith('ch_r'):
             # Refl channel
             enc = {'dtype': 'int16',
                    'scale_factor': 0.01,
@@ -169,21 +169,28 @@ def rename_latitude_longitude(scene):
         pass
 
 
-def update_angle_attributes(scene, start_time):
+def update_angle_attributes(scene, band):
     """Set and delete angle attributes."""
-    for angle in ['sunzenith', 'satzenith', 'azimuthdiff', 'sunazimuth', 'satazimuth']:
+    for angle in PPS_ANGLE_TAGS:
         if angle not in scene.keys() and angle in ['sunazimuth', 'satazimuth']:
             # azimuth angles not always there
             continue
         scene[angle].attrs['id_tag'] = angle
         scene[angle].attrs['name'] = angle
         scene[angle].attrs['coordinates'] = 'lon lat'
+        scene[angle].attrs['units'] = 'degree'
         scene[angle].attrs['long_name'] = ANGLE_ATTRIBUTES['long_name'][angle]
         scene[angle].attrs['valid_range'] = ANGLE_ATTRIBUTES['valid_range'][angle]
         scene[angle].attrs['standard_name'] = ANGLE_ATTRIBUTES['standard_name'][angle]
-        scene[angle].coords['time'] = start_time
+        scene[angle].coords['time'] = band.attrs["start_time"]
+        for attr in ["start_time", "end_time"]:
+            scene[angle].attrs[attr] = band.attrs[attr]
         # delete some attributes
-        del scene[angle].attrs['area']
+        try:
+            del scene[angle].attrs['area']
+        except KeyError:
+            pass
+        # delete some coords
         try:
             del scene[angle].coords['acq_time']
         except KeyError:

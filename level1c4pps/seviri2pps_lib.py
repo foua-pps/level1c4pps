@@ -43,7 +43,7 @@ from pyorbital.astronomy import get_alt_az, sun_zenith_angle
 from pyorbital.orbital import get_observer_look
 
 from level1c4pps.calibration_coefs import get_calibration_for_time, CALIB_MODE
-from level1c4pps import make_azidiff_angle, get_encoding, compose_filename, ANGLE_ATTRIBUTES
+from level1c4pps import make_azidiff_angle, get_encoding, compose_filename, update_angle_attributes
 
 
 try:
@@ -253,7 +253,6 @@ def add_ancillary_datasets(scene, lons, lats, sunz, satz, azidiff,
     start_time = scene['IR_108'].attrs['start_time']
     end_time = scene['IR_108'].attrs['end_time']
     angle_coords = scene['IR_108'].coords
-    angle_coords['time'] = start_time
 
     # Latitude
     scene['lat'] = xr.DataArray(
@@ -292,16 +291,8 @@ def add_ancillary_datasets(scene, lons, lats, sunz, satz, azidiff,
         da.from_array(azidiff[:, :], chunks=chunks),
         dims=['y', 'x'], coords=angle_coords)
 
-    # Some common attributes
-    for angle in ['azimuthdiff', 'satzenith', 'sunzenith']:
-        scene[angle].attrs['units'] = 'degree'
-        scene[angle].attrs['id_tag'] = angle
-        scene[angle].attrs['name'] = angle
-        scene[angle].attrs['long_name'] = ANGLE_ATTRIBUTES['long_name'][angle]
-        scene[angle].attrs['valid_range'] = ANGLE_ATTRIBUTES['valid_range'][angle]
-        scene[angle].attrs['standard_name'] = ANGLE_ATTRIBUTES['standard_name'][angle]
-        for attr in ["start_time", "end_time"]:
-            scene[angle].attrs[attr] = scene['IR_108'].attrs[attr]
+    # Update the attributes
+    update_angle_attributes(scene, band=scene['IR_108'])
 
 
 def get_encoding_seviri(scene):

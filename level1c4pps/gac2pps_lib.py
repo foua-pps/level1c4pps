@@ -165,7 +165,7 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
 
     # Convert angles to PPS
     convert_angles(scn_, SATPY_ANGLE_NAMES)
-    update_angle_attributes(scn_, start_time=irch.attrs['start_time'])
+    update_angle_attributes(scn_, irch)
 
     # Handle gac specific datasets qual_flags and scanline_timestamps
     update_ancilliary_datasets(scn_)

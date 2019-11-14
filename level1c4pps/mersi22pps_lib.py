@@ -139,7 +139,7 @@ def process_one_scene(scene_files, out_path):
 
     # Convert angles to PPS
     convert_angles(scn_, SATPY_ANGLE_NAMES)
-    update_angle_attributes(scn_, irch.attrs['start_time'])
+    update_angle_attributes(scn_, irch)
     for angle in ['sunzenith', 'satzenith', 'azimuthdiff']:
         scn_[angle].attrs['file_key'] = ANGLE_ATTRIBUTES['mersi2_file_key'][angle]
 
