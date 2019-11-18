@@ -323,6 +323,7 @@ class TestSeviri2PPS(unittest.TestCase):
         azimuthdiff = mock.MagicMock(attrs={'name': 'image13',
                                             'id_tag': 'azimuthdiff'})
         scene = Scene()
+        scene.attrs = {'start_time': dt.datetime(2009, 7, 1, 12, 15)}
         scene_dict = {'VIS006': vis006, 'IR_108': ir_108, 'lat': lat, 'lon': lon,
                       'sunzenith': sunzenith, 'satzenith': satzenith,  'azimuthdiff': azimuthdiff}
         for key in scene_dict:
@@ -342,6 +343,13 @@ class TestSeviri2PPS(unittest.TestCase):
                           'complevel': 4,
                           '_FillValue': -999.0,
                           'chunksizes': (512, 3712)}
+        enc_exp_time = {'units': 'days since 2004-01-01 00:00',
+                        'calendar': 'standard',
+                        '_FillValue': None,
+                        'chunksizes': [1]}
+        enc_exp_acq = {'units': 'milliseconds since 2009-07-01 12:15',
+                       'calendar': 'standard',
+                       '_FillValue': -9999.0}
         encoding_exp = {
             'image0': {'dtype': 'int16',
                        'scale_factor': 0.01,
@@ -361,7 +369,9 @@ class TestSeviri2PPS(unittest.TestCase):
             'image12': enc_exp_angles,
             'image13': enc_exp_angles,
             'lon': enc_exp_coords,
-            'lat': enc_exp_coords
+            'lat': enc_exp_coords,
+            'time': enc_exp_time,
+            'acq_time': enc_exp_acq
         }
         encoding = seviri2pps.get_encoding_seviri(scene)
         self.assertDictEqual(encoding, encoding_exp)

@@ -246,7 +246,7 @@ def add_ancillary_datasets(scene, lons, lats, sunz, satz, azidiff,
         lats: Latitude coordinates
         sunz: Solar zenith angle
         satz: Satellite zenith angle
-        azidiff: Absoulte azimuth difference angle
+        azidiff: Absolute azimuth difference angle
         chunks: Chunksize
 
     """
@@ -299,10 +299,23 @@ def get_encoding_seviri(scene):
     """Get netcdf encoding for all datasets."""
     # Bands
     chunks = (1, 512, 3712)
-    return get_encoding(scene,
-                        bandnames=BANDNAMES,
-                        pps_tagnames=PPS_TAGNAMES,
-                        chunks=chunks)
+    encoding = get_encoding(scene,
+                            bandnames=BANDNAMES,
+                            pps_tagnames=PPS_TAGNAMES,
+                            chunks=chunks)
+
+    # Time
+    acq_units = scene.attrs['start_time'].strftime(
+        'milliseconds since %Y-%m-%d %H:%M')
+    encoding['acq_time'] = {'units': acq_units,
+                            'calendar': 'standard',
+                            '_FillValue': -9999.0}
+    encoding['time'] = {'units': 'days since 2004-01-01 00:00',
+                        'calendar': 'standard',
+                        '_FillValue': None,
+                        'chunksizes': [1]}
+
+    return encoding
 
 
 def get_header_attrs(scene):
