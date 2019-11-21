@@ -119,7 +119,7 @@ def set_header_and_band_attrs(scene):
     irch = scene['4']
     scene.attrs['platform'] = irch.attrs['platform_name']
     scene.attrs['platform_name'] = irch.attrs['platform_name']
-    scene.attrs['orbit_number'] = '{:05d}'.format(irch.attrs['orbit_number'])
+    scene.attrs['orbit_number'] = irch.attrs['orbit_number']
     scene.attrs['orbit'] = scene.attrs['orbit_number']
 
     # bands

@@ -178,7 +178,7 @@ def set_attrs(scene):
     scene.attrs['platform'] = scene['IR_108'].attrs['platform_name']
     scene.attrs['instrument'] = 'SEVIRI'
     scene.attrs['source'] = "seviri2pps.py"
-    scene.attrs['orbit_number'] = "99999"
+    scene.attrs['orbit_number'] = 99999
     nowutc = datetime.utcnow()
     scene.attrs['date_created'] = nowutc.strftime("%Y-%m-%dT%H:%M:%SZ")
 
