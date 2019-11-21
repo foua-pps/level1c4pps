@@ -96,7 +96,7 @@ def set_header_and_band_attrs(scene):
     scene.attrs['source'] = "mersi22pps.py"
     # Perhaps one can get the orbit number from the hdf file?
     # FIXME!
-    scene.attrs['orbit_number'] = "99999"
+    scene.attrs['orbit_number'] = 99999
     nowutc = datetime.utcnow()
     scene.attrs['date_created'] = nowutc.strftime("%Y-%m-%dT%H:%M:%SZ")
 

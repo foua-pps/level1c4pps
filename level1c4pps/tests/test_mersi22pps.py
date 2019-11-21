@@ -102,6 +102,7 @@ class TestMersi22PPS(unittest.TestCase):
     def test_set_header_and_band_attrs(self):
         """Test to set header_and_band_attrs."""
         mersi22pps.set_header_and_band_attrs(self.scene)
+        self.assertTrue(isinstance(self.scene.attrs['orbit_number'], int))
 
 
 def suite():
