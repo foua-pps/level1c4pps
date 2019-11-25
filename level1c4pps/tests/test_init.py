@@ -16,29 +16,27 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with level1c4pps.  If not, see <http://www.gnu.org/licenses/>.
-# Author(s):
-
-#   Nina Hakansson <nina.hakansson@smhi.se>
-
-"""Test Initializer for level1c4pps."""
 
 import unittest
+try:
+    from unittest import mock
+except ImportError:
+    import mock
+import xarray as xr
 
-from level1c4pps.tests import (test_angles, test_seviri2pps, test_gac2pps,
-                               test_mersi22pps, test_init)
+import level1c4pps
+
+
+class TestInit(unittest.TestCase):
+    def test_get_band_encoding(self):
+        ds = xr.DataArray([], attrs={'name': 'dummy'})
+        self.assertRaises(ValueError, level1c4pps.get_band_encoding, ds,
+                          None, None)
 
 
 def suite():
-    """Test global test suite."""
+    """Create the test suite for test_init."""
+    loader = unittest.TestLoader()
     mysuite = unittest.TestSuite()
-    mysuite.addTests(test_angles.suite())
-    mysuite.addTests(test_seviri2pps.suite())
-    mysuite.addTests(test_gac2pps.suite())
-    mysuite.addTests(test_mersi22pps.suite())
-    mysuite.addTests(test_init.suite())
+    mysuite.addTest(loader.loadTestsFromTestCase(TestInit))
     return mysuite
-
-
-def load_tests(loader, tests, pattern):
-    """Load all tests."""
-    return suite()

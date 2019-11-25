@@ -176,9 +176,9 @@ class TestSeviri2PPS(unittest.TestCase):
         self.assertEqual(scene['VIS006'].attrs['id_tag'], 'ch_r06')
         self.assertEqual(scene['IR_108'].attrs['name'], 'image1')
         self.assertEqual(scene['IR_108'].attrs['id_tag'], 'ch_tb11')
-        self.assertEqual(scene.attrs['orb_a'], 1)
-        self.assertEqual(scene.attrs['orb_b'], 2)
-        self.assertEqual(scene.attrs['georef_offset_corrected'], True)
+        self.assertNotIn('orb_a', scene.attrs)
+        self.assertNotIn('orbital_parameters', scene.attrs)
+        self.assertNotIn('georef_offset_corrected', scene.attrs)
 
     def test_get_mean_acq_time(self):
         """Test computation of mean scanline acquisition time."""
@@ -210,7 +210,7 @@ class TestSeviri2PPS(unittest.TestCase):
         vis006 = xr.DataArray(data=[1, 2, 3],
                               dims=('x',),
                               coords={'acq_time': ('x', [0, 0, 0])},
-                              attrs={'area': mock.MagicMock(area_extent='aex'),
+                              attrs={'area': 'myarea',
                                      'start_time': dt.datetime(2009, 7, 1, 0)})
         ir_108 = xr.DataArray(data=[4, 5, 6],
                               dims=('x',),
@@ -222,7 +222,7 @@ class TestSeviri2PPS(unittest.TestCase):
 
         seviri2pps.update_coords(scene)
 
-        self.assertEqual(scene.attrs['projection_area_extent'], 'aex')
+        self.assertEqual(scene.attrs['area'], 'myarea')
         for band in seviri2pps.BANDNAMES:
             self.assertEqual(scene[band].attrs['coordinates'], 'lon lat')
             np.testing.assert_array_equal(scene[band].coords['acq_time'].data,
@@ -383,7 +383,8 @@ class TestSeviri2PPS(unittest.TestCase):
         scene = mock.MagicMock(attrs={'foo': 'bar',
                                       'start_time': start_time,
                                       'end_time': end_time,
-                                      'sensor': 'SEVIRI'})
+                                      'sensor': 'SEVIRI',
+                                      'area': 'myarea'})
         header_attrs_exp = {
             'foo': 'bar',
             'start_time': start_time,
@@ -391,6 +392,45 @@ class TestSeviri2PPS(unittest.TestCase):
         }
         header_attrs = seviri2pps.get_header_attrs(scene)
         self.assertDictEqual(header_attrs, header_attrs_exp)
+
+    def test_add_proj_satpos(self):
+        """Test adding projection and satellite position."""
+        ir_108 = mock.MagicMock(attrs={
+            'orbital_parameters': {'projection_longitude': 'lon0',
+                                   'projection_latitude': 'lat0',
+                                   'projection_altitude': 'h',
+                                   'satellite_actual_longitude': 10,
+                                   'satellite_actual_latitude': 20,
+                                   'satellite_actual_altitude': 30},
+            'georef_offset_corrected': True
+        })
+
+        scene = Scene()
+        scene.attrs = {'area': mock.MagicMock(proj_dict={'a': 1, 'b': 2},
+                                              area_extent=[1, 2, 3, 4])}
+        scene['IR_108'] = ir_108
+
+        # Add projection and satellite position
+        seviri2pps.add_proj_satpos(scene)
+
+        # Test global attributes
+        scene.attrs.pop('area', None)
+        attrs_exp = {'projection': 'geos',
+                     'projection_semi_major_axis': 1,
+                     'projection_semi_minor_axis': 2,
+                     'projection_longitude': 'lon0',
+                     'projection_latitude': 'lat0',
+                     'projection_altitude': 'h'}
+        self.assertDictEqual(scene.attrs, attrs_exp)
+
+        # Test variables
+        np.testing.assert_array_equal(scene['projection_area_extent'],
+                                      [[1, 2, 3, 4]])
+        np.testing.assert_array_equal(scene['georef_offset_corrected'], [1])
+        np.testing.assert_array_equal(scene['satellite_longitude'], [10])
+        np.testing.assert_array_equal(scene['satellite_latitude'], [20])
+        np.testing.assert_array_equal(scene['satellite_altitude'], [30])
+
 
 
 class TestCalibration(unittest.TestCase):
