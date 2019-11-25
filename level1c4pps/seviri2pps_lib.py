@@ -381,6 +381,7 @@ def process_one_scan(tslot_files, out_path, rotate=True):
                        header_attrs=get_header_attrs(scn_),
                        engine='netcdf4',
                        encoding=get_encoding_seviri(scn_),
+                       unlimited_dims=['time'],
                        include_lonlats=False,
                        pretty=True,
                        flatten_attrs=True,
