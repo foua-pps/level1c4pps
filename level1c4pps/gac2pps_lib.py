@@ -129,8 +129,14 @@ def set_header_and_band_attrs(scene):
             idtag = PPS_TAGNAMES.get(band, band)
             scene[band].attrs['id_tag'] = idtag
             scene[band].attrs['description'] = 'AVHRR ' + str(band)
-            scene[band].attrs['sun_earth_distance_correction_applied'] = 'True'
-            scene[band].attrs['sun_earth_distance_correction_factor'] = 1.0
+            if idtag.startswith('ch_r'):
+                scene[band].attrs['sun_earth_distance_correction_applied'] = 'True'
+                # The sun_earth_distance_correction_factor is not provided by pygac <= 1.2.1 / satpy <= 0.18.1
+                if 'sun_earth_distance_correction_factor' not in scene[band].attrs.keys():
+                    scene[band].attrs['sun_earth_distance_correction_factor'] = 1.0   
+            else:
+                scene[band].attrs['sun_earth_distance_correction_applied'] = 'False'
+                scene[band].attrs['sun_earth_distance_correction_factor'] = 1.0
             scene[band].attrs['sun_zenith_angle_correction_applied'] = 'False'
             scene[band].attrs['name'] = "image{:d}".format(image_num)
             image_num += 1
