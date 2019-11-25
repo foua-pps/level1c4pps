@@ -18,10 +18,6 @@
 # along with level1c4pps.  If not, see <http://www.gnu.org/licenses/>.
 
 import unittest
-try:
-    from unittest import mock
-except ImportError:
-    import mock
 import xarray as xr
 
 import level1c4pps
