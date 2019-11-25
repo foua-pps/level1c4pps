@@ -172,9 +172,6 @@ def get_satellite_angles(dataset, lons, lats):
 def set_attrs(scene):
     """Set global and band attributes."""
     # Global
-    scene.attrs.update(scene['IR_108'].attrs['orbital_parameters'])
-    scene.attrs['georef_offset_corrected'] = scene['IR_108'].attrs[
-        'georef_offset_corrected']
     scene.attrs['platform'] = scene['IR_108'].attrs['platform_name']
     scene.attrs['instrument'] = 'SEVIRI'
     scene.attrs['source'] = "seviri2pps.py"
@@ -231,7 +228,7 @@ def update_coords(scene):
         scene[band].attrs['coordinates'] = 'lon lat'
         area = scene[band].attrs.pop('area', None)
         if area:
-            scene.attrs['projection_area_extent'] = area.area_extent
+            scene.attrs['area'] = area
 
         # Add time coordinate to make cfwriter aware that we want 3D data
         scene[band].coords['time'] = scene[band].attrs['start_time']
@@ -295,6 +292,70 @@ def add_ancillary_datasets(scene, lons, lats, sunz, satz, azidiff,
     update_angle_attributes(scene, band=scene['IR_108'])
 
 
+def add_proj_satpos(scene):
+    """Add information on projection and satellite position."""
+    orb = scene['IR_108'].attrs['orbital_parameters']
+
+    # Area extent
+    scene.attrs.update({
+        'projection': 'geos',
+        'projection_semi_major_axis': scene.attrs['area'].proj_dict['a'],
+        'projection_semi_minor_axis': scene.attrs['area'].proj_dict['b'],
+        'projection_longitude': orb['projection_longitude'],
+        'projection_latitude': orb['projection_latitude'],
+        'projection_altitude': orb['projection_altitude']
+    })
+    scene['projection_area_extent'] = xr.DataArray(
+        np.array([scene.attrs['area'].area_extent]),
+        dims=('time', 'corners'),
+        attrs={'units': 'meters',
+               'long_name': 'Projection area extent',
+               'comment': 'Area extent (lower left x, lower left y, '
+                          'upper right x, upper right y) in projection '
+                          'coordinates'}
+    )
+    scene['georef_offset_corrected'] = xr.DataArray(
+        np.array([scene['IR_108'].attrs['georef_offset_corrected']],
+                 dtype='int8'),
+        dims=('time', ),
+        attrs={'long_name': 'Georeferencing offset correction flag',
+               'flag_values': np.array([0, 1], dtype='int8'),
+               'flag_meanings': 'georef_offset_present georef_offset_corrected',
+               'comment': 'Until December 2017, SEVIRI L1.5 data is shifted '
+                          'by 1.5km SSP North and West against the nominal '
+                          'GEOS projection. Since December 2017 this offset '
+                          'has been corrected by EUMETSAT. This flag indicates '
+                          'if the correction has been applied. If not, the area '
+                          'extent is adjusted so that the projection always '
+                          'matches the data.'}
+    )
+
+    # Satellite position
+    scene['satellite_longitude'] = xr.DataArray(
+        [orb['satellite_actual_longitude']],
+        dims=('time',),
+        attrs={'units': 'degree_east',
+               'long_name': 'Actual satellite longitude',
+               'comment': 'Not to be confused with projection longitude'}
+    )
+    scene['satellite_latitude'] = xr.DataArray(
+        [orb['satellite_actual_latitude']],
+        dims=('time',),
+        attrs={'units': 'degree_north',
+               'long_name': 'Actual satellite latitude',
+               'comment': 'Not to be confused with projection latitude'}
+    )
+    scene['satellite_altitude'] = xr.DataArray(
+        [orb['satellite_actual_altitude']],
+        dims=('time',),
+        attrs={'units': 'meters',
+               'long_name': 'Actual satellite altitude',
+               'comment': 'Relative and perpendicular to the surface of the '
+                          'earth ellipsoid. Not to be confused with projection '
+                          'altitude.'}
+    )
+
+
 def get_encoding_seviri(scene):
     """Get netcdf encoding for all datasets."""
     # Bands
@@ -321,7 +382,8 @@ def get_encoding_seviri(scene):
 def get_header_attrs(scene):
     """Get global netcdf attributes."""
     header_attrs = scene.attrs.copy()
-    header_attrs.pop('sensor', None)
+    for key in ['sensor', 'area']:
+        header_attrs.pop(key, None)
     return header_attrs
 
 
@@ -367,9 +429,10 @@ def process_one_scan(tslot_files, out_path, rotate=True):
     # Update coordinates
     update_coords(scn_)
 
-    # Add ancillary datasets to the scen
+    # Add ancillary datasets to the scene
     add_ancillary_datasets(scn_, lons=lons, lats=lats, sunz=sunz, satz=satz,
                            azidiff=azidiff)
+    add_proj_satpos(scn_)
 
     # Set attributes. This changes SEVIRI band names to PPS band names.
     set_attrs(scn_)

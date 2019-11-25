@@ -97,7 +97,11 @@ def get_encoding(scene, bandnames, pps_tagnames, chunks=None):
     """Get netcdf encoding for all datasets."""
     encoding = {}
     for dataset in scene.keys():
-        name, enc = get_band_encoding(scene[dataset.name], bandnames, pps_tagnames, chunks=chunks)
+        try:
+            name, enc = get_band_encoding(scene[dataset.name], bandnames, pps_tagnames,
+                                          chunks=chunks)
+        except ValueError:
+            continue
         encoding[name] = enc
     return encoding
 
@@ -134,7 +138,7 @@ def get_band_encoding(dataset, bandnames, pps_tagnames, chunks=None):
                 'add_offset': 0.0}
         if chunks is not None:
             enc['chunksizes'] = chunks
-    if name in ['lon', 'lat']:
+    elif name in ['lon', 'lat']:
         # Lat/Lon
         enc = {'dtype': 'float32',
                'zlib': True,
@@ -142,14 +146,16 @@ def get_band_encoding(dataset, bandnames, pps_tagnames, chunks=None):
                '_FillValue': -999.0}
         if chunks is not None:
             enc['chunksizes'] = (chunks[1], chunks[2])
-    if name in ['qual_flags']:
+    elif name in ['qual_flags']:
         # pygac qual flags
         enc = {'dtype': 'int16', 'zlib': True,
                'complevel': 4, '_FillValue': -32001.0}
-    if name in ['scanline_timestamps']:
+    elif name in ['scanline_timestamps']:
         # pygac scanline_timestamps
         enc = {'dtype': 'int64', 'zlib': True,
                'complevel': 4, '_FillValue': -1.0}
+    else:
+        raise ValueError('Unsupported band: {}'.format(name))
     return name, enc
 
 
