@@ -47,11 +47,11 @@ ANGLE_ATTRIBUTES = {
         'satazimuth': 'satellite azimuth angle degree clockwise from north',
     },
     'valid_range': {
-        'sunzenith': [0, 18000],
-        'satzenith': [0, 9000],
-        'azimuthdiff': [0, 18000],
-        'sunazimuth': [-18000, 18000],
-        'satazimuth': [-18000, 18000],
+        'sunzenith': np.array([0, 18000], dtype='int16'),
+        'satzenith': np.array([0, 9000], dtype='int16'),
+        'azimuthdiff': np.array([0, 18000], dtype='int16'),
+        'sunazimuth': np.array([-18000, 18000], dtype='int16'),
+        'satazimuth': np.array([-18000, 18000], dtype='int16'),
     },
     'mersi2_file_key':  {
         'sunzenith': 'Geolocation/SolarZenithAngle',
@@ -97,7 +97,11 @@ def get_encoding(scene, bandnames, pps_tagnames, chunks=None):
     """Get netcdf encoding for all datasets."""
     encoding = {}
     for dataset in scene.keys():
-        name, enc = get_band_encoding(scene[dataset.name], bandnames, pps_tagnames, chunks=chunks)
+        try:
+            name, enc = get_band_encoding(scene[dataset.name], bandnames, pps_tagnames,
+                                          chunks=chunks)
+        except ValueError:
+            continue
         encoding[name] = enc
     return encoding
 
@@ -106,6 +110,7 @@ def get_band_encoding(dataset, bandnames, pps_tagnames, chunks=None):
     """Get netcdf encoding for a datasets."""
     name = dataset.attrs['name']
     id_tag = dataset.attrs.get('id_tag', None)
+    enc = {}
     if id_tag is not None:
         if id_tag.startswith('ch_tb'):
             # IR channel
@@ -115,7 +120,7 @@ def get_band_encoding(dataset, bandnames, pps_tagnames, chunks=None):
                    'zlib': True,
                    'complevel': 4,
                    'add_offset': 273.15}
-        if id_tag.startswith('ch_r'):
+        elif id_tag.startswith('ch_r'):
             # Refl channel
             enc = {'dtype': 'int16',
                    'scale_factor': 0.01,
@@ -123,7 +128,7 @@ def get_band_encoding(dataset, bandnames, pps_tagnames, chunks=None):
                    'complevel': 4,
                    '_FillValue': -32767,
                    'add_offset': 0.0}
-        if id_tag in PPS_ANGLE_TAGS:
+        elif id_tag in PPS_ANGLE_TAGS:
             # Angle
             enc = {
                 'dtype': 'int16',
@@ -142,14 +147,16 @@ def get_band_encoding(dataset, bandnames, pps_tagnames, chunks=None):
                '_FillValue': -999.0}
         if chunks is not None:
             enc['chunksizes'] = (chunks[1], chunks[2])
-    if name in ['qual_flags']:
+    elif name in ['qual_flags']:
         # pygac qual flags
         enc = {'dtype': 'int16', 'zlib': True,
                'complevel': 4, '_FillValue': -32001.0}
-    if name in ['scanline_timestamps']:
+    elif name in ['scanline_timestamps']:
         # pygac scanline_timestamps
         enc = {'dtype': 'int64', 'zlib': True,
                'complevel': 4, '_FillValue': -1.0}
+    if not enc:
+        raise ValueError('Unsupported band: {}'.format(name))
     return name, enc
 
 
