@@ -139,7 +139,7 @@ def get_band_encoding(dataset, bandnames, pps_tagnames, chunks=None):
                 'add_offset': 0.0}
         if chunks is not None:
             enc['chunksizes'] = chunks
-    elif name in ['lon', 'lat']:
+    if name in ['lon', 'lat']:
         # Lat/Lon
         enc = {'dtype': 'float32',
                'zlib': True,
@@ -155,7 +155,7 @@ def get_band_encoding(dataset, bandnames, pps_tagnames, chunks=None):
         # pygac scanline_timestamps
         enc = {'dtype': 'int64', 'zlib': True,
                'complevel': 4, '_FillValue': -1.0}
-    else:
+    if not enc:
         raise ValueError('Unsupported band: {}'.format(name))
     return name, enc
 
