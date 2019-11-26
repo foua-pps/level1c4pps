@@ -47,11 +47,11 @@ ANGLE_ATTRIBUTES = {
         'satazimuth': 'satellite azimuth angle degree clockwise from north',
     },
     'valid_range': {
-        'sunzenith': [0, 18000],
-        'satzenith': [0, 9000],
-        'azimuthdiff': [0, 18000],
-        'sunazimuth': [-18000, 18000],
-        'satazimuth': [-18000, 18000],
+        'sunzenith': np.array([0, 18000], dtype='int16'),
+        'satzenith': np.array([0, 9000], dtype='int16'),
+        'azimuthdiff': np.array([0, 18000], dtype='int16'),
+        'sunazimuth': np.array([-18000, 18000], dtype='int16'),
+        'satazimuth': np.array([-18000, 18000], dtype='int16'),
     },
     'mersi2_file_key':  {
         'sunzenith': 'Geolocation/SolarZenithAngle',
