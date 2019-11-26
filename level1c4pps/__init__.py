@@ -110,6 +110,7 @@ def get_band_encoding(dataset, bandnames, pps_tagnames, chunks=None):
     """Get netcdf encoding for a datasets."""
     name = dataset.attrs['name']
     id_tag = dataset.attrs.get('id_tag', None)
+    enc = {}
     if id_tag is not None:
         if id_tag.startswith('ch_tb'):
             # IR channel
@@ -119,7 +120,7 @@ def get_band_encoding(dataset, bandnames, pps_tagnames, chunks=None):
                    'zlib': True,
                    'complevel': 4,
                    'add_offset': 273.15}
-        if id_tag.startswith('ch_r'):
+        elif id_tag.startswith('ch_r'):
             # Refl channel
             enc = {'dtype': 'int16',
                    'scale_factor': 0.01,
@@ -127,7 +128,7 @@ def get_band_encoding(dataset, bandnames, pps_tagnames, chunks=None):
                    'complevel': 4,
                    '_FillValue': -32767,
                    'add_offset': 0.0}
-        if id_tag in PPS_ANGLE_TAGS:
+        elif id_tag in PPS_ANGLE_TAGS:
             # Angle
             enc = {
                 'dtype': 'int16',

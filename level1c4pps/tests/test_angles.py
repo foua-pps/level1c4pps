@@ -106,7 +106,8 @@ class TestUpdateAnglesAttribute(unittest.TestCase):
         update_angle_attributes(angle_dict, band)
         self.assertEqual(angle_dict['satzenith'].attrs['name'], 'satzenith')
         self.assertEqual(angle_dict['satzenith'].attrs['id_tag'], 'satzenith')
-        self.assertEqual(angle_dict['satzenith'].attrs['valid_range'], [0, 9000])
+        np.testing.assert_array_equal(angle_dict['satzenith'].attrs['valid_range'],
+                                      np.array([0, 9000], dtype='int16'))
         self.assertNotIn('area', angle_dict['satzenith'].attrs.keys())
         self.assertIn('time', angle_dict['satzenith'].coords.keys())
         self.assertIn('long_name', angle_dict['satzenith'].attrs.keys())
