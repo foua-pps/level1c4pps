@@ -87,7 +87,7 @@ def update_ancilliary_datasets(scene):
     first_jan_1970 = np.array([datetime(1970, 1, 1, 0, 0, 0)]).astype('datetime64[ns]')
     scanline_timestamps = np.array(scene['qual_flags'].coords['acq_time'] -
                                    first_jan_1970).astype(dtype='timedelta64[ms]').astype(np.float64)
-    scene['scanline_timestamps'] = xr.DataArray(da.from_array(scanline_timestamps),
+    scene['scanline_timestamps'] = xr.DataArray(da.from_array(scanline_timestamps, chunks=1024),
                                                 dims=['y'], coords={'y': scene['qual_flags']['y']})
     scene['scanline_timestamps'].attrs['units'] = 'Milliseconds since 1970-01-01 00:00:00 UTC'
 

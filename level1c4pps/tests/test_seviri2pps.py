@@ -176,9 +176,9 @@ class TestSeviri2PPS(unittest.TestCase):
         self.assertEqual(scene['VIS006'].attrs['id_tag'], 'ch_r06')
         self.assertEqual(scene['IR_108'].attrs['name'], 'image1')
         self.assertEqual(scene['IR_108'].attrs['id_tag'], 'ch_tb11')
-        self.assertEqual(scene.attrs['orb_a'], 1)
-        self.assertEqual(scene.attrs['orb_b'], 2)
-        self.assertEqual(scene.attrs['georef_offset_corrected'], True)
+        self.assertNotIn('orb_a', scene.attrs)
+        self.assertNotIn('orbital_parameters', scene.attrs)
+        self.assertNotIn('georef_offset_corrected', scene.attrs)
 
     def test_get_mean_acq_time(self):
         """Test computation of mean scanline acquisition time."""
@@ -210,7 +210,7 @@ class TestSeviri2PPS(unittest.TestCase):
         vis006 = xr.DataArray(data=[1, 2, 3],
                               dims=('x',),
                               coords={'acq_time': ('x', [0, 0, 0])},
-                              attrs={'area': mock.MagicMock(area_extent='aex'),
+                              attrs={'area': 'myarea',
                                      'start_time': dt.datetime(2009, 7, 1, 0)})
         ir_108 = xr.DataArray(data=[4, 5, 6],
                               dims=('x',),
@@ -222,7 +222,7 @@ class TestSeviri2PPS(unittest.TestCase):
 
         seviri2pps.update_coords(scene)
 
-        self.assertEqual(scene.attrs['projection_area_extent'], 'aex')
+        self.assertEqual(scene.attrs['area'], 'myarea')
         for band in seviri2pps.BANDNAMES:
             self.assertEqual(scene[band].attrs['coordinates'], 'lon lat')
             np.testing.assert_array_equal(scene[band].coords['acq_time'].data,
@@ -323,6 +323,7 @@ class TestSeviri2PPS(unittest.TestCase):
         azimuthdiff = mock.MagicMock(attrs={'name': 'image13',
                                             'id_tag': 'azimuthdiff'})
         scene = Scene()
+        scene.attrs = {'start_time': dt.datetime(2009, 7, 1, 12, 15)}
         scene_dict = {'VIS006': vis006, 'IR_108': ir_108, 'lat': lat, 'lon': lon,
                       'sunzenith': sunzenith, 'satzenith': satzenith,  'azimuthdiff': azimuthdiff}
         for key in scene_dict:
@@ -342,6 +343,13 @@ class TestSeviri2PPS(unittest.TestCase):
                           'complevel': 4,
                           '_FillValue': -999.0,
                           'chunksizes': (512, 3712)}
+        enc_exp_time = {'units': 'days since 2004-01-01 00:00',
+                        'calendar': 'standard',
+                        '_FillValue': None,
+                        'chunksizes': [1]}
+        enc_exp_acq = {'units': 'milliseconds since 2009-07-01 12:15',
+                       'calendar': 'standard',
+                       '_FillValue': -9999.0}
         encoding_exp = {
             'image0': {'dtype': 'int16',
                        'scale_factor': 0.01,
@@ -361,7 +369,9 @@ class TestSeviri2PPS(unittest.TestCase):
             'image12': enc_exp_angles,
             'image13': enc_exp_angles,
             'lon': enc_exp_coords,
-            'lat': enc_exp_coords
+            'lat': enc_exp_coords,
+            'time': enc_exp_time,
+            'acq_time': enc_exp_acq
         }
         encoding = seviri2pps.get_encoding_seviri(scene)
         self.assertDictEqual(encoding, encoding_exp)
@@ -373,7 +383,8 @@ class TestSeviri2PPS(unittest.TestCase):
         scene = mock.MagicMock(attrs={'foo': 'bar',
                                       'start_time': start_time,
                                       'end_time': end_time,
-                                      'sensor': 'SEVIRI'})
+                                      'sensor': 'SEVIRI',
+                                      'area': 'myarea'})
         header_attrs_exp = {
             'foo': 'bar',
             'start_time': start_time,
@@ -381,6 +392,45 @@ class TestSeviri2PPS(unittest.TestCase):
         }
         header_attrs = seviri2pps.get_header_attrs(scene)
         self.assertDictEqual(header_attrs, header_attrs_exp)
+
+    def test_add_proj_satpos(self):
+        """Test adding projection and satellite position."""
+        ir_108 = mock.MagicMock(attrs={
+            'orbital_parameters': {'projection_longitude': 'lon0',
+                                   'projection_latitude': 'lat0',
+                                   'projection_altitude': 'h',
+                                   'satellite_actual_longitude': 10,
+                                   'satellite_actual_latitude': 20,
+                                   'satellite_actual_altitude': 30},
+            'georef_offset_corrected': True
+        })
+
+        scene = Scene()
+        scene.attrs = {'area': mock.MagicMock(proj_dict={'a': 1, 'b': 2},
+                                              area_extent=[1, 2, 3, 4])}
+        scene['IR_108'] = ir_108
+
+        # Add projection and satellite position
+        seviri2pps.add_proj_satpos(scene)
+
+        # Test global attributes
+        scene.attrs.pop('area', None)
+        attrs_exp = {'projection': 'geos',
+                     'projection_semi_major_axis': 1,
+                     'projection_semi_minor_axis': 2,
+                     'projection_longitude': 'lon0',
+                     'projection_latitude': 'lat0',
+                     'projection_altitude': 'h'}
+        self.assertDictEqual(scene.attrs, attrs_exp)
+
+        # Test variables
+        np.testing.assert_array_equal(scene['projection_area_extent'],
+                                      [[1, 2, 3, 4]])
+        np.testing.assert_array_equal(scene['georef_offset_corrected'], [1])
+        np.testing.assert_array_equal(scene['satellite_longitude'], [10])
+        np.testing.assert_array_equal(scene['satellite_latitude'], [20])
+        np.testing.assert_array_equal(scene['satellite_altitude'], [30])
+
 
 
 class TestCalibration(unittest.TestCase):
@@ -422,12 +472,12 @@ class TestCalibration(unittest.TestCase):
                 'IR_016': {'gain': 0.0228774688,
                            'offset': -1.1667509087999999}},
             ('MSG4', dt.datetime(2019, 1, 18, 0, 0)): {
-                'VIS006': {'gain': 0.0230358454,
-                           'offset': -1.1748281154},
-                'VIS008': {'gain': 0.0292054763,
-                           'offset': -1.4894792913000001},
-                'IR_016': {'gain': 0.022189932800000003,
-                           'offset': -1.1316865728}}
+                'VIS006': {'gain': 0.0230447858,
+                           'offset': -1.1752840757999998},
+                'VIS008': {'gain': 0.0292354541,
+                           'offset': -1.4910081591},
+                'IR_016': {'gain': 0.022253477,
+                           'offset': -1.134927327}}
         }
         for (platform, time), ref in REF.items():
             coefs = calib.get_calibration_for_time(platform=platform,

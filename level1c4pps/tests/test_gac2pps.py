@@ -46,7 +46,8 @@ class TestGac2PPS(unittest.TestCase):
                                        'id_tag': 'ch_tb11',
                                        'platform_name': 'tirosn',
                                        'orbit_number': 99999})
-        qual_f = mock.MagicMock(attrs={'name': 'qual_flags'})
+        qual_f = mock.MagicMock(attrs={'name': 'qual_flags',
+                                       'id_tag': 'qual_flags'})
         scan_t = mock.MagicMock(attrs={'name': 'scanline_timestamps'})
         self.scene = Scene()
         scene_dict = {'1': vis006, '4': ir_108, 'qual_flags': qual_f, 'scanline_timestamps': scan_t}
