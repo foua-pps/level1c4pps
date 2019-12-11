@@ -133,7 +133,7 @@ def set_header_and_band_attrs(scene):
                 scene[band].attrs['sun_earth_distance_correction_applied'] = 'True'
                 # The sun_earth_distance_correction_factor is not provided by pygac <= 1.2.1 / satpy <= 0.18.1
                 if 'sun_earth_distance_correction_factor' not in scene[band].attrs.keys():
-                    scene[band].attrs['sun_earth_distance_correction_factor'] = 1.0   
+                    scene[band].attrs['sun_earth_distance_correction_factor'] = 1.0
             else:
                 scene[band].attrs['sun_earth_distance_correction_applied'] = 'False'
                 scene[band].attrs['sun_earth_distance_correction_factor'] = 1.0
@@ -155,11 +155,16 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
     scn_ = Scene(reader='avhrr_l1b_gaclac',
                  filenames=[gac_file], reader_kwargs=reader_kwargs)
 
-    scn_.load(BANDNAMES + ['latitude', 'longitude',
-                           'qual_flags',
-                           'sensor_zenith_angle', 'solar_zenith_angle',
-                           'solar_azimuth_angle', 'sensor_azimuth_angle',
-                           'sun_sensor_azimuth_difference_angle'])
+    # Loading all at once sometimes fails with newer satpy, so start with BANDNAMES ...
+
+    scn_.load(BANDNAMES)
+    scn_.load(['latitude',
+               'longitude',
+               'qual_flags',
+               'sensor_zenith_angle', 'solar_zenith_angle',
+               'solar_azimuth_angle', 'sensor_azimuth_angle',
+               'sun_sensor_azimuth_difference_angle'])
+
     # one ir channel
     irch = scn_['4']
 
