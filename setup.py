@@ -37,6 +37,7 @@ try:
 except ImportError:
     pass
 
+requires = ['satpy >= 0.19', 'pyorbital', 'trollsift', 'pyspectral'],
 
 NAME = "level1c4pps"
 README = open('README.md', 'r').read()
@@ -61,6 +62,6 @@ setup(name=NAME,
       zip_safe=False,
       use_scm_version=True,
       python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*',
-      install_requires=['satpy', 'pyorbital', 'trollsift', 'pyspectral'],
+      install_requires=requires,
       test_suite='level1c4pps.tests.suite',
       )
