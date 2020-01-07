@@ -33,6 +33,7 @@ except ImportError:
 from satpy import Scene
 
 import level1c4pps.gac2pps_lib as gac2pps
+import numpy as np
 
 
 class TestGac2PPS(unittest.TestCase):
@@ -124,6 +125,9 @@ class TestGac2PPS(unittest.TestCase):
                                  'time', 'y', 'num_flags', 'lon', 'lat', 'qual_flags',
                                  'image1', 'image3', 'image0', 'image2',
                                  'scanline_timestamps', 'time_bnds']))
+
+        np.testing.assert_almost_equal(pps_nc.variables['image0'].sun_earth_distance_correction_factor,
+                                       0.9666, decimal=4)
 
 
 def suite():
