@@ -28,12 +28,12 @@ import os
 import time
 from datetime import datetime
 from satpy.scene import Scene
-from level1c4pps import (make_azidiff_angle, get_encoding, compose_filename,
-                         ANGLE_ATTRIBUTES, rename_latitude_longitude,
-                         update_angle_attributes, get_header_attrs, 
-                         SATPY_ANGLE_NAMES, convert_angles, 
+from level1c4pps import (get_encoding, compose_filename,
+                         rename_latitude_longitude,
+                         update_angle_attributes, get_header_attrs,
+                         SATPY_ANGLE_NAMES, convert_angles,
                          apply_sunz_correction)
-import pyspectral  # testing that pyspectral is available # noqa: F401
+
 import logging
 
 # Example:
@@ -45,7 +45,7 @@ logger = logging.getLogger('modis2pps')
 
 BANDNAMES = ['1', '2', '6', '20', '26', '28', '29', '31', '32']
 
-REFL_BANDS = ['1', '2', '6','26']
+REFL_BANDS = ['1', '2', '6', '26']
 
 PPS_TAGNAMES = {'1': 'ch_r06',
                 '2': 'ch_r09',
@@ -57,12 +57,14 @@ PPS_TAGNAMES = {'1': 'ch_r06',
                 '31': 'ch_tb11',
                 '32': 'ch_tb12'}
 
+
 def get_encoding_mersi2(scene):
     """Get netcdf encoding for all datasets."""
     return get_encoding(scene,
                         BANDNAMES,
                         PPS_TAGNAMES,
                         chunks=None)
+
 
 def set_header_and_band_attrs(scene):
     """Set and delete some attributes."""
@@ -72,7 +74,7 @@ def set_header_and_band_attrs(scene):
     scene.attrs['platform'] = irch.attrs['platform_name']
     sensor_name = [x for x in scene.attrs['sensor']][0]
     scene.attrs['instrument'] = sensor_name.upper()
-    scene.attrs['source'] = "modis2pps.py"    
+    scene.attrs['source'] = "modis2pps.py"
     nowutc = datetime.utcnow()
     scene.attrs['date_created'] = nowutc.strftime("%Y-%m-%dT%H:%M:%SZ")
     scene.attrs['orbit_number'] = 00000

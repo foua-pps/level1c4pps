@@ -28,9 +28,9 @@ import os
 import time
 from datetime import datetime
 from satpy.scene import Scene
-from level1c4pps import (make_azidiff_angle, get_encoding, compose_filename,
+from level1c4pps import (get_encoding, compose_filename,
                          ANGLE_ATTRIBUTES, rename_latitude_longitude,
-                         update_angle_attributes, get_header_attrs, 
+                         update_angle_attributes, get_header_attrs,
                          SATPY_ANGLE_NAMES, convert_angles)
 import pyspectral  # testing that pyspectral is available # noqa: F401
 import logging
@@ -60,12 +60,14 @@ PPS_TAGNAMES = {'3': 'ch_r06',
 
 MERSI2_LEVEL1_FILE_PATTERN = 'tf{start_time:%Y%j%H%M%S}.{platform_shortname:4s}-X_MERSI_{dataset}_L1B.HDF'
 
+
 def get_encoding_mersi2(scene):
     """Get netcdf encoding for all datasets."""
     return get_encoding(scene,
                         BANDNAMES,
                         PPS_TAGNAMES,
                         chunks=None)
+
 
 def set_header_and_band_attrs(scene):
     """Set and delete some attributes."""

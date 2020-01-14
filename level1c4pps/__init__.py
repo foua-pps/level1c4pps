@@ -43,6 +43,7 @@ SATPY_ANGLE_NAMES = {
     'sunazimuth': 'solar_azimuth_angle',
     'satazimuth': 'satellite_azimuth_angle'}
 
+
 def convert_angles(scene, satpy_angle_names):
     """Convert angles to pps format."""
     for angle in ['sunzenith', 'satzenith', 'sunazimuth', 'satazimuth']:
@@ -52,6 +53,7 @@ def convert_angles(scene, satpy_angle_names):
     scene['azimuthdiff'].attrs = scene['sunazimuth'].attrs
     del scene['satazimuth']
     del scene['sunazimuth']
+
 
 PPS_ANGLE_TAGS = ['sunzenith', 'satzenith', 'azimuthdiff', 'sunazimuth', 'satazimuth']
 ANGLE_ATTRIBUTES = {
@@ -221,18 +223,21 @@ def update_angle_attributes(scene, band):
         except KeyError:
             pass
 
+
 def apply_sunz_correction(scene, REFL_BANDS):
     """Apply sun zenith angle correciton to visual channels."""
     sza = scene['sunzenith']
     mu0 = np.cos(np.radians(sza))
     scaler = 24.35 / (2 * mu0 + np.sqrt(498.5225 * mu0 * mu0 + 1))
     for band in REFL_BANDS:
-        if scene[band].attrs['sun_zenith_angle_correction_applied']=='False':
+        if scene[band].attrs['sun_zenith_angle_correction_applied'] == 'False':
             scene[band].values = scene[band].values * scaler
             scene[band].attrs['sun_zenith_angle_correction_applied'] = 'True'
-            
+
+
 def platform_name_to_use_in_filename(platform_name):
-    return platform_name.lower().replace('-', '').replace('Aqua','2').replace('Terra','1')
+    """Get platform name for PPS filenames from platfrom attribute."""
+    return platform_name.lower().replace('-', '').replace('Aqua', '2').replace('Terra', '1')
 
 
 def compose_filename(scene, out_path, instrument, band=None):
