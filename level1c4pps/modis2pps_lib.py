@@ -58,7 +58,7 @@ PPS_TAGNAMES = {'1':  'ch_r06',
                 '32': 'ch_tb12'}
 
 
-def get_encoding_mersi2(scene):
+def get_encoding_modis(scene):
     """Get netcdf encoding for all datasets."""
     return get_encoding(scene,
                         BANDNAMES,
@@ -142,7 +142,7 @@ def process_one_scene(scene_files, out_path):
                        engine='netcdf4',
                        include_lonlats=False,
                        flatten_attrs=True,
-                       encoding=get_encoding_mersi2(scn_))
+                       encoding=get_encoding_modis(scn_))
     print("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),
         time.time()-tic))
