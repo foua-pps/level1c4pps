@@ -47,10 +47,10 @@ BANDNAMES = ['1', '2', '6', '20', '26', '28', '29', '31', '32']
 
 REFL_BANDS = ['1', '2', '6', '26']
 
-PPS_TAGNAMES = {'1': 'ch_r06',
-                '2': 'ch_r09',
+PPS_TAGNAMES = {'1':  'ch_r06',
+                '2':  'ch_r09',
                 '26': 'ch_r13',
-                '6': 'ch_r16',
+                '6':  'ch_r16',
                 '20': 'ch_tb37',
                 '28': 'ch_tb73',
                 '29': 'ch_tb85',
@@ -80,11 +80,13 @@ def set_header_and_band_attrs(scene):
     scene.attrs['orbit_number'] = 00000
     # bands
     for band in BANDNAMES:
+        if band not in scene:
+            continue
         idtag = PPS_TAGNAMES.get(band, None)
         if not idtag:
             continue
         scene[band].attrs['id_tag'] = idtag
-        scene[band].attrs['description'] = 'MODIS band ' + str(band)
+        scene[band].attrs['description'] = 'MODIS ' + str(band)
         scene[band].attrs['sun_earth_distance_correction_applied'] = 'False'
         scene[band].attrs['sun_earth_distance_correction_factor'] = 1.0
         scene[band].attrs['sun_zenith_angle_correction_applied'] = 'False'
@@ -113,13 +115,18 @@ def process_one_scene(scene_files, out_path):
     # one ir channel
     irch = scn_['31']
 
+    # Remove som buggy channels:
+    if 'aqua' in irch.attrs['platform_name'].lower():
+        del(scn_['6'])  # Skip 1.6 for Aqua
+    elif 'terra' in irch.attrs['platform_name'].lower():
+        del(scn_['29'])  # Skip 8.6 for Terra
+
     # Set header and band attributes
     set_header_and_band_attrs(scn_)
 
     # Rename longitude, latitude to lon, lat.
-    rename_latitude_longitude(scn_)
-    print(scn_)
-
+    rename_latitude_longitude(scn_)  
+ 
     # Convert angles to PPS
     convert_angles(scn_, SATPY_ANGLE_NAMES)
     update_angle_attributes(scn_, irch)
@@ -128,7 +135,6 @@ def process_one_scene(scene_files, out_path):
     apply_sunz_correction(scn_, REFL_BANDS)
 
     filename = compose_filename(scn_, out_path, instrument='modis', band=irch)
-    filename = filename.replace('aqua', '2')
     filename = filename.replace('aqua', '2')
     scn_.save_datasets(writer='cf',
                        filename=filename,
