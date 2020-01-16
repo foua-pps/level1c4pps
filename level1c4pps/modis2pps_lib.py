@@ -125,8 +125,8 @@ def process_one_scene(scene_files, out_path):
     set_header_and_band_attrs(scn_)
 
     # Rename longitude, latitude to lon, lat.
-    rename_latitude_longitude(scn_)  
- 
+    rename_latitude_longitude(scn_)
+
     # Convert angles to PPS
     convert_angles(scn_, SATPY_ANGLE_NAMES)
     update_angle_attributes(scn_, irch)

@@ -230,7 +230,7 @@ def apply_sunz_correction(scene, REFL_BANDS):
     mu0 = np.cos(np.radians(sza))
     scaler = 24.35 / (2 * mu0 + np.sqrt(498.5225 * mu0 * mu0 + 1))
     for band in REFL_BANDS:
-        if not band in scene:
+        if band not in scene:
             continue
         if scene[band].attrs['sun_zenith_angle_correction_applied'] == 'False':
             scene[band].values = scene[band].values * scaler
