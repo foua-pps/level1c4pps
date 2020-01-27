@@ -21,9 +21,9 @@
 
 #  Nina.Hakansson
 
+"""Module with calibration coefficients for SEVIRI."""
 
 import datetime
-"""Module with calibration coefficients for SEVIRI."""
 
 CALIB_MODE = 'Nominal'
 COEFS_MEIRINK = dict(

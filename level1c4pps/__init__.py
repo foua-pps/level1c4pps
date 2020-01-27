@@ -37,6 +37,24 @@ except DistributionNotFound:
     # package is not installed
     pass
 
+SATPY_ANGLE_NAMES = {
+    'sunzenith': 'solar_zenith_angle',
+    'satzenith': 'satellite_zenith_angle',
+    'sunazimuth': 'solar_azimuth_angle',
+    'satazimuth': 'satellite_azimuth_angle'}
+
+
+def convert_angles(scene, satpy_angle_names):
+    """Convert angles to pps format."""
+    for angle in ['sunzenith', 'satzenith', 'sunazimuth', 'satazimuth']:
+        scene[angle] = scene[satpy_angle_names[angle]]
+        del scene[satpy_angle_names[angle]]
+    scene['azimuthdiff'] = make_azidiff_angle(scene['satazimuth'], scene['sunazimuth'])
+    scene['azimuthdiff'].attrs = scene['sunazimuth'].attrs
+    del scene['satazimuth']
+    del scene['sunazimuth']
+
+
 PPS_ANGLE_TAGS = ['sunzenith', 'satzenith', 'azimuthdiff', 'sunazimuth', 'satazimuth']
 ANGLE_ATTRIBUTES = {
     'long_name': {
@@ -206,6 +224,24 @@ def update_angle_attributes(scene, band):
             pass
 
 
+def apply_sunz_correction(scene, REFL_BANDS):
+    """Apply sun zenith angle correciton to visual channels."""
+    sza = scene['sunzenith']
+    mu0 = np.cos(np.radians(sza))
+    scaler = 24.35 / (2 * mu0 + np.sqrt(498.5225 * mu0 * mu0 + 1))
+    for band in REFL_BANDS:
+        if band not in scene:
+            continue
+        if scene[band].attrs['sun_zenith_angle_correction_applied'] == 'False':
+            scene[band].values = scene[band].values * scaler
+            scene[band].attrs['sun_zenith_angle_correction_applied'] = 'True'
+
+
+def platform_name_to_use_in_filename(platform_name):
+    """Get platform name for PPS filenames from platfrom attribute."""
+    return platform_name.lower().replace('-', '').replace('aqua', '2').replace('terra', '1')
+
+
 def compose_filename(scene, out_path, instrument, band=None):
     """Compose output filename.
 
@@ -231,7 +267,7 @@ def compose_filename(scene, out_path, instrument, band=None):
         out_path,
         "S_NWC_{:s}_{:s}_{:05d}_{:s}Z_{:s}Z.nc".format(
             instrument,
-            platform_name.lower().replace('-', ''),
+            platform_name_to_use_in_filename(platform_name),
             orbit_number,
             datetime.strftime(dt64_to_datetime(start_time), '%Y%m%dT%H%M%S%f')[:-5],
             datetime.strftime(dt64_to_datetime(end_time), '%Y%m%dT%H%M%S%f')[:-5]))
