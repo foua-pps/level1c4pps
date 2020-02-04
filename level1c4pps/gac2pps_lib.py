@@ -64,6 +64,7 @@ INSTRUMENTS = {'tirosn': 'avhrr',
                'noaa18': 'avhrr/3',
                'noaa19': 'avhrr/3'}
 
+
 def get_encoding_gac(scene):
     """Get netcdf encoding for all datasets."""
     return get_encoding(scene,

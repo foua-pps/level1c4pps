@@ -45,8 +45,8 @@ SATPY_ANGLE_NAMES = {
     'satellite_azimuth_angle': 'satazimuth',
     'sensor_azimuth_angle': 'satazimuth',
     'sun_sensor_azimuth_difference_angle': 'azimuthdiff',
-
 }
+
 
 def convert_angles(scene, delete_azimuth=False):
     """Convert angles to pps format."""
@@ -56,7 +56,7 @@ def convert_angles(scene, delete_azimuth=False):
             del scene[satpy_name]
 
     angle = 'azimuthdiff'
-    if angle not in scene: 
+    if angle not in scene:
         # Create azimuth diff angle
         scene[angle] = make_azidiff_angle(scene['satazimuth'], scene['sunazimuth'])
         scene[angle].attrs = scene['sunazimuth'].attrs  # Copy sunazimuth attrs
@@ -65,8 +65,8 @@ def convert_angles(scene, delete_azimuth=False):
         scene[angle] = abs(scene[angle])
         scene[angle].attrs = scene[angle].attrs
 
-    if delete_azimuth: 
-        # PPS does not need azimuth angles 
+    if delete_azimuth:
+        # PPS does not need azimuth angles
         try:
             del scene['satazimuth']
             del scene['sunazimuth']

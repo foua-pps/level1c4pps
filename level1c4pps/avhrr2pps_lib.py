@@ -115,7 +115,7 @@ def process_one_scene(scene_files, out_path):
         angles = ANGLE_NAMES_EPS
     else:
         avhrr_reader = 'avhrr_l1b_aapp'
-        angles =  ANGLE_NAMES_AAPP
+        angles = ANGLE_NAMES_AAPP
     scn_ = Scene(
         reader=avhrr_reader,
         filenames=scene_files)

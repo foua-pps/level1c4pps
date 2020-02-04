@@ -117,7 +117,7 @@ def process_one_scene(scene_files, out_path):
         filenames=scene_files)
 
     scn_.load(BANDNAMES + ['latitude', 'longitude'] + ANGLE_NAMES, resolution=1000)
-     
+
     # one ir channel
     irch = scn_['24']
 
