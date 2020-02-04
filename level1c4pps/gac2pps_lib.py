@@ -63,6 +63,7 @@ INSTRUMENTS = {'tirosn': 'avhrr',
                'noaa17': 'avhrr/3',
                'noaa18': 'avhrr/3',
                'noaa19': 'avhrr/3'}
+# Note: Not the same as the ones in __init__
 SATPY_ANGLE_NAMES = {
     'sunzenith': 'solar_zenith_angle',
     'satzenith': 'sensor_zenith_angle',

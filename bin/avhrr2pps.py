@@ -25,7 +25,7 @@
 """Script to convert AVHRR level-1 to PPS level-1c format using Pytroll/Satpy."""
 
 import argparse
-from level1c4pps.avhrr2pps_lib import process_one_scene 
+from level1c4pps.avhrr2pps_lib import process_one_scene
 
 if __name__ == "__main__":
     """ Create PPS-format level1c data
@@ -41,4 +41,3 @@ if __name__ == "__main__":
 
     options = parser.parse_args()
     process_one_scene(options.files, options.out_dir)
-

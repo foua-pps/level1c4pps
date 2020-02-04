@@ -22,7 +22,7 @@
 #   Nina Hakansson <nina.hakansson@smhi.se>
 #   Adam.Dybbroe <adam.dybbroe@smhi.se>
 
-"""Functions to convert AVHRR HRPT or EPS l1b data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
+"""Functions to convert AVHRR AAPP or EPS l1b data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
 
 import os
 import time
@@ -108,11 +108,10 @@ def process_one_scene(scene_files, out_path):
     if 'AVHR_xxx' in scene_files[0]:
         avhrr_reader = 'avhrr_l1b_eps'
     else:
-        avhrr_reader = 'aapp_l1b'   
+        avhrr_reader = 'aapp_l1b'
     scn_ = Scene(
         reader=avhrr_reader,
         filenames=scene_files)
-    #import pdb;pdb.set_trace()
     scn_.load(BANDNAMES + ['latitude', 'longitude',
                            'satellite_zenith_angle', 'solar_zenith_angle',
                            'satellite_azimuth_angle', 'solar_azimuth_angle'])
