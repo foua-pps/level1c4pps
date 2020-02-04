@@ -31,7 +31,7 @@ from satpy.scene import Scene
 from level1c4pps import (get_encoding, compose_filename,
                          ANGLE_ATTRIBUTES, rename_latitude_longitude,
                          update_angle_attributes, get_header_attrs,
-                         SATPY_ANGLE_NAMES, convert_angles)
+                         convert_angles)
 import pyspectral  # testing that pyspectral is available # noqa: F401
 import logging
 
@@ -47,6 +47,9 @@ logger = logging.getLogger('mersi22pps')
 PLATFORM_SHORTNAMES = {'FY3D': 'FY-3D'}
 # BANDNAMES = ['%d' % (chn+1) for chn in range(25)]
 BANDNAMES = ['3', '4', '5', '6', '20', '23', '24', '25']
+
+ANGLE_NAMES = ['satellite_zenith_angle', 'solar_zenith_angle',
+               'satellite_azimuth_angle', 'solar_azimuth_angle']
 
 PPS_TAGNAMES = {'3': 'ch_r06',
                 '4': 'ch_r09',
@@ -113,9 +116,8 @@ def process_one_scene(scene_files, out_path):
         reader='mersi2_l1b',
         filenames=scene_files)
 
-    scn_.load(BANDNAMES + ['latitude', 'longitude',
-                           'satellite_zenith_angle', 'solar_zenith_angle',
-                           'satellite_azimuth_angle', 'solar_azimuth_angle'], resolution=1000)
+    scn_.load(BANDNAMES + ['latitude', 'longitude'] + ANGLE_NAMES, resolution=1000)
+     
     # one ir channel
     irch = scn_['24']
 
@@ -126,7 +128,7 @@ def process_one_scene(scene_files, out_path):
     rename_latitude_longitude(scn_)
 
     # Convert angles to PPS
-    convert_angles(scn_, SATPY_ANGLE_NAMES)
+    convert_angles(scn_, delete_azimuth=True)
     update_angle_attributes(scn_, irch)
     for angle in ['sunzenith', 'satzenith', 'azimuthdiff']:
         scn_[angle].attrs['file_key'] = ANGLE_ATTRIBUTES['mersi2_file_key'][angle]

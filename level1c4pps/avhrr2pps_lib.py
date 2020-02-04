@@ -31,7 +31,7 @@ from satpy.scene import Scene
 from level1c4pps import (get_encoding, compose_filename,
                          rename_latitude_longitude,
                          update_angle_attributes, get_header_attrs,
-                         SATPY_ANGLE_NAMES, convert_angles,
+                         convert_angles,
                          apply_sunz_correction)
 
 import logging
@@ -42,6 +42,11 @@ import logging
 logger = logging.getLogger('avhrr2pps')
 
 BANDNAMES = ['1', '2', '3a', '3b', '4', '5']
+
+ANGLE_NAMES_EPS = ['satellite_zenith_angle', 'solar_zenith_angle',
+                   'satellite_azimuth_angle', 'solar_azimuth_angle']
+ANGLE_NAMES_AAPP = ['sensor_zenith_angle', 'solar_zenith_angle',
+                    'sun_sensor_azimuth_difference_angle']
 
 REFL_BANDS = ['1', '2', '3a']
 
@@ -107,14 +112,14 @@ def process_one_scene(scene_files, out_path):
     tic = time.time()
     if 'AVHR_xxx' in scene_files[0]:
         avhrr_reader = 'avhrr_l1b_eps'
+        angles = ANGLE_NAMES_EPS
     else:
-        avhrr_reader = 'aapp_l1b'
+        avhrr_reader = 'avhrr_l1b_aapp'
+        angles =  ANGLE_NAMES_AAPP
     scn_ = Scene(
         reader=avhrr_reader,
         filenames=scene_files)
-    scn_.load(BANDNAMES + ['latitude', 'longitude',
-                           'satellite_zenith_angle', 'solar_zenith_angle',
-                           'satellite_azimuth_angle', 'solar_azimuth_angle'])
+    scn_.load(BANDNAMES + ['latitude', 'longitude'] + angles)
     # one ir channel
     irch = scn_['4']
 
@@ -125,7 +130,7 @@ def process_one_scene(scene_files, out_path):
     rename_latitude_longitude(scn_)
 
     # Convert angles to PPS
-    convert_angles(scn_, SATPY_ANGLE_NAMES)
+    convert_angles(scn_, delete_azimuth=True)
     update_angle_attributes(scn_, irch)
 
     # Apply sunz correction

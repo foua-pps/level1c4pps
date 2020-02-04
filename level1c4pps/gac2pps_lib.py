@@ -35,7 +35,7 @@ from satpy.scene import Scene
 import pygac  # testing that pygac is available # noqa: F401
 from level1c4pps import (get_encoding, compose_filename,
                          rename_latitude_longitude, update_angle_attributes,
-                         get_header_attrs)
+                         get_header_attrs, convert_angles)
 import logging
 
 logger = logging.getLogger('gac2pps')
@@ -63,14 +63,6 @@ INSTRUMENTS = {'tirosn': 'avhrr',
                'noaa17': 'avhrr/3',
                'noaa18': 'avhrr/3',
                'noaa19': 'avhrr/3'}
-# Note: Not the same as the ones in __init__
-SATPY_ANGLE_NAMES = {
-    'sunzenith': 'solar_zenith_angle',
-    'satzenith': 'sensor_zenith_angle',
-    'azimuthdiff': 'sun_sensor_azimuth_difference_angle',
-    'sunazimuth': 'solar_azimuth_angle',
-    'satazimuth': 'sensor_azimuth_angle'}
-
 
 def get_encoding_gac(scene):
     """Get netcdf encoding for all datasets."""
@@ -97,17 +89,6 @@ def update_ancilliary_datasets(scene):
     scene['qual_flags'].attrs['long_name'] = 'pygac quality flags'
     scene['qual_flags'].coords['time'] = irch.attrs['start_time']
     del scene['qual_flags'].coords['acq_time']
-
-
-def convert_angles(scene, satpy_angle_names):
-    """Convert angles to pps format."""
-    for angle in ['sunzenith', 'satzenith', 'sunazimuth', 'satazimuth']:
-        scene[angle] = scene[satpy_angle_names[angle]]
-        del scene[satpy_angle_names[angle]]
-    angle = 'azimuthdiff'
-    scene[angle] = abs(scene[satpy_angle_names[angle]])
-    scene[angle].attrs = scene[satpy_angle_names[angle]].attrs
-    del scene[satpy_angle_names[angle]]
 
 
 def set_header_and_band_attrs(scene):
@@ -176,7 +157,7 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
     rename_latitude_longitude(scn_)
 
     # Convert angles to PPS
-    convert_angles(scn_, SATPY_ANGLE_NAMES)
+    convert_angles(scn_)
     update_angle_attributes(scn_, irch)
 
     # Handle gac specific datasets qual_flags and scanline_timestamps

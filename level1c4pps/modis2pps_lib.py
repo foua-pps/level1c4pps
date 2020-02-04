@@ -31,14 +31,14 @@ from satpy.scene import Scene
 from level1c4pps import (get_encoding, compose_filename,
                          rename_latitude_longitude,
                          update_angle_attributes, get_header_attrs,
-                         SATPY_ANGLE_NAMES, convert_angles,
+                         convert_angles,
                          apply_sunz_correction)
 
 import logging
 
 # Example:
-# tf2019234102243.FY3D-X_MERSI_GEOQK_L1B.HDF
-# tf2019234102243.FY3D-X_MERSI_GEO1K_L1B.HDF
+# MYD03.A2014272.0215.006.2014274124038.hdf
+# MYD021KM.A2014272.0215.006.2014274142955.hdf
 
 
 logger = logging.getLogger('modis2pps')
@@ -46,6 +46,9 @@ logger = logging.getLogger('modis2pps')
 BANDNAMES = ['1', '2', '6', '20', '26', '28', '29', '31', '32']
 
 REFL_BANDS = ['1', '2', '6', '26']
+
+ANGLE_NAMES = ['satellite_zenith_angle', 'solar_zenith_angle',
+               'satellite_azimuth_angle', 'solar_azimuth_angle']
 
 PPS_TAGNAMES = {'1':  'ch_r06',
                 '2':  'ch_r09',
@@ -109,9 +112,7 @@ def process_one_scene(scene_files, out_path):
         reader='modis_l1b',
         filenames=scene_files)
 
-    scn_.load(BANDNAMES + ['latitude', 'longitude',
-                           'satellite_zenith_angle', 'solar_zenith_angle',
-                           'satellite_azimuth_angle', 'solar_azimuth_angle'], resolution=1000)
+    scn_.load(BANDNAMES + ['latitude', 'longitude'] + ANGLE_NAMES, resolution=1000)
     # one ir channel
     irch = scn_['31']
 
@@ -128,7 +129,7 @@ def process_one_scene(scene_files, out_path):
     rename_latitude_longitude(scn_)
 
     # Convert angles to PPS
-    convert_angles(scn_, SATPY_ANGLE_NAMES)
+    convert_angles(scn_, delete_azimuth=True)
     update_angle_attributes(scn_, irch)
 
     # Apply sunz correction
