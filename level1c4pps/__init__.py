@@ -38,21 +38,40 @@ except DistributionNotFound:
     pass
 
 SATPY_ANGLE_NAMES = {
-    'sunzenith': 'solar_zenith_angle',
-    'satzenith': 'satellite_zenith_angle',
-    'sunazimuth': 'solar_azimuth_angle',
-    'satazimuth': 'satellite_azimuth_angle'}
+    'solar_zenith_angle': 'sunzenith',
+    'solar_azimuth_angle': 'sunazimuth',
+    'satellite_zenith_angle': 'satzenith',
+    'sensor_zenith_angle': 'satzenith',
+    'satellite_azimuth_angle': 'satazimuth',
+    'sensor_azimuth_angle': 'satazimuth',
+    'sun_sensor_azimuth_difference_angle': 'azimuthdiff',
+}
 
 
-def convert_angles(scene, satpy_angle_names):
+def convert_angles(scene, delete_azimuth=False):
     """Convert angles to pps format."""
-    for angle in ['sunzenith', 'satzenith', 'sunazimuth', 'satazimuth']:
-        scene[angle] = scene[satpy_angle_names[angle]]
-        del scene[satpy_angle_names[angle]]
-    scene['azimuthdiff'] = make_azidiff_angle(scene['satazimuth'], scene['sunazimuth'])
-    scene['azimuthdiff'].attrs = scene['sunazimuth'].attrs
-    del scene['satazimuth']
-    del scene['sunazimuth']
+    for satpy_name in SATPY_ANGLE_NAMES:
+        if satpy_name in scene:
+            scene[SATPY_ANGLE_NAMES[satpy_name]] = scene[satpy_name]  # Rename angle
+            del scene[satpy_name]
+
+    angle = 'azimuthdiff'
+    if angle not in scene:
+        # Create azimuth diff angle
+        scene[angle] = make_azidiff_angle(scene['satazimuth'], scene['sunazimuth'])
+        scene[angle].attrs = scene['sunazimuth'].attrs  # Copy sunazimuth attrs
+    else:
+        # Just apply abs
+        scene[angle] = abs(scene[angle])
+        scene[angle].attrs = scene[angle].attrs
+
+    if delete_azimuth:
+        # PPS does not need azimuth angles
+        try:
+            del scene['satazimuth']
+            del scene['sunazimuth']
+        except KeyError:
+            pass
 
 
 PPS_ANGLE_TAGS = ['sunzenith', 'satzenith', 'azimuthdiff', 'sunazimuth', 'satazimuth']

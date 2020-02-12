@@ -5,4 +5,5 @@ So far supports
  - NOAA AVHRR GAC
  - MERSI-2 level-1
  - MODIS level-1
-
+ - AVHRR eps level-1b
+ - AVHRR AAPP level-1b

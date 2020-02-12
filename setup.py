@@ -22,10 +22,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Scripts to convert various satellite level-1 data formats (e.g. SEVIRI level
-1.5 HRIT) to NWCSAF/PPS level-1c format
-
-"""
+"""Scripts to convert various satellite level-1 data formats to NWCSAF/PPS level-1c format."""
 
 from setuptools import setup
 
@@ -57,7 +54,8 @@ setup(name=NAME,
                    "Topic :: Scientific/Engineering"],
       url="https://github.com/foua-pps/level1c4pps",
       packages=['level1c4pps', ],
-      scripts=['bin/seviri2pps.py', 'bin/gac2pps.py', 'bin/mersi22pps.py', 'bin/modis2pps.py'],
+      scripts=['bin/seviri2pps.py', 'bin/gac2pps.py', 'bin/mersi22pps.py',
+               'bin/modis2pps.py', 'bin/avhrr2pps.py'],
       data_files=[],
       zip_safe=False,
       use_scm_version=True,
