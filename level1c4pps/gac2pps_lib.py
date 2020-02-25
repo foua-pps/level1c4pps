@@ -34,6 +34,7 @@ from datetime import datetime
 from satpy.scene import Scene
 import pygac  # testing that pygac is available # noqa: F401
 from level1c4pps import (get_encoding, compose_filename,
+                         set_header_and_band_attrs_defaults,
                          rename_latitude_longitude, update_angle_attributes,
                          get_header_attrs, convert_angles)
 import logging
@@ -41,6 +42,8 @@ import logging
 logger = logging.getLogger('gac2pps')
 
 BANDNAMES = ['1', '2', '3', '3a', '3b', '4', '5']
+
+REFL_BANDS = ['1', '2', '3a']
 
 PPS_TAGNAMES = {"1": "ch_r06",
                 "2": "ch_r09",
@@ -94,42 +97,25 @@ def update_ancilliary_datasets(scene):
 
 def set_header_and_band_attrs(scene):
     """Set and delete some attributes."""
-    scene.attrs['instrument'] = "AVHRR"
-    scene.attrs['source'] = "gac2pps.py"
-    scene.attrs['history'] = "Created by level1c4pps."  # history attr missing in satpy=0.18.2
-    nowutc = datetime.utcnow()
-    scene.attrs['date_created'] = nowutc.strftime("%Y-%m-%dT%H:%M:%SZ")
     irch = scene['4']
+    nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch)
+    scene.attrs['source'] = "gac2pps.py"
+
+    # Are these really needed?
     scene.attrs['platform'] = irch.attrs['platform_name']
     scene.attrs['platform_name'] = irch.attrs['platform_name']
     scene.attrs['orbit_number'] = irch.attrs['orbit_number']
     scene.attrs['orbit'] = scene.attrs['orbit_number']
+    scene.attrs['instrument'] = "AVHRR"
 
-    # bands
-    image_num = 0  # name of first dataset is image0
     for band in BANDNAMES:
-        try:
-            idtag = PPS_TAGNAMES.get(band, band)
-            scene[band].attrs['id_tag'] = idtag
-            scene[band].attrs['description'] = 'AVHRR ' + str(band)
-            if idtag.startswith('ch_r'):
-                scene[band].attrs['sun_earth_distance_correction_applied'] = 'True'
-                # The sun_earth_distance_correction_factor is not provided by pygac <= 1.2.1 / satpy <= 0.18.1
-                if 'sun_earth_distance_correction_factor' not in scene[band].attrs.keys():
-                    scene[band].attrs['sun_earth_distance_correction_factor'] = 1.0
-            else:
-                scene[band].attrs['sun_earth_distance_correction_applied'] = 'False'
-                scene[band].attrs['sun_earth_distance_correction_factor'] = 1.0
-            scene[band].attrs['sun_zenith_angle_correction_applied'] = 'False'
-            scene[band].attrs['name'] = "image{:d}".format(image_num)
-            image_num += 1
-            scene[band].attrs['coordinates'] = 'lon lat'
-            # Add time coordinate. To make cfwriter aware that we want 3D data.
-            scene[band].coords['time'] = irch.attrs['start_time']
-            del scene[band].coords['acq_time']
-            del scene[band].attrs['area']
-        except KeyError:
+        if band not in scene:
             continue
+        if band in REFL_BANDS:
+            # For GAC data sun_earth_distance_correction is applied always!
+            # The sun_earth_distance_correction_factor is not provided by pygac <= 1.2.1 / satpy <= 0.18.1
+            scene[band].attrs['sun_earth_distance_correction_applied'] = 'True'
+    return nimg
 
 
 def process_one_file(gac_file, out_path='.', reader_kwargs=None):

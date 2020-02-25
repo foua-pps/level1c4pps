@@ -26,6 +26,7 @@
 import datetime as dt
 import netCDF4
 import unittest
+from datetime import datetime
 try:
     from unittest import mock
 except ImportError:
@@ -45,12 +46,14 @@ class TestGac2PPS(unittest.TestCase):
                                        'id_tag': 'ch_r06'})
         ir_108 = mock.MagicMock(attrs={'name': 'image1',
                                        'id_tag': 'ch_tb11',
+                                       'start_time': datetime.utcnow(),
                                        'platform_name': 'tirosn',
                                        'orbit_number': 99999})
         qual_f = mock.MagicMock(attrs={'name': 'qual_flags',
                                        'id_tag': 'qual_flags'})
         scan_t = mock.MagicMock(attrs={'name': 'scanline_timestamps'})
         self.scene = Scene()
+        self.scene.attrs['sensor'] = ['avhrr-1', 'avhrr-2', 'avhrr-3']
         scene_dict = {'1': vis006, '4': ir_108, 'qual_flags': qual_f, 'scanline_timestamps': scan_t}
         for key in scene_dict:
             pps_name = scene_dict[key].attrs['name']

@@ -26,10 +26,10 @@
 
 import os
 import time
-from datetime import datetime
 from satpy.scene import Scene
 from level1c4pps import (get_encoding, compose_filename,
                          rename_latitude_longitude,
+                         set_header_and_band_attrs_defaults,
                          update_angle_attributes, get_header_attrs,
                          convert_angles,
                          apply_sunz_correction)
@@ -68,42 +68,10 @@ def get_encoding_avhrr(scene):
 
 def set_header_and_band_attrs(scene):
     """Set and delete some attributes."""
-    nimg = 0  # name of first dataset is image0
-    # Set some header attributes:
     irch = scene['4']
-    scene.attrs['platform'] = irch.attrs['platform_name']
-    sensor_name = [x for x in scene.attrs['sensor']][0]
-    scene.attrs['instrument'] = sensor_name.upper()
+    nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch)
     scene.attrs['source'] = "avhrr2pps.py"
-    nowutc = datetime.utcnow()
-    scene.attrs['date_created'] = nowutc.strftime("%Y-%m-%dT%H:%M:%SZ")
     scene.attrs['orbit_number'] = 00000
-    # bands
-    for band in BANDNAMES:
-        if band not in scene:
-            continue
-        idtag = PPS_TAGNAMES.get(band, None)
-        if not idtag:
-            continue
-        scene[band].attrs['id_tag'] = idtag
-        scene[band].attrs['description'] = 'AVHRR ' + str(band)
-        scene[band].attrs['sun_earth_distance_correction_applied'] = 'False'
-        scene[band].attrs['sun_earth_distance_correction_factor'] = 1.0
-        scene[band].attrs['sun_zenith_angle_correction_applied'] = 'False'
-        scene[band].attrs['name'] = "image{:d}".format(nimg)
-        scene[band].attrs['coordinates'] = 'lon lat'
-        # Add time coordinate. To make cfwriter aware that we want 3D data.
-        scene[band].coords['time'] = irch.attrs['start_time']
-        if band in REFL_BANDS:
-            scene[band].attrs['units'] = '%'
-        else:
-            scene[band].attrs['units'] = 'K'
-
-        try:
-            del scene[band].attrs['area']
-        except KeyError:
-            pass
-        nimg += 1
     return nimg
 
 
