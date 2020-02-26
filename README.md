@@ -7,3 +7,4 @@ So far supports
  - MODIS level-1
  - AVHRR eps level-1b
  - AVHRR AAPP level-1b
+ - FIDUCEO FCDR

@@ -55,7 +55,7 @@ PPS_TAGNAMES = {"1": "ch_r06",
 ANGLE_NAMES = ['sensor_zenith_angle', 'solar_zenith_angle',
                'sun_sensor_azimuth_difference_angle']
 
-move_to_header_attrs = ['source',
+MOVE_TO_HEADER_ATTRS = ['source',
                         'Ch3a_only',
                         'file_type',
                         'Ch3a_Ch3b_split_file',
@@ -71,7 +71,8 @@ move_to_header_attrs = ['source',
                         'references',
                         'history',
                         'title']
-    
+
+
 def get_encoding_fiduceo(scene):
     """Get netcdf encoding for all datasets."""
     return get_encoding(scene,
@@ -87,9 +88,8 @@ def set_header_and_band_attrs(scene):
     scene.attrs['source'] = "fiduceo2pps.py"
     scene.attrs['orbit_number'] = 99999
     # Move some attributes to header:
-    for attr in  move_to_header_attrs:
+    for attr in MOVE_TO_HEADER_ATTRS:
         scene.attrs[attr] = irch.attrs[attr]
-                            
     for band in BANDNAMES:
         if band not in scene:
             continue
@@ -98,33 +98,24 @@ def set_header_and_band_attrs(scene):
             scene[band].attrs['sun_earth_distance_correction_applied'] = 'True'
     return nimg
 
-def remove_some_attrs_and_nones(scene):
-#    import pdb;pdb.set_trace()
+
+def remove_some_attrs_and_none(scene):
+    """Remove some attributes and replace some None with none."""
     for dataset in scene:
         print(dataset.name)
         for coord in dataset.coords:
-            for attr in move_to_header_attrs:
+            for attr in MOVE_TO_HEADER_ATTRS:
                 dataset.coords[coord].attrs.pop(attr, None)
             for attr in dataset.coords[coord].attrs:
-                if dataset.coords[coord].attrs[attr] is None and attr not in ['_FillValue']:                
-                    dataset.coords[coord].attrs[attr] = 'none'  
-        for attr in move_to_header_attrs:
+                if dataset.coords[coord].attrs[attr] is None and attr not in ['_FillValue']:
+                    dataset.coords[coord].attrs[attr] = 'none'
+        for attr in MOVE_TO_HEADER_ATTRS:
             dataset.attrs.pop(attr, None)
-        #dataset.attrs.pop('wavelength', None)   
         for attr in dataset.attrs:
-            if dataset.attrs[attr] is None and attr not in ['_FillValue']:                
+            if dataset.attrs[attr] is None and attr not in ['_FillValue']:
                 dataset.attrs[attr] = 'none'
-                
-            #if dataset.attrs[attr] == []:                
-            #    dataset.attrs[attr] = 'Empty List'
-            #attr='wavelength'
-            print(dataset.name, attr, type(dataset.attrs[attr]), type(attr), dataset.attrs[attr])
-            #print(dataset.coords)
-        #if 'id_tag' not in dataset.attrs:
-    #for dataset in scene:
-    #    print(dataset.name, dataset[dataset.name],attrs['ccordinates'], dataset.coords)
 
-    
+
 def process_one_scene(scene_files, out_path):
     """Make level 1c files in PPS-format."""
     tic = time.time()
@@ -134,12 +125,10 @@ def process_one_scene(scene_files, out_path):
     scn_.load(BANDNAMES + ['latitude', 'longitude'] + ANGLE_NAMES)
     # one ir channel
     irch = scn_['4']
-    #scn_['4'].attrs['platform_name'] = "NOAA18"
-    #import pdb;pdb.set_trace()
 
     # Rename longitude, latitude to lon, lat.
     rename_latitude_longitude(scn_)
-    
+
     # Set header and band attributes
     set_header_and_band_attrs(scn_)
 
@@ -150,12 +139,11 @@ def process_one_scene(scene_files, out_path):
     # Apply sunz correction
     apply_sunz_correction(scn_, REFL_BANDS)
 
-    remove_some_attrs_and_nones(scn_)
-    #import pdb;pdb.set_trace()
+    remove_some_attrs_and_none(scn_)
     filename = compose_filename(scn_, out_path, instrument='avhrr', band=irch)
     scn_.save_datasets(writer='cf',
                        filename=filename,
-                       #header_attrs=get_header_attrs(scn_, band=irch, sensor='avhrr'),
+                       header_attrs=get_header_attrs(scn_, band=irch, sensor='avhrr'),
                        engine='netcdf4',
                        include_lonlats=False,
                        flatten_attrs=True,

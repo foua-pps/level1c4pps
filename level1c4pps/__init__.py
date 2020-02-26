@@ -276,9 +276,7 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
 
         # Add time coordinate. To make cfwriter aware that we want 3D data.
         scene[band].coords['time'] = irch.attrs['start_time']
-        #scene[band].coords['lon'] = scene['lon']
-        #scene[band].coords['lat'] = scene['lat']
-        
+
         # Remove some attributes and coordinates
         for attr in ['area', 'valid_min', 'valid_max']:
             scene[band].attrs.pop(attr, None)
@@ -307,8 +305,6 @@ def update_angle_attributes(scene, band):
         scene[angle].attrs['valid_range'] = ANGLE_ATTRIBUTES['valid_range'][angle]
         scene[angle].attrs['standard_name'] = ANGLE_ATTRIBUTES['standard_name'][angle]
         scene[angle].coords['time'] = band.attrs["start_time"]
-        #scene[angle].coords['lon'] = scene['lon']
-        #scene[angle].coords['lat'] = scene['lat']
         for attr in ["start_time", "end_time"]:
             scene[angle].attrs[attr] = band.attrs[attr]
         # delete some attributes
