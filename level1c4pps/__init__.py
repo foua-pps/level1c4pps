@@ -38,12 +38,16 @@ except DistributionNotFound:
     pass
 
 SATPY_ANGLE_NAMES = {
+    'solar_zenith': 'sunzenith',  # no _angle
     'solar_zenith_angle': 'sunzenith',
+    'solar_azimuth': 'sunazimuth',  # no _angle
     'solar_azimuth_angle': 'sunazimuth',
     'satellite_zenith_angle': 'satzenith',
     'sensor_zenith_angle': 'satzenith',
+    'observation_zenith': 'satzenith',
     'satellite_azimuth_angle': 'satazimuth',
     'sensor_azimuth_angle': 'satazimuth',
+    'observation_azimuth': 'satazimuth',
     'sun_sensor_azimuth_difference_angle': 'azimuthdiff',
 }
 
@@ -199,20 +203,87 @@ def get_band_encoding(dataset, bandnames, pps_tagnames, chunks=None):
 
 def rename_latitude_longitude(scene):
     """Rename latitude longitude to lat lon."""
-    scene['lat'] = scene['latitude']
-    scene['lon'] = scene['longitude']
-    del scene['latitude']
-    del scene['longitude']
+    lat_name_satpy = 'latitude'
+    lon_name_satpy = 'longitude'
+    if 'lat_pixels' in scene:
+        lat_name_satpy = 'lat_pixels'
+    if 'lon_pixels' in scene:
+        lon_name_satpy = 'lon_pixels'
+    scene['lat'] = scene[lat_name_satpy]
+    scene['lon'] = scene[lon_name_satpy]
+    del scene[lat_name_satpy]
+    del scene[lon_name_satpy]
     # Update attributes
     scene['lat'].attrs['long_name'] = 'latitude coordinate'
     scene['lon'].attrs['long_name'] = 'longitude coordinate'
     scene['lat'].attrs['name'] = 'lat'
     scene['lon'].attrs['name'] = 'lon'
+    scene['lon'].attrs['name'] = 'lon'
+    scene['lon'].attrs['name'] = 'lon'
+    scene['lon'].attrs['valid_range'] = np.array([-18000, 18000], dtype='float32')
+    scene['lat'].attrs['valid_range'] = np.array([-9000, 90000], dtype='float32')
+    for attr in ['valid_min', 'valid_max']:
+        try:
+            del scene['lat'].attrs[attr]
+            del scene['lon'].attrs[attr]
+        except KeyError:
+            pass
     try:
         del scene['lat'].coords['acq_time']
         del scene['lon'].coords['acq_time']
     except KeyError:
         pass
+
+
+def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch):
+    """Add some default values for band attributes."""
+    nimg = 0  # name of first dataset is image0
+    # Set some header attributes:
+    scene.attrs['history'] = "Created by level1c4pps."
+    scene.attrs['platform'] = irch.attrs['platform_name']
+    print([x for x in scene.attrs['sensor']])
+    sensor_name = [x for x in scene.attrs['sensor']][0]
+    scene.attrs['instrument'] = sensor_name.upper()
+    nowutc = datetime.utcnow()
+    scene.attrs['date_created'] = nowutc.strftime("%Y-%m-%dT%H:%M:%SZ")
+    # bands
+    for band in BANDNAMES:
+        if band not in scene:
+            continue
+        idtag = PPS_TAGNAMES.get(band, None)
+        if idtag is not None:
+            scene[band].attrs['id_tag'] = idtag
+        scene[band].attrs['description'] = sensor_name.upper() + ' ' + str(band).upper()
+        if 'sun_earth_distance_correction_factor' not in scene[band].attrs.keys():
+            scene[band].attrs['sun_earth_distance_correction_factor'] = 1.0
+            scene[band].attrs['sun_earth_distance_correction_applied'] = 'False'
+        else:
+            # Assume factor applied if available as attribute.
+            scene[band].attrs['sun_earth_distance_correction_applied'] = 'True'
+        scene[band].attrs['sun_zenith_angle_correction_applied'] = 'False'
+        scene[band].attrs['name'] = "image{:d}".format(nimg)
+        scene[band].attrs['coordinates'] = 'lon lat'
+        if band in REFL_BANDS:
+            scene[band].attrs['valid_range'] = np.array([0, 20000], dtype='int16')
+            scene[band].attrs['units'] = '%'  # Needed by AVHRR
+        else:
+            scene[band].attrs['valid_range'] = np.array([-273.15 * 100, 300 * 100], dtype='int16')
+            scene[band].attrs['units'] = 'K'  # Needed by AVHRR
+
+        # Add time coordinate. To make cfwriter aware that we want 3D data.
+        scene[band].coords['time'] = irch.attrs['start_time']
+
+        # Remove some attributes and coordinates
+        for attr in ['area', 'valid_min', 'valid_max']:
+            scene[band].attrs.pop(attr, None)
+        for coord_name in ['acq_time']:
+            try:
+                del scene[band].coords[coord_name]
+            except KeyError:
+                pass
+
+        nimg += 1
+    return nimg
 
 
 def update_angle_attributes(scene, band):
@@ -232,10 +303,11 @@ def update_angle_attributes(scene, band):
         for attr in ["start_time", "end_time"]:
             scene[angle].attrs[attr] = band.attrs[attr]
         # delete some attributes
-        try:
-            del scene[angle].attrs['area']
-        except KeyError:
-            pass
+        for attr in ['area', 'valid_min', 'valid_max']:
+            try:
+                del scene[angle].attrs['area']
+            except KeyError:
+                pass
         # delete some coords
         try:
             del scene[angle].coords['acq_time']
