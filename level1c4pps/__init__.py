@@ -218,8 +218,8 @@ def rename_latitude_longitude(scene):
     scene['lon'].attrs['long_name'] = 'longitude coordinate'
     scene['lat'].attrs['name'] = 'lat'
     scene['lon'].attrs['name'] = 'lon'
-    scene['lon'].attrs['name'] = 'lon'
-    scene['lon'].attrs['name'] = 'lon'
+    scene['lat'].name = 'lat'
+    scene['lon'].name = 'lon'
     scene['lon'].attrs['valid_range'] = np.array([-18000, 18000], dtype='float32')
     scene['lat'].attrs['valid_range'] = np.array([-9000, 90000], dtype='float32')
     for attr in ['valid_min', 'valid_max']:
@@ -240,7 +240,10 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
     nimg = 0  # name of first dataset is image0
     # Set some header attributes:
     scene.attrs['history'] = "Created by level1c4pps."
-    scene.attrs['platform'] = irch.attrs['platform_name']
+    if 'platform_name' in irch.attrs:
+        scene.attrs['platform'] = irch.attrs['platform_name']
+    else:
+        scene.attrs['platform'] = irch.attrs['platform']
     print([x for x in scene.attrs['sensor']])
     sensor_name = [x for x in scene.attrs['sensor']][0]
     scene.attrs['instrument'] = sensor_name.upper()
@@ -262,6 +265,7 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
             scene[band].attrs['sun_earth_distance_correction_applied'] = 'True'
         scene[band].attrs['sun_zenith_angle_correction_applied'] = 'False'
         scene[band].attrs['name'] = "image{:d}".format(nimg)
+        scene[band].name = scene[band].attrs['name']
         scene[band].attrs['coordinates'] = 'lon lat'
         if band in REFL_BANDS:
             scene[band].attrs['valid_range'] = np.array([0, 20000], dtype='int16')
@@ -272,11 +276,13 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
 
         # Add time coordinate. To make cfwriter aware that we want 3D data.
         scene[band].coords['time'] = irch.attrs['start_time']
-
+        #scene[band].coords['lon'] = scene['lon']
+        #scene[band].coords['lat'] = scene['lat']
+        
         # Remove some attributes and coordinates
         for attr in ['area', 'valid_min', 'valid_max']:
             scene[band].attrs.pop(attr, None)
-        for coord_name in ['acq_time']:
+        for coord_name in ['acq_time', 'longitude', 'latitude']:
             try:
                 del scene[band].coords[coord_name]
             except KeyError:
@@ -292,6 +298,7 @@ def update_angle_attributes(scene, band):
         if angle not in scene.keys() and angle in ['sunazimuth', 'satazimuth']:
             # azimuth angles not always there
             continue
+        scene[angle].name = angle
         scene[angle].attrs['id_tag'] = angle
         scene[angle].attrs['name'] = angle
         scene[angle].attrs['coordinates'] = 'lon lat'
@@ -300,6 +307,8 @@ def update_angle_attributes(scene, band):
         scene[angle].attrs['valid_range'] = ANGLE_ATTRIBUTES['valid_range'][angle]
         scene[angle].attrs['standard_name'] = ANGLE_ATTRIBUTES['standard_name'][angle]
         scene[angle].coords['time'] = band.attrs["start_time"]
+        #scene[angle].coords['lon'] = scene['lon']
+        #scene[angle].coords['lat'] = scene['lat']
         for attr in ["start_time", "end_time"]:
             scene[angle].attrs[attr] = band.attrs[attr]
         # delete some attributes
@@ -309,22 +318,23 @@ def update_angle_attributes(scene, band):
             except KeyError:
                 pass
         # delete some coords
-        try:
-            del scene[angle].coords['acq_time']
-        except KeyError:
-            pass
+        for coord_name in ['acq_time', 'longitude', 'latitude']:
+            try:
+                del scene[angle].coords[coord_name]
+            except KeyError:
+                pass
 
 
 def apply_sunz_correction(scene, REFL_BANDS):
     """Apply sun zenith angle correciton to visual channels."""
-    sza = scene['sunzenith']
+    sza = scene['sunzenith'].data
     mu0 = np.cos(np.radians(sza))
     scaler = 24.35 / (2 * mu0 + np.sqrt(498.5225 * mu0 * mu0 + 1))
     for band in REFL_BANDS:
         if band not in scene:
             continue
         if scene[band].attrs['sun_zenith_angle_correction_applied'] == 'False':
-            scene[band].values = scene[band].values * scaler
+            scene[band].data = scene[band].data * scaler
             scene[band].attrs['sun_zenith_angle_correction_applied'] = 'True'
 
 
