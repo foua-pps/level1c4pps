@@ -55,10 +55,13 @@ PPS_TAGNAMES = {'1':  'ch_r06',
                 '26': 'ch_r13',
                 '6':  'ch_r16',
                 '20': 'ch_tb37',
+                '27': 'ch_tb67',
                 '28': 'ch_tb73',
                 '29': 'ch_tb85',
                 '31': 'ch_tb11',
-                '32': 'ch_tb12'}
+                '32': 'ch_tb12',
+                '33': 'ch_tb133',
+}
 
 
 def get_encoding_modis(scene):
