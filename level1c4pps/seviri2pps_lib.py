@@ -297,10 +297,19 @@ def add_proj_satpos(scene):
     orb = scene['IR_108'].attrs['orbital_parameters']
 
     # Area extent
+    try:
+        # Traditionally a, b was included in proj_dict
+        param_a = scene.attrs['area'].proj_dict['a']
+        param_b = scene.attrs['area'].proj_dict['b']
+    except KeyError:
+        # But sometimes b is missing:
+        from pyresample.utils import proj4_radius_parameters
+        param_a, param_b = proj4_radius_parameters(scene.attrs['area'].proj_dict)
+
     scene.attrs.update({
         'projection': 'geos',
-        'projection_semi_major_axis': scene.attrs['area'].proj_dict['a'],
-        'projection_semi_minor_axis': scene.attrs['area'].proj_dict['b'],
+        'projection_semi_major_axis': param_a,
+        'projection_semi_minor_axis': param_b,
         'projection_longitude': orb['projection_longitude'],
         'projection_latitude': orb['projection_latitude'],
         'projection_altitude': orb['projection_altitude']
