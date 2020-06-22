@@ -303,8 +303,8 @@ def add_proj_satpos(scene):
         param_b = scene.attrs['area'].proj_dict['b']
     except KeyError:
         # But sometimes b is missing:
-        from pyresample.utils import proj4_radius_parameters
-        param_a, param_b = proj4_radius_parameters(scene.attrs['area'].proj_dict)
+        param_a = scene.attrs['area'].crs.ellipsoid.semi_major_metre
+        param_b = scene.attrs['area'].crs.ellipsoid.semi_minor_metre
 
     scene.attrs.update({
         'projection': 'geos',
