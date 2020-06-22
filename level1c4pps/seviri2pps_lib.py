@@ -297,10 +297,19 @@ def add_proj_satpos(scene):
     orb = scene['IR_108'].attrs['orbital_parameters']
 
     # Area extent
+    try:
+        # Traditionally a, b was included in proj_dict
+        param_a = scene.attrs['area'].proj_dict['a']
+        param_b = scene.attrs['area'].proj_dict['b']
+    except KeyError:
+        # But sometimes b is missing:
+        param_a = scene.attrs['area'].crs.ellipsoid.semi_major_metre
+        param_b = scene.attrs['area'].crs.ellipsoid.semi_minor_metre
+
     scene.attrs.update({
         'projection': 'geos',
-        'projection_semi_major_axis': scene.attrs['area'].proj_dict['a'],
-        'projection_semi_minor_axis': scene.attrs['area'].proj_dict['b'],
+        'projection_semi_major_axis': param_a,
+        'projection_semi_minor_axis': param_b,
         'projection_longitude': orb['projection_longitude'],
         'projection_latitude': orb['projection_latitude'],
         'projection_altitude': orb['projection_altitude']
