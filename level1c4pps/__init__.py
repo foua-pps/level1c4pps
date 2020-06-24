@@ -330,7 +330,7 @@ def apply_sunz_correction(scene, REFL_BANDS):
 
 def platform_name_to_use_in_filename(platform_name):
     """Get platform name for PPS filenames from platfrom attribute."""
-    return platform_name.lower().replace('-', '').replace('aqua', '2').replace('terra', '1')
+    return platform_name.lower().replace('-', '').replace('aqua', '2').replace('terra', '1').replace('sga', 'metopsga')
 
 
 def compose_filename(scene, out_path, instrument, band=None):
