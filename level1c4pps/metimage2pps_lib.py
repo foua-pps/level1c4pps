@@ -78,6 +78,8 @@ def set_header_and_band_attrs(scene):
     scene.attrs['source'] = "metimage2pps.py"
     scene.attrs['orbit_number'] = 00000
     nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch)
+    for band in REFL_BANDS:
+        scene[band].attrs['sun_zenith_angle_correction_applied'] = 'True'
     return nimg
 
 
