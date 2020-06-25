@@ -32,6 +32,7 @@ from level1c4pps import (get_encoding, compose_filename,
                          update_angle_attributes, get_header_attrs,
                          set_header_and_band_attrs_defaults,
                          convert_angles,
+                         adjust_lons_to_valid_range,
                          apply_sunz_correction)
 
 import logging
@@ -97,6 +98,11 @@ def process_one_scene(scene_files, out_path):
     # Rename longitude, latitude to lon, lat.
     rename_latitude_longitude(scn_)
 
+    # Adjust lons to valid range:
+    adjust_lons_to_valid_range(scn_)
+    import numpy as np
+    print(np.max(scn_['lon'].values))
+    
     # Convert angles to PPS
     convert_angles(scn_, delete_azimuth=True)
     update_angle_attributes(scn_, irch)

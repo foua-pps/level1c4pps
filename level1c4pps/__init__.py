@@ -112,14 +112,19 @@ ANGLE_ATTRIBUTES = {
 def make_azidiff_angle(sata, suna):
     """Calculate azimuth difference angle."""
     daz = abs(sata - suna)
-    daz = daz % 360
+    return centered_modulus(daz, divisor=360)
+    
+def centered_modulus(daz, divisor=360):
+    """Transform array to half open range ]-divisor/2, divisor/2]."""
+    half_divisor = divisor / 2.0
+    daz = daz % divisor
     if isinstance(daz, np.ndarray):
-        daz[daz > 180] = 360 - daz[daz > 180]
+        daz[daz > half_divisor] = divisor - daz[daz > half_divisor]
         return daz
     elif isinstance(daz, xr.DataArray):
-        return daz.where(daz < 180, 360 - daz)
+        return daz.where(daz < half_divisor, divisor - daz)
     else:
-        raise ValueError("Azimuth difference is neither a Numpy nor an Xarray object! Type = %s", type(daz))
+        raise ValueError("Array is neither a Numpy nor an Xarray object! Type = %s", type(daz))
 
 
 def dt64_to_datetime(dt64):
@@ -234,7 +239,11 @@ def rename_latitude_longitude(scene):
     except KeyError:
         pass
 
+def adjust_lons_to_valid_range(scene):
+    # Lons should be in [-180, 180[ not [0, 360]
+    scene['lon'] = centered_modulus(scene['lon'])
 
+    
 def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch):
     """Add some default values for band attributes."""
     nimg = 0  # name of first dataset is image0
