@@ -32,12 +32,12 @@ from level1c4pps import (get_encoding, compose_filename,
                          update_angle_attributes, get_header_attrs,
                          set_header_and_band_attrs_defaults,
                          convert_angles,
-                         adjust_lons_to_valid_range,
-                         apply_sunz_correction)
+                         adjust_lons_to_valid_range)
 
 import logging
-from satpy.utils import debug_on
-#debug_on()
+
+# from satpy.utils import debug_on
+# debug_on()
 
 # Example:
 # '/home/a001865/DATA_MISC/EPSSG_TEST/Testdata/W_xx-eumetsat-darmstadt,SAT,SGA1-VII-1B-RAD_C_EUMT_20191001043852_G_D_20070912095840_20070912100343_T_N____.nc'
@@ -52,17 +52,18 @@ ANGLE_NAMES = ['observation_zenith', 'solar_zenith',
                'observation_azimuth', 'solar_azimuth']
 
 PPS_TAGNAMES = {"vii_668": "ch_r06",
-                 "vii_865": "ch_r09",
-                 "vii_1375": "ch_r13",
-                 "vii_1630": "ch_r16",
-                 "vii_3740": "ch_tb37",
-                 "vii_7325": "ch_tb73",
-                 "vii_8540": "ch_tb85",
-                 "vii_10690": "ch_tb11",
-                 "vii_12020": "ch_tb12"
-                                }
+                "vii_865": "ch_r09",
+                "vii_1375": "ch_r13",
+                "vii_1630": "ch_r16",
+                "vii_3740": "ch_tb37",
+                "vii_7325": "ch_tb73",
+                "vii_8540": "ch_tb85",
+                "vii_10690": "ch_tb11",
+                "vii_12020": "ch_tb12"}
+
 BANDNAMES = list(PPS_TAGNAMES.keys())
-                                
+
+
 def get_encoding_metimage(scene):
     """Get netcdf encoding for all datasets."""
     return get_encoding(scene,
@@ -102,7 +103,7 @@ def process_one_scene(scene_files, out_path):
     adjust_lons_to_valid_range(scn_)
     import numpy as np
     print(np.max(scn_['lon'].values))
-    
+
     # Convert angles to PPS
     convert_angles(scn_, delete_azimuth=True)
     update_angle_attributes(scn_, irch)
