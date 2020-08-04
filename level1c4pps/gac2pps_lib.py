@@ -117,6 +117,7 @@ def set_header_and_band_attrs(scene):
             scene[band].attrs['sun_earth_distance_correction_applied'] = 'True'
     return nimg
 
+
 def process_one_file(gac_file, out_path='.', reader_kwargs=None):
     """Make level 1c files in PPS-format."""
     tic = time.time()
@@ -129,7 +130,7 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
         tle_name = conf.get('tle', 'tlename', raw=True)
         reader_kwargs['tle_dir'] = tle_dir
         reader_kwargs['tle_name'] = tle_name
- 
+
     scn_ = Scene(reader='avhrr_l1b_gaclac',
                  filenames=[gac_file], reader_kwargs=reader_kwargs)
 
