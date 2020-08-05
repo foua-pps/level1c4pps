@@ -52,9 +52,16 @@ if __name__ == "__main__":
     parser.add_argument('-el', '--end_line', type=int, nargs='?',
                         required=False, default=None,
                         help="Use only part of data, start with end_line.")
-
+    parser.add_argument('-td', '--tle_dir', type=str, nargs='?',
+                        required=False, default='.',
+                        help="TLE directory.")
+    parser.add_argument('-tn', '--tle_name', type=str, nargs='?',
+                        required=False, default='.',
+                        help="TLE_name.")
     options = parser.parse_args()
     process_one_file(options.file, options.out_dir,
                      reader_kwargs={'start_line': options.start_line,
                                     'end_line': options.end_line,
+                                    'tle_name': options.tle_name,
+                                    'tle_dir': options.tle_dir,
                                     'strip_invalid_coords': not options.dont_strip_invalid_coords})
