@@ -50,10 +50,9 @@ logger = logging.getLogger('slstr2pps')
 
 # BANDNAMES = ['%d' % (chn+1) for chn in range(25)]
 
-#slstr2pps.py -o temp/ S3A_SL_1_RBT____20200911T163815_20200911T164115_20200912T215136_0179_062_340_0360_LN2_O_NT_004.SEN3/*an.nc  S3A_SL_1_RBT____20200911T163815_20200911T164115_20200912T215136_0179_062_340_0360_LN2_O_NT_004.SEN3/*n.nc 
+#slstr2pps.py -o temp/ S3A_SL_1_RBT____20200911T163815_20200911T164115_20200912T215136_0179_062_340_0360_LN2_O_NT_004.SEN3/*n.nc  
 
 #['F1_in', 'F2_in', 'S1_an', 'S2_an', 'S3_an', 'S4_an', 'S4_bn', 'S5_an', 'S5_bn', 'S6_an', 'S6_bn', 'S7_in', 'S8_in', 'S9_in', 'bayes_an', 'bayes_bn', 'bayes_in', 'cloud_an', 'cloud_bn', 'cloud_in', 'confidence_an', 'confidence_bn', 'confidence_in', 'latitude_an', 'latitude_ao', 'latitude_bn', 'latitude_bo', 'latitude_in', 'latitude_io', 'longitude_an', 'longitude_ao', 'longitude_bn', 'longitude_bo', 'longitude_in', 'longitude_io', 'pointing_an', 'pointing_bn', 'pointing_in', 'satellite_azimuth_angle_n', 'satellite_azimuth_angle_o', 'satellite_zenith_angle_n', 'satellite_zenith_angle_o', 'solar_azimuth_angle_n', 'solar_azimuth_angle_o', 'solar_zenith_angle_n', 'solar_zenith_angle_o']
-
 
 
 BANDNAMES = ['S2', 'S3', 'S4', 'S5', 'S7', 'S8', 'S9']
@@ -98,7 +97,7 @@ def process_one_scene(scene_files, out_path):
 
     scn_.load(BANDNAMES + ['latitude', 'longitude'] + ANGLE_NAMES)
 
-    # Everythong should be on the same grid, to be saved as leve1c-pps
+    # Everything should be on the same grid, to be saved as ppsleve1c
     scn_ = scn_.resample(resampler="native")
 
     # one ir channel
