@@ -30,7 +30,7 @@ import satpy
 from satpy.scene import Scene
 from level1c4pps import (get_encoding, compose_filename,
                          set_header_and_band_attrs_defaults,
-                         ANGLE_ATTRIBUTES, rename_latitude_longitude,
+                         rename_latitude_longitude,
                          update_angle_attributes, get_header_attrs,
                          convert_angles)
 import pyspectral  # testing that pyspectral is available # noqa: F401
@@ -39,7 +39,7 @@ from satpy.utils import debug_on
 
 from distutils.version import LooseVersion
 if LooseVersion(satpy.__version__) < LooseVersion('0.22.1'):
-    raise ImportError("'slstr3pps' requires satpy 0.22.1 or greater")
+    raise ImportError("'slstr2pps' requires satpy 0.22.1 or greater")
 
 debug_on()
 
@@ -48,11 +48,16 @@ debug_on()
 
 logger = logging.getLogger('slstr2pps')
 
-# BANDNAMES = ['%d' % (chn+1) for chn in range(25)]
-
-#slstr2pps.py -o temp/ S3A_SL_1_RBT____20200911T163815_20200911T164115_20200912T215136_0179_062_340_0360_LN2_O_NT_004.SEN3/*n.nc  
-
-#['F1_in', 'F2_in', 'S1_an', 'S2_an', 'S3_an', 'S4_an', 'S4_bn', 'S5_an', 'S5_bn', 'S6_an', 'S6_bn', 'S7_in', 'S8_in', 'S9_in', 'bayes_an', 'bayes_bn', 'bayes_in', 'cloud_an', 'cloud_bn', 'cloud_in', 'confidence_an', 'confidence_bn', 'confidence_in', 'latitude_an', 'latitude_ao', 'latitude_bn', 'latitude_bo', 'latitude_in', 'latitude_io', 'longitude_an', 'longitude_ao', 'longitude_bn', 'longitude_bo', 'longitude_in', 'longitude_io', 'pointing_an', 'pointing_bn', 'pointing_in', 'satellite_azimuth_angle_n', 'satellite_azimuth_angle_o', 'satellite_zenith_angle_n', 'satellite_zenith_angle_o', 'solar_azimuth_angle_n', 'solar_azimuth_angle_o', 'solar_zenith_angle_n', 'solar_zenith_angle_o']
+# slstr2pps.py -o temp/ S3A_SL_1_RBT____20200911T163815_*.SEN3/*n.nc
+# ['F1_in', 'F2_in', 'S1_an', 'S2_an', 'S3_an', 'S4_an', 'S4_bn', 'S5_an', 'S5_bn',
+# 'S6_an', 'S6_bn', 'S7_in', 'S8_in', 'S9_in',
+# 'bayes_an', 'bayes_bn', 'bayes_in', 'cloud_an', 'cloud_bn', 'cloud_in',
+# 'confidence_an', 'confidence_bn', 'confidence_in',
+# 'latitude_an', 'latitude_ao', 'latitude_bn', 'latitude_bo', 'latitude_in', 'latitude_io',
+# 'longitude_an', 'longitude_ao', 'longitude_bn', 'longitude_bo', 'longitude_in', 'longitude_io',
+# 'pointing_an', 'pointing_bn', 'pointing_in',
+# 'satellite_azimuth_angle_n', 'satellite_azimuth_angle_o', 'satellite_zenith_angle_n', 'satellite_zenith_angle_o',
+# 'solar_azimuth_angle_n', 'solar_azimuth_angle_o', 'solar_zenith_angle_n', 'solar_zenith_angle_o']
 
 
 BANDNAMES = ['S2', 'S3', 'S4', 'S5', 'S7', 'S8', 'S9']
@@ -62,7 +67,7 @@ REFL_BANDS = ['S2', 'S3', 'S4', 'S5']
 ANGLE_NAMES = ['satellite_azimuth_angle', 'satellite_zenith_angle',
                'solar_azimuth_angle', 'solar_zenith_angle']
 
-PPS_TAGNAMES = {'S2': 'ch_r06', # or S2
+PPS_TAGNAMES = {'S2': 'ch_r06',  # or S1
                 'S3': 'ch_r09',
                 'S4': 'ch_r13',
                 'S5': 'ch_r16',

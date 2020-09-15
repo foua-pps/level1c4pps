@@ -208,7 +208,7 @@ def rename_latitude_longitude(scene):
     if 'lat_pixels' in scene:
         lat_name_satpy = 'lat_pixels'
     if 'lon_pixels' in scene:
-        lon_name_satpy = 'lon_pixels'    
+        lon_name_satpy = 'lon_pixels'
     scene['lat'] = scene[lat_name_satpy]
     scene['lon'] = scene[lon_name_satpy]
     del scene[lat_name_satpy]
