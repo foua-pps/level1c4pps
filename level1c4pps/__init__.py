@@ -49,6 +49,11 @@ SATPY_ANGLE_NAMES = {
     'sensor_azimuth_angle': 'satazimuth',
     'observation_azimuth': 'satazimuth',
     'sun_sensor_azimuth_difference_angle': 'azimuthdiff',
+    # SLSTR:
+    'satellite_azimuth_angle_n': 'satazimuth',
+    'satellite_zenith_angle_n': 'satzenith',
+    'solar_azimuth_angle_n': 'sunazimuth',
+    'solar_zenith_angle_n': 'sunzenith',
 }
 
 
@@ -209,6 +214,10 @@ def rename_latitude_longitude(scene):
         lat_name_satpy = 'lat_pixels'
     if 'lon_pixels' in scene:
         lon_name_satpy = 'lon_pixels'
+    if 'latitude_in' in scene:
+        lat_name_satpy = 'latitude_in'
+    if 'longitude_in' in scene:
+        lon_name_satpy = 'longitude_in'     
     scene['lat'] = scene[lat_name_satpy]
     scene['lon'] = scene[lon_name_satpy]
     del scene[lat_name_satpy]
