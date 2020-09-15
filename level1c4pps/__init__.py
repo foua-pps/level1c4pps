@@ -205,10 +205,12 @@ def rename_latitude_longitude(scene):
     """Rename latitude longitude to lat lon."""
     lat_name_satpy = 'latitude'
     lon_name_satpy = 'longitude'
-    if 'lat_pixels' in scene:
-        lat_name_satpy = 'lat_pixels'
-    if 'lon_pixels' in scene:
-        lon_name_satpy = 'lon_pixels'
+    for alt_latname in ['lat_pixels', 'm_latitude', 'i_latitude']:
+        if alt_latname in scene and 'latitude' not in scene:
+            lat_name_satpy = alt_latname
+    for alt_lonname in ['lon_pixels', 'm_longitude', 'i_longitude']:
+        if alt_lonname in scene and 'longitude' not in scene:
+            lon_name_satpy = alt_lonname
     scene['lat'] = scene[lat_name_satpy]
     scene['lon'] = scene[lon_name_satpy]
     del scene[lat_name_satpy]
@@ -222,17 +224,18 @@ def rename_latitude_longitude(scene):
     scene['lon'].attrs['name'] = 'lon'
     scene['lon'].attrs['valid_range'] = np.array([-18000, 18000], dtype='float32')
     scene['lat'].attrs['valid_range'] = np.array([-9000, 90000], dtype='float32')
-    for attr in ['valid_min', 'valid_max']:
+    for attr in ['valid_min', 'valid_max', 'coordinates']:
         try:
             del scene['lat'].attrs[attr]
             del scene['lon'].attrs[attr]
         except KeyError:
             pass
-    try:
-        del scene['lat'].coords['acq_time']
-        del scene['lon'].coords['acq_time']
-    except KeyError:
-        pass
+    for coord_name in ['acq_time', 'm_latitude', 'i_latitude',  'm_latitude', 'i_latitude']:
+        try:
+            del scene['lat'].coords['coord_name']
+            del scene['lon'].coords['coord_name']
+        except KeyError:
+            pass
 
 
 def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch):
@@ -330,7 +333,8 @@ def apply_sunz_correction(scene, REFL_BANDS):
 
 def platform_name_to_use_in_filename(platform_name):
     """Get platform name for PPS filenames from platfrom attribute."""
-    return platform_name.lower().replace('-', '').replace('aqua', '2').replace('terra', '1')
+    new_name = platform_name.lower().replace('-', '').replace('aqua', '2').replace('terra', '1').replace("suomi", "")
+    return new_name
 
 
 def compose_filename(scene, out_path, instrument, band=None):
