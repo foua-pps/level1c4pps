@@ -53,7 +53,8 @@ REFL_BANDS = ["M01", "M02", "M03", "M04", "M05", "M06", "M07", "M08",
 
 MBAND_PPS = [ "M05", "M07", "M09", "M10", "M12", "M14", "M15", "M16"]
 
-IBAND_PPS = ["I01", "I02", "I03", "I04", "M09", "M14", "M15", "M16"]
+IBAND_PPS_I = ["I01", "I02", "I03", "I04"]
+IBAND_PPS_M = ["M09", "M14", "M15", "M16"]
 
 ANGLE_NAMES = ['satellite_zenith_angle', 'solar_zenith_angle',
                'satellite_azimuth_angle', 'solar_azimuth_angle']
@@ -102,20 +103,13 @@ def process_one_scene(scene_files, out_path, use_iband_res=False):
     scn_ = Scene(
         reader='viirs_sdr',
         filenames=scene_files)
-    BANDNAMES = MBAND_PPS
-    resolution = 742
     if use_iband_res:
-        BANDNAMES = IBAND_PPS
-        resolution = 371
+        scn_.load(IBAND_PPS_I + ANGLE_NAMES + ['i_latitude', 'i_longitude'], resolution=371)
+        scn_.load(IBAND_PPS_M, resolution=742)
+        scn_ = scn_.resample(resampler='native')
+    else:  
+        scn_.load(MBAND_PPS + ANGLE_NAMES + ['m_latitude', 'm_longitude'], resolution=742)
 
-    scn_.load(BANDNAMES + ANGLE_NAMES, resolution=resolution)
-    #import pdb;pdb.set_trace()    
-    if use_iband_res:
-        scn_.load(['i_latitude', 'i_longitude'])
-    else:
-        scn_.load(['m_latitude', 'm_longitude'])
-  
-        
     # one ir channel
     irch = scn_['M15']
 
