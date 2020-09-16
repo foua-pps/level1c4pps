@@ -35,7 +35,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description=('Script to produce a PPS-level1c file for a VIIRS level-1 scene'))
     parser.add_argument('files', metavar='fileN', type=str, nargs='+',
-                        help='List of VIIRS files to process')    
+                        help='List of VIIRS files to process')
     parser.add_argument('-o', '--out_dir', type=str, nargs='?',
                         required=False, default='.',
                         help="Output directory where to store the level1c file")
