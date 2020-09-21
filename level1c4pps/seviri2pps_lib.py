@@ -447,7 +447,7 @@ def process_one_scan(tslot_files, out_path, rotate=True):
     set_attrs(scn_)
 
     # Write datasets to netcdf
-    filename = compose_filename(scene=scn_, out_path=out_path, instrument='seviri' band=scn_['IR_108'])
+    filename = compose_filename(scene=scn_, out_path=out_path, instrument='seviri', band=scn_['IR_108'])
     scn_.save_datasets(writer='cf',
                        filename=filename,
                        header_attrs=get_header_attrs(scn_),
