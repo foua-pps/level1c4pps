@@ -173,3 +173,4 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
     print("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),
         time.time()-tic))
+    return filename
