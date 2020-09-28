@@ -120,3 +120,4 @@ def process_one_scene(scene_files, out_path):
     print("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),
         time.time()-tic))
+    return filename
