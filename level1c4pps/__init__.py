@@ -209,10 +209,16 @@ def rename_latitude_longitude(scene):
         lat_name_satpy = 'lat_pixels'
     if 'lon_pixels' in scene:
         lon_name_satpy = 'lon_pixels'
+
+    scene[lat_name_satpy].rename('lat')
+    scene[lon_name_satpy].rename('lon')
+    scene[lat_name_satpy].attrs['name'] = 'lat'
+    scene[lon_name_satpy].attrs['name'] = 'lon'
     scene['lat'] = scene[lat_name_satpy]
     scene['lon'] = scene[lon_name_satpy]
     del scene[lat_name_satpy]
     del scene[lon_name_satpy]
+
     # Update attributes
     scene['lat'].attrs['long_name'] = 'latitude coordinate'
     scene['lon'].attrs['long_name'] = 'longitude coordinate'
@@ -228,11 +234,14 @@ def rename_latitude_longitude(scene):
             del scene['lon'].attrs[attr]
         except KeyError:
             pass
-    try:
-        del scene['lat'].coords['acq_time']
-        del scene['lon'].coords['acq_time']
-    except KeyError:
-        pass
+
+    # delete some coords
+    for coord_name in ['acq_time']:
+        try:
+            del scene['lat'].coords[coord_name]
+            del scene['lon'].coords[coord_name]
+        except KeyError:
+            pass
 
 
 def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch):
@@ -289,7 +298,7 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
 def update_angle_attributes(scene, band):
     """Set and delete angle attributes."""
     for angle in PPS_ANGLE_TAGS:
-        if angle not in scene.keys() and angle in ['sunazimuth', 'satazimuth']:
+        if angle not in scene and angle in ['sunazimuth', 'satazimuth']:
             # azimuth angles not always there
             continue
         scene[angle].attrs['id_tag'] = angle
@@ -309,10 +318,11 @@ def update_angle_attributes(scene, band):
             except KeyError:
                 pass
         # delete some coords
-        try:
-            del scene[angle].coords['acq_time']
-        except KeyError:
-            pass
+        for coord_name in ['acq_time']:
+            try:
+                del scene[angle].coords[coord_name]
+            except KeyError:
+                pass
 
 
 def apply_sunz_correction(scene, REFL_BANDS):
