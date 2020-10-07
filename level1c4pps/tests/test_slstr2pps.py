@@ -83,7 +83,6 @@ class TestSlstr2PPS(unittest.TestCase):
         encoding = slstr2pps.get_encoding_slstr(self.scene)
         self.assertDictEqual(encoding, encoding_exp)
 
-
     def test_set_header_and_band_attrs(self):
         """Test to set header_and_band_attrs."""
         slstr2pps.set_header_and_band_attrs(self.scene)
