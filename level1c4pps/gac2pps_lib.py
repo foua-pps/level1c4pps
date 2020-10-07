@@ -166,8 +166,11 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
                        header_attrs=get_header_attrs(scn_, band=irch, sensor='avhrr'),
                        engine='netcdf4',
                        flatten_attrs=True,
+                       include_lonlats=False,  # Included anyway as they are datasets in scn_
+                       pretty=True,
                        encoding=get_encoding_gac(scn_))
 
     print("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),
         time.time()-tic))
+    return filename
