@@ -123,11 +123,16 @@ class TestGac2PPS(unittest.TestCase):
                                  'orbit', 'orbit_number', 'platform', 'platform_name',
                                  'sensor', 'source', 'start_time', 'Conventions']))
 
+        expected_vars = ['satzenith', 'azimuthdiff', 'satazimuth', 'sunazimuth', 'sunzenith',
+                         'time', 'y', 'num_flags', 'lon', 'lat', 'qual_flags',
+                         'image1', 'image3', 'image0', 'image2',
+                         'scanline_timestamps', 'time_bnds']
+        optional = ['bands_1d', 'acq_time']
+        for var in optional:
+            if var in pps_nc.variables.keys():
+                expected_vars.append(var)
         self.assertEqual(sorted(pps_nc.variables.keys()),
-                         sorted(['satzenith', 'azimuthdiff', 'satazimuth', 'sunazimuth', 'sunzenith',
-                                 'time', 'y', 'num_flags', 'lon', 'lat', 'qual_flags',
-                                 'image1', 'image3', 'image0', 'image2',
-                                 'scanline_timestamps', 'time_bnds']))
+                         sorted(expected_vars))
 
         np.testing.assert_almost_equal(pps_nc.variables['image0'].sun_earth_distance_correction_factor,
                                        0.9666, decimal=4)
