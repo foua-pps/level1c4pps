@@ -39,6 +39,8 @@ def suite():
     mysuite.addTests(test_mersi22pps.suite())
     mysuite.addTests(test_modis2pps.suite())
     mysuite.addTests(test_avhrr2pps.suite())
+    mysuite.addTests(test_slstr2pps.suite())
+    mysuite.addTests(test_viirs2pps.suite())
     mysuite.addTests(test_init.suite())
     return mysuite
 
