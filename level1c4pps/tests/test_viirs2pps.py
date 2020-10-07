@@ -89,6 +89,7 @@ class TestViirs2PPS(unittest.TestCase):
         self.assertTrue(isinstance(self.scene.attrs['orbit_number'], int))
         self.assertTrue(self.scene["M05"].attrs['sun_zenith_angle_correction_applied'])
 
+
 def suite():
     """Create the test suite for test_viirs2pps."""
     loader = unittest.TestLoader()
