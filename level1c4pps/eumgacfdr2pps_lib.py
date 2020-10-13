@@ -178,7 +178,8 @@ def set_header_and_band_attrs(scene):
             pass
         
     for attr in RENAME_AND_MOVE_TO_HEADER:
-        scene.attrs[RENAME_AND_MOVE_TO_HEADER[attr]] = irch.attrs[attr]
+        if attr in irch.attrs:
+            scene.attrs[RENAME_AND_MOVE_TO_HEADER[attr]] = irch.attrs[attr]
     for band in BANDNAMES:
         if band not in scene:
             continue
