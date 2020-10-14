@@ -23,7 +23,6 @@
 
 """Unit tests for the eumgacfdr2pps_lib module."""
 
-import datetime as dt
 import netCDF4
 import unittest
 from datetime import datetime
@@ -54,7 +53,8 @@ class TestEumgacfdr2PPS(unittest.TestCase):
         scan_t = mock.MagicMock(attrs={'name': 'scanline_timestamps'})
         self.scene = Scene()
         self.scene.attrs['sensor'] = ['avhrr-1', 'avhrr-2', 'avhrr-3']
-        scene_dict = {'reflectance_channel_1': vis006, 'brightness_temperature_channel_4': ir_108, 'qual_flags': qual_f, 'acq_time': scan_t}
+        scene_dict = {'reflectance_channel_1': vis006, 'brightness_temperature_channel_4': ir_108,
+                      'qual_flags': qual_f, 'acq_time': scan_t}
         for key in scene_dict:
             pps_name = scene_dict[key].attrs['name']
             self.scene[key] = scene_dict[key]
@@ -96,17 +96,17 @@ class TestEumgacfdr2PPS(unittest.TestCase):
             out_path='./level1c4pps/tests/',
         )
         filename = './level1c4pps/tests/S_NWC_avhrr_noaa6_99999_19810330T0423580Z_19810330T0609030Z.nc'
-        pps_nc = netCDF4.Dataset(filename, 'r', format='NETCDF4')
+        # written with hfnetcdf read with NETCDF4 ensure compatability
+        pps_nc = netCDF4.Dataset(filename, 'r', format='NETCDF4')  # Check compatability implicitly
         self.assertTrue('start_time' in pps_nc.__dict__.keys())
-        #sorted(['date_created', 'end_time', 'history', 'instrument',
+        # sorted(['date_created', 'end_time', 'history', 'instrument',
         #                         'orbit', 'orbit_number', 'platform', 'platform_name',
         #                         'sensor', 'source', 'start_time', 'Conventions']))
 
         expected_vars = ['satzenith', 'azimuthdiff', 'satazimuth', 'sunazimuth', 'sunzenith',
                          'time', 'y', 'num_flags', 'lon', 'lat', 'qual_flags',
                          'image1', 'image3', 'image0', 'image2',
-                         'midnight_line','overlap_free_end', 'x',
-
+                         'midnight_line', 'overlap_free_end', 'x',
                          'scanline_timestamps', 'time_bnds']
         optional = ['bands_1d', 'acq_time']
         for var in optional:

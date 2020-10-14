@@ -27,12 +27,7 @@
 
 import os
 import time
-import xarray as xr
-import dask.array as da
-import numpy as np
-from datetime import datetime
 from satpy.scene import Scene
-import pygac  # testing that pygac is available # noqa: F401
 from level1c4pps import (get_encoding, compose_filename,
                          set_header_and_band_attrs_defaults,
                          remove_attributes,
@@ -68,11 +63,14 @@ PPS_TAGNAMES = {"reflectance_channel_1": "ch_r06",
                 "brightness_temperature_channel_4": "ch_tb11",
                 "brightness_temperature_channel_5": "ch_tb12"}
 
-ATTRIBUTES_TO_DELETE = ['_satpy_id', 'creator_email',
-                        'comment', 'creator_url',
+ATTRIBUTES_TO_DELETE = ['_satpy_id',
+                        'creator_email',
+                        'comment',
+                        'creator_url',
                         'creator_name',
-                        'date_created', 'disposition_mode',
-                        'institution', 
+                        'date_created',
+                        'disposition_mode',
+                        'institution',
                         'keywords', 'keywords_vocabulary',
                         'naming_authority',
                         'processing_mode']
@@ -137,32 +135,34 @@ def update_ancilliary_datasets(scene):
     scene['qual_flags'].attrs['long_name'] = 'pygac quality flags'
     scene['qual_flags'].coords['time'] = irch.attrs['start_time']
     del scene['qual_flags'].coords['acq_time']
-    for band in  ['scanline_timestamps', 'qual_flags',
-                  'overlap_free_end', 'overlap_free_end',
-                  'midnight_line']:
+    for band in ['scanline_timestamps', 'qual_flags',
+                 'overlap_free_end', 'overlap_free_end',
+                 'midnight_line']:
         scene[band].encoding.pop('coordinates', None)
         remove_header_attributes_from_band(scene, band)
         remove_attributes(scene, band, remove=BAND_ATTRIBUTES)
-    
-        
+
+
 def fix_platform_instrument_attributes(scene, bands):
     """Fix some attributes that are very long in EUMETSAT GAC FDR."""
-    # EARTH REMOTE SENSING INSTRUMENTS > PASSIVE REMOTE SENSING > SPECTROMETERS-RADIOMETERS > IMAGING SPECTROMETERS-RADIOMETERS > AVHRR
+    # EARTH REMOTE SENSING INSTRUMENTS > ... > IMAGING SPECTROMETERS-RADIOMETERS > AVHRR
     for attr in ['platform', 'instrument', 'sensor']:
         if attr in scene.attrs:
-            scene.attrs[attr] =  scene.attrs[attr].pop().split('>')[-1].strip()  # This attribute is an set
+            scene.attrs[attr] = scene.attrs[attr].pop().split('>')[-1].strip()  # This attribute is an set
         for band in bands:
             if band in scene:
                 if attr in scene[band].attrs:
                     if '>' in scene[band].attrs[attr]:
                         scene[band].attrs[attr] = scene[band].attrs[attr].split('>')[-1].strip()
                         print(scene[band].attrs[attr])
-        
+
+
 def remove_header_attributes_from_band(scene, band):
+    """Remove attributes from band."""
     header_attrs_to_remove = ATTRIBUTES_TO_DELETE + MOVE_TO_HEADER + list(RENAME_AND_MOVE_TO_HEADER.keys())
     remove_attributes(scene, band, header_attrs_to_remove)
-        
-        
+
+
 def set_header_and_band_attrs(scene):
     """Set and delete some attributes."""
     fix_platform_instrument_attributes(scene, BANDNAMES)
@@ -176,7 +176,7 @@ def set_header_and_band_attrs(scene):
             scene.attrs[attr] = irch.attrs[attr]
         except KeyError:
             pass
-        
+
     for attr in RENAME_AND_MOVE_TO_HEADER:
         if attr in irch.attrs:
             scene.attrs[RENAME_AND_MOVE_TO_HEADER[attr]] = irch.attrs[attr]
@@ -185,9 +185,7 @@ def set_header_and_band_attrs(scene):
             continue
         if band in REFL_BANDS:
             # For GAC data sun_earth_distance_correction is applied always!
-            # The sun_earth_distance_correction_factor is not provided by pygac <= 1.2.1 / satpy <= 0.18.1
             scene[band].attrs['sun_earth_distance_correction_applied'] = 'True'
-            scene[band].attrs['sun_earth_distance_correction_factor'] = irch.attrs['sun_earth_distance_correction_factor']
         del scene[band].encoding['coordinates']
         remove_header_attributes_from_band(scene, band)
     return nimg
@@ -209,8 +207,8 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None):
                'overlap_free_end',
                'overlap_free_end',
                'midnight_line'] +
-              ANGLENAMES) 
-    
+              ANGLENAMES)
+
     # One ir channel
     irch = scn_['brightness_temperature_channel_4']
 
@@ -218,7 +216,7 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None):
     scn_['latitude'] = scn_['brightness_temperature_channel_4'].coords['latitude']
     scn_['longitude'] = scn_['brightness_temperature_channel_4'].coords['longitude']
     scn_['acq_time'] = scn_['brightness_temperature_channel_4'].coords['acq_time']
-     
+
     # Set header and band attributes
     set_header_and_band_attrs(scn_)
 
@@ -228,10 +226,10 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None):
     # Convert angles to PPS
     convert_angles(scn_)
     update_angle_attributes(scn_, irch)  # Standard name etc
-          
+
     # Handle gac specific datasets qual_flags and scanline_timestamps
     update_ancilliary_datasets(scn_)
-    
+
     filename = compose_filename(scn_, out_path, instrument='avhrr', band=irch)
     encoding = get_encoding_gac(scn_)
     scn_.save_datasets(writer='cf',
@@ -241,8 +239,7 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None):
                        flatten_attrs=True,
                        include_lonlats=False,  # Included anyway as they are datasets in scn_
                        pretty=True,
-                       encoding=encoding,
-                    )
+                       encoding=encoding)
 
     print("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),

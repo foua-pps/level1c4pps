@@ -202,10 +202,12 @@ def get_band_encoding(dataset, bandnames, pps_tagnames, chunks=None):
         raise ValueError('Unsupported band: {}'.format(name))
     return name, enc
 
+
 def remove_attributes(scene, band, remove):
     """Remove attributes from band."""
     for attr in remove:
-        scene[band].attrs.pop(attr, None)  
+        scene[band].attrs.pop(attr, None)
+
 
 def rename_latitude_longitude(scene):
     """Rename latitude longitude to lat lon."""
@@ -240,7 +242,7 @@ def rename_latitude_longitude(scene):
                  'modifiers', '_satpy_id']:
         scene['lat'].attrs.pop(attr, None)
         scene['lon'].attrs.pop(attr, None)
-    for coord_name in ['acq_time', 'm_latitude', 'i_latitude',  'm_latitude', 'i_latitude', 'latitude', 'longitude']:
+    for coord_name in ['acq_time', 'm_latitude', 'i_latitude', 'm_latitude', 'i_latitude', 'latitude', 'longitude']:
         try:
             del scene['lat'].coords[coord_name]
             del scene['lon'].coords[coord_name]
@@ -253,9 +255,9 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
     nimg = 0  # name of first dataset is image0
     # Set some header attributes:
     scene.attrs['history'] = "Created by level1c4pps."
-    if 'platform_name' in irch.attrs and not 'platform' in scene.attrs:
+    if 'platform_name' in irch.attrs and 'platform' not in scene.attrs:
         scene.attrs['platform'] = irch.attrs['platform_name']
-    if 'platform' in irch.attrs and not 'platform' in scene.attrs:
+    if 'platform' in irch.attrs and 'platform' not in scene.attrs:
         scene.attrs['platform'] = irch.attrs['platform']
     if 'sensor' in irch.attrs:  # prefer channel sensor (often one)
         sensor_name = irch.attrs['sensor']
@@ -332,7 +334,7 @@ def update_angle_attributes(scene, band):
             scene[angle].attrs.pop(attr, None)
             try:
                 del scene[angle].encoding['coordinates']
-            except:
+            except (AttributeError, KeyError):
                 pass
         # delete some coords
         for coord_name in ['acq_time', 'latitude', 'longitude']:
