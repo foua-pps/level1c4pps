@@ -121,7 +121,9 @@ class TestGac2PPS(unittest.TestCase):
         self.assertEqual(sorted(pps_nc.__dict__.keys()),
                          sorted(['date_created', 'end_time', 'history', 'instrument',
                                  'orbit', 'orbit_number', 'platform', 'platform_name',
-                                 'sensor', 'source', 'start_time', 'Conventions']))
+                                 'sensor', 'source', 'start_time', 'Conventions',
+                                 'version_level1c4pps',
+                                 'version_level1c4pps_satpy']))
 
         expected_vars = ['satzenith', 'azimuthdiff', 'satazimuth', 'sunazimuth', 'sunzenith',
                          'time', 'y', 'num_flags', 'lon', 'lat', 'qual_flags',

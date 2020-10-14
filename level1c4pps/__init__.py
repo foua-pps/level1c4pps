@@ -260,7 +260,10 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
     if 'sensor' in irch.attrs:  # prefer channel sensor (often one)
         sensor_name = irch.attrs['sensor']
     elif 'sensor' in scene.attrs:  # might be a list
-        sensor_name = scene.attrs['sensor']
+        if isinstance(scene.attrs['sensor'], list):
+            sensor_name = scene.attrs['sensor'][0]
+        else:
+            sensor_name = scene.attrs['sensor']
     scene.attrs['sensor'] = sensor_name.upper()
     scene.attrs['instrument'] = sensor_name.upper()
     nowutc = datetime.utcnow()
