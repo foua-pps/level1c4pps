@@ -98,10 +98,12 @@ class TestEumgacfdr2PPS(unittest.TestCase):
         filename = './level1c4pps/tests/S_NWC_avhrr_noaa6_99999_19810330T0423580Z_19810330T0609030Z.nc'
         # written with hfnetcdf read with NETCDF4 ensure compatability
         pps_nc = netCDF4.Dataset(filename, 'r', format='NETCDF4')  # Check compatability implicitly
-        self.assertTrue('start_time' in pps_nc.__dict__.keys())
-        # sorted(['date_created', 'end_time', 'history', 'instrument',
-        #                         'orbit', 'orbit_number', 'platform', 'platform_name',
-        #                         'sensor', 'source', 'start_time', 'Conventions']))
+        for key in ['date_created', 'end_time', 'history', 'instrument',
+                    'orbit_number', 'platform',
+                    'sensor', 'source', 'start_time', 'Conventions']:
+            if key not in pps_nc.__dict__.keys():
+                print(key)
+            self.assertTrue(key in pps_nc.__dict__.keys())
 
         expected_vars = ['satzenith', 'azimuthdiff', 'satazimuth', 'sunazimuth', 'sunzenith',
                          'time', 'y', 'num_flags', 'lon', 'lat', 'qual_flags',
