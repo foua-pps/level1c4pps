@@ -141,7 +141,7 @@ def get_encoding(scene, bandnames, pps_tagnames, chunks=None):
     encoding = {}
     for dataset in scene.keys():
         try:
-            name, enc = get_band_encoding(scene[dataset.name], bandnames, pps_tagnames,
+            name, enc = get_band_encoding(scene[dataset['name']], bandnames, pps_tagnames,
                                           chunks=chunks)
         except ValueError:
             continue

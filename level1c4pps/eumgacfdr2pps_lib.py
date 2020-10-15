@@ -154,7 +154,6 @@ def fix_platform_instrument_attributes(scene, bands):
                 if attr in scene[band].attrs:
                     if '>' in scene[band].attrs[attr]:
                         scene[band].attrs[attr] = scene[band].attrs[attr].split('>')[-1].strip()
-                        print(scene[band].attrs[attr])
 
 
 def remove_header_attributes_from_band(scene, band):

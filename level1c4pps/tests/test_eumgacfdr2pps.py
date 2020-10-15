@@ -102,7 +102,7 @@ class TestEumgacfdr2PPS(unittest.TestCase):
                     'orbit_number', 'platform',
                     'sensor', 'source', 'start_time', 'Conventions']:
             if key not in pps_nc.__dict__.keys():
-                print(key)
+                print("Missing in attributes:", key)
             self.assertTrue(key in pps_nc.__dict__.keys())
 
         expected_vars = ['satzenith', 'azimuthdiff', 'satazimuth', 'sunazimuth', 'sunzenith',
