@@ -142,6 +142,8 @@ def update_ancilliary_datasets(scene):
     del scene['qual_flags'].coords['acq_time']
     for band in ['scanline_timestamps', 'qual_flags',
                  'overlap_free_end', 'overlap_free_end',
+                 'equator_crossing_time',
+                 'equator_crossing_longitude',
                  'midnight_line']:
         scene[band].encoding.pop('coordinates', None)
         remove_header_attributes_from_band(scene, band)
@@ -187,7 +189,6 @@ def set_header_and_band_attrs(scene):
         if band not in scene:
             continue
         if band in REFL_BANDS:
-            # For GAC data sun_earth_distance_correction is applied always!
             scene[band].attrs['sun_earth_distance_correction_applied'] = 'True'
         del scene[band].encoding['coordinates']
         remove_header_attributes_from_band(scene, band)
@@ -200,8 +201,6 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None):
     scn_ = Scene(reader='eum_gac_fdr_nc',
                  filenames=[eumgacfdr_file])
 
-    # Loading all at once sometimes fails with newer satpy, so start with BANDNAMES ...
-
     scn_.load(BANDNAMES)
     scn_.load(['latitude',
                'longitude',
@@ -209,6 +208,8 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None):
                'acq_time',
                'overlap_free_end',
                'overlap_free_end',
+               'equator_crossing_time',
+               'equator_crossing_longitude',
                'midnight_line'] +
               ANGLENAMES)
 

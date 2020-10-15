@@ -109,6 +109,8 @@ class TestEumgacfdr2PPS(unittest.TestCase):
                          'time', 'y', 'num_flags', 'lon', 'lat', 'qual_flags',
                          'image1', 'image3', 'image0', 'image2',
                          'midnight_line', 'overlap_free_end', 'x',
+                         'equator_crossing_longitude',
+                         'equator_crossing_time',
                          'scanline_timestamps', 'time_bnds']
         optional = ['bands_1d', 'acq_time']
         for var in optional:
