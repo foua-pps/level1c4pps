@@ -35,7 +35,12 @@ from level1c4pps import (get_encoding, compose_filename,
                          get_header_attrs, convert_angles)
 import logging
 from satpy.utils import debug_on
-debug_on()
+from distutils.version import LooseVersion
+import satpy
+if LooseVersion(satpy.__version__) < LooseVersion('0.23.1'):
+    debug_on()
+    raise ImportError("'eumgac2pps' writer requires satpy 0.23.1 or greater")
+
 
 # AVHRR-GAC_FDR_1C_N06_19810330T005421Z_19810330T024632Z_R_O_20200101T000000Z_0100.nc
 
@@ -148,7 +153,7 @@ def fix_platform_instrument_attributes(scene, bands):
     # EARTH REMOTE SENSING INSTRUMENTS > ... > IMAGING SPECTROMETERS-RADIOMETERS > AVHRR
     for attr in ['platform', 'instrument', 'sensor']:
         if attr in scene.attrs:
-            scene.attrs[attr] = scene.attrs[attr].pop().split('>')[-1].strip()  # This attribute is an set
+            scene.attrs[attr] = scene.attrs[attr].pop().split('>')[-1].strip()  # This attribute is an set or list
         for band in bands:
             if band in scene:
                 if attr in scene[band].attrs:
@@ -168,7 +173,6 @@ def set_header_and_band_attrs(scene):
     irch = scene['brightness_temperature_channel_4']
     nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch)
     scene.attrs['source'] = "eumgacfdr2pps.py"
-    # Are these really needed?
     scene.attrs['orbit_number'] = int(99999)
     for attr in MOVE_TO_HEADER + COPY_TO_HEADER:
         try:
@@ -210,11 +214,6 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None):
 
     # One ir channel
     irch = scn_['brightness_temperature_channel_4']
-
-    # Get time, lat and lon as datasets:
-    scn_['latitude'] = scn_['brightness_temperature_channel_4'].coords['latitude']
-    scn_['longitude'] = scn_['brightness_temperature_channel_4'].coords['longitude']
-    scn_['acq_time'] = scn_['brightness_temperature_channel_4'].coords['acq_time']
 
     # Set header and band attributes
     set_header_and_band_attrs(scn_)
