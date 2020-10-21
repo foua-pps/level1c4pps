@@ -198,7 +198,7 @@ def set_header_and_band_attrs(scene):
 def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None):
     """Make level 1c files in PPS-format."""
     tic = time.time()
-    scn_ = Scene(reader='eum_gac_fdr_nc',
+    scn_ = Scene(reader='avhrr_l1c_eum_gac_fdr_nc',
                  filenames=[eumgacfdr_file])
 
     scn_.load(BANDNAMES)
