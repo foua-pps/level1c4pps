@@ -164,7 +164,7 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
     scn_.save_datasets(writer='cf',
                        filename=filename,
                        header_attrs=get_header_attrs(scn_, band=irch, sensor='avhrr'),
-                       engine='netcdf4',
+                       engine='h5netcdf',
                        flatten_attrs=True,
                        include_lonlats=False,  # Included anyway as they are datasets in scn_
                        pretty=True,
