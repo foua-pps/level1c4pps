@@ -37,9 +37,9 @@ import logging
 from satpy.utils import debug_on
 from distutils.version import LooseVersion
 import satpy
-if LooseVersion(satpy.__version__) < LooseVersion('0.23.1'):
+if LooseVersion(satpy.__version__) < LooseVersion('0.24.0'):
     debug_on()
-    raise ImportError("'eumgac2pps' writer requires satpy 0.23.1 or greater")
+    raise ImportError("'eumgac2pps' writer requires satpy 0.24.0 or greater")
 
 
 # AVHRR-GAC_FDR_1C_N06_19810330T005421Z_19810330T024632Z_R_O_20200101T000000Z_0100.nc
