@@ -29,6 +29,8 @@ import xarray as xr
 from datetime import datetime
 import os
 import logging
+import satpy
+import level1c4pps
 
 logger = logging.getLogger('level1c4pps')
 try:
@@ -139,7 +141,7 @@ def get_encoding(scene, bandnames, pps_tagnames, chunks=None):
     encoding = {}
     for dataset in scene.keys():
         try:
-            name, enc = get_band_encoding(scene[dataset.name], bandnames, pps_tagnames,
+            name, enc = get_band_encoding(scene[dataset['name']], bandnames, pps_tagnames,
                                           chunks=chunks)
         except ValueError:
             continue
@@ -201,6 +203,12 @@ def get_band_encoding(dataset, bandnames, pps_tagnames, chunks=None):
     return name, enc
 
 
+def remove_attributes(scene, band, remove):
+    """Remove attributes from band."""
+    for attr in remove:
+        scene[band].attrs.pop(attr, None)
+
+
 def rename_latitude_longitude(scene):
     """Rename latitude longitude to lat lon."""
     lat_name_satpy = 'latitude'
@@ -211,8 +219,8 @@ def rename_latitude_longitude(scene):
     for alt_lonname in ['lon_pixels', 'm_longitude', 'i_longitude']:
         if alt_lonname in scene and 'longitude' not in scene:
             lon_name_satpy = alt_lonname
-    scene[lat_name_satpy].rename('lat')
-    scene[lon_name_satpy].rename('lon')
+    # scene[lat_name_satpy].rename('lat')
+    # scene[lon_name_satpy].rename('lon')
     scene[lat_name_satpy].attrs['name'] = 'lat'
     scene[lon_name_satpy].attrs['name'] = 'lon'
     scene['lat'] = scene[lat_name_satpy]
@@ -229,16 +237,15 @@ def rename_latitude_longitude(scene):
     scene['lon'].attrs['name'] = 'lon'
     scene['lon'].attrs['valid_range'] = np.array([-18000, 18000], dtype='float32')
     scene['lat'].attrs['valid_range'] = np.array([-9000, 90000], dtype='float32')
-    for attr in ['valid_min', 'valid_max', 'coordinates']:
+    for attr in ['valid_min', 'valid_max', 'coordinates',
+                 'resolution', 'calibration', 'polarization', 'level',
+                 'modifiers', '_satpy_id']:
+        scene['lat'].attrs.pop(attr, None)
+        scene['lon'].attrs.pop(attr, None)
+    for coord_name in ['acq_time', 'm_latitude', 'i_latitude', 'm_latitude', 'i_latitude', 'latitude', 'longitude']:
         try:
-            del scene['lat'].attrs[attr]
-            del scene['lon'].attrs[attr]
-        except KeyError:
-            pass
-    for coord_name in ['acq_time', 'm_latitude', 'i_latitude',  'm_latitude', 'i_latitude']:
-        try:
-            del scene['lat'].coords['coord_name']
-            del scene['lon'].coords['coord_name']
+            del scene['lat'].coords[coord_name]
+            del scene['lon'].coords[coord_name]
         except KeyError:
             pass
 
@@ -248,12 +255,23 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
     nimg = 0  # name of first dataset is image0
     # Set some header attributes:
     scene.attrs['history'] = "Created by level1c4pps."
-    scene.attrs['platform'] = irch.attrs['platform_name']
-    print([x for x in scene.attrs['sensor']])
-    sensor_name = [x for x in scene.attrs['sensor']][0]
+    if 'platform_name' in irch.attrs and 'platform' not in scene.attrs:
+        scene.attrs['platform'] = irch.attrs['platform_name']
+    if 'platform' in irch.attrs and 'platform' not in scene.attrs:
+        scene.attrs['platform'] = irch.attrs['platform']
+    if 'sensor' in irch.attrs:  # prefer channel sensor (often one)
+        sensor_name = irch.attrs['sensor']
+    elif 'sensor' in scene.attrs:  # might be a list
+        if isinstance(scene.attrs['sensor'], list):
+            sensor_name = scene.attrs['sensor'][0]
+        else:
+            sensor_name = scene.attrs['sensor']
+    scene.attrs['sensor'] = sensor_name.upper()
     scene.attrs['instrument'] = sensor_name.upper()
     nowutc = datetime.utcnow()
     scene.attrs['date_created'] = nowutc.strftime("%Y-%m-%dT%H:%M:%SZ")
+    scene.attrs['version_level1c4pps_satpy'] = satpy.__version__
+    scene.attrs['version_level1c4pps'] = level1c4pps.__version__
     # bands
     for band in BANDNAMES:
         if band not in scene:
@@ -284,7 +302,7 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
         # Remove some attributes and coordinates
         for attr in ['area', 'valid_min', 'valid_max']:
             scene[band].attrs.pop(attr, None)
-        for coord_name in ['acq_time']:
+        for coord_name in ['acq_time', 'latitude', 'longitude']:
             try:
                 del scene[band].coords[coord_name]
             except KeyError:
@@ -300,6 +318,7 @@ def update_angle_attributes(scene, band):
         if angle not in scene and angle in ['sunazimuth', 'satazimuth']:
             # azimuth angles not always there
             continue
+        scene[angle].attrs = {}
         scene[angle].attrs['id_tag'] = angle
         scene[angle].attrs['name'] = angle
         scene[angle].attrs['coordinates'] = 'lon lat'
@@ -312,12 +331,13 @@ def update_angle_attributes(scene, band):
             scene[angle].attrs[attr] = band.attrs[attr]
         # delete some attributes
         for attr in ['area', 'valid_min', 'valid_max']:
+            scene[angle].attrs.pop(attr, None)
             try:
-                del scene[angle].attrs['area']
-            except KeyError:
+                del scene[angle].encoding['coordinates']
+            except (AttributeError, KeyError):
                 pass
         # delete some coords
-        for coord_name in ['acq_time']:
+        for coord_name in ['acq_time', 'latitude', 'longitude']:
             try:
                 del scene[angle].coords[coord_name]
             except KeyError:

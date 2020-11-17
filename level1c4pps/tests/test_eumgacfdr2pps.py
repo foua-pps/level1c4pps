@@ -21,9 +21,8 @@
 #   Stephan Finkensieper <stephan.finkensieper@dwd.de>
 #   Nina Hakansson <nina.hakansson@smhi.se>
 
-"""Unit tests for the gac2pps_lib module."""
+"""Unit tests for the eumgacfdr2pps_lib module."""
 
-import datetime as dt
 import netCDF4
 import unittest
 from datetime import datetime
@@ -33,12 +32,12 @@ except ImportError:
     import mock
 from satpy import Scene
 
-import level1c4pps.gac2pps_lib as gac2pps
+import level1c4pps.eumgacfdr2pps_lib as eumgacfdr2pps
 import numpy as np
 
 
-class TestGac2PPS(unittest.TestCase):
-    """Test gac2pps_lib."""
+class TestEumgacfdr2PPS(unittest.TestCase):
+    """Test eumgacfdr2pps_lib."""
 
     def setUp(self):
         """Create a test scene."""
@@ -54,14 +53,15 @@ class TestGac2PPS(unittest.TestCase):
         scan_t = mock.MagicMock(attrs={'name': 'scanline_timestamps'})
         self.scene = Scene()
         self.scene.attrs['sensor'] = ['avhrr-1', 'avhrr-2', 'avhrr-3']
-        scene_dict = {'1': vis006, '4': ir_108, 'qual_flags': qual_f, 'scanline_timestamps': scan_t}
+        scene_dict = {'reflectance_channel_1': vis006, 'brightness_temperature_channel_4': ir_108,
+                      'qual_flags': qual_f, 'acq_time': scan_t}
         for key in scene_dict:
             pps_name = scene_dict[key].attrs['name']
             self.scene[key] = scene_dict[key]
             self.scene[key].attrs['name'] = pps_name
 
     def test_get_encoding(self):
-        """Test the encoding for GAC."""
+        """Test the encoding for EUMSAT GAC FDR."""
         encoding_exp = {
             'image0': {'dtype': 'int16',
                        'scale_factor': 0.01,
@@ -80,54 +80,37 @@ class TestGac2PPS(unittest.TestCase):
             'scanline_timestamps': {'dtype': 'int64', 'zlib': True,
                                     'complevel': 4, '_FillValue': -1.0},
         }
-        encoding = gac2pps.get_encoding_gac(self.scene)
+        encoding = eumgacfdr2pps.get_encoding_gac(self.scene)
         self.assertDictEqual(encoding, encoding_exp)
-
-    def test_compose_filename(self):
-        """Test compose filename for GAC."""
-        start_time = dt.datetime(2009, 7, 1, 12, 15)
-        end_time = dt.datetime(2009, 7, 1, 12, 30)
-        scene = mock.MagicMock(attrs={'start_time': start_time,
-                                      'end_time': end_time,
-                                      'orbit_number': '99999',
-                                      'platform': 'Noaa19'})
-        start_time = dt.datetime(2009, 7, 1, 12, 16)
-        end_time = dt.datetime(2009, 7, 1, 12, 27)
-        band = mock.MagicMock(attrs={'start_time': start_time,
-                                     'end_time': end_time})
-        fname_exp = '/out/path/S_NWC_avhrr_noaa19_99999_20090701T1216000Z_20090701T1227000Z.nc'
-        fname = gac2pps.compose_filename(scene, '/out/path', 'avhrr', band=band)
-        self.assertEqual(fname, fname_exp)
 
     def test_set_header_and_band_attrs(self):
         """Test to set header_and_band_attrs."""
-        gac2pps.set_header_and_band_attrs(self.scene)
+        eumgacfdr2pps.set_header_and_band_attrs(self.scene)
 
     def test_process_one_file(self):
         """Test process one file for one example file."""
         # '1 11060U 78096A   80003.54792075  .00000937  00000-0  52481-3 0  2588\r\n',
         # '2 11060  98.9783 332.1605 0012789  88.8047 271.4583 14.11682873 63073\r\n']
-        tle_dir = './level1c4pps/tests/'
-        tle_name = 'TLE_tirosn.txt'
-        gac2pps.process_one_file(
-            './level1c4pps/tests/NSS.GHRR.TN.D80003.S1147.E1332.B0630506.GC',
+        eumgacfdr2pps.process_one_file(
+            './level1c4pps/tests/AVHRR-GAC_FDR_1C_N06_19810330T042358Z_19810330T060903Z_R_O_20200101T000000Z_0100.nc',
             out_path='./level1c4pps/tests/',
-            reader_kwargs={
-                'tle_dir': tle_dir,
-                'tle_name': tle_name
-            })
-        filename = './level1c4pps/tests/S_NWC_avhrr_tirosn_06305_19800103T1147154Z_19800103T1147229Z.nc'
-        pps_nc = netCDF4.Dataset(filename, 'r', format='NETCDF4')
-        self.assertEqual(sorted(pps_nc.__dict__.keys()),
-                         sorted(['date_created', 'end_time', 'history', 'instrument',
-                                 'orbit', 'orbit_number', 'platform', 'platform_name',
-                                 'sensor', 'source', 'start_time', 'Conventions',
-                                 'version_level1c4pps',
-                                 'version_level1c4pps_satpy']))
+        )
+        filename = './level1c4pps/tests/S_NWC_avhrr_noaa6_99999_19810330T0423580Z_19810330T0609030Z.nc'
+        # written with hfnetcdf read with NETCDF4 ensure compatability
+        pps_nc = netCDF4.Dataset(filename, 'r', format='NETCDF4')  # Check compatability implicitly
+        for key in ['date_created', 'end_time', 'history', 'instrument',
+                    'orbit_number', 'platform',
+                    'sensor', 'source', 'start_time', 'Conventions']:
+            if key not in pps_nc.__dict__.keys():
+                print("Missing in attributes:", key)
+            self.assertTrue(key in pps_nc.__dict__.keys())
 
         expected_vars = ['satzenith', 'azimuthdiff', 'satazimuth', 'sunazimuth', 'sunzenith',
                          'time', 'y', 'num_flags', 'lon', 'lat', 'qual_flags',
                          'image1', 'image3', 'image0', 'image2',
+                         'midnight_line', 'overlap_free_end', 'x',
+                         'equator_crossing_longitude',
+                         'equator_crossing_time',
                          'scanline_timestamps', 'time_bnds']
         optional = ['bands_1d', 'acq_time']
         for var in optional:
@@ -137,13 +120,13 @@ class TestGac2PPS(unittest.TestCase):
                          sorted(expected_vars))
 
         np.testing.assert_almost_equal(pps_nc.variables['image0'].sun_earth_distance_correction_factor,
-                                       0.9666, decimal=4)
+                                       0.9975245, decimal=4)
 
 
 def suite():
-    """Create the test suite for test_gac2pps."""
+    """Create the test suite for test_eumgacfdr2pps."""
     loader = unittest.TestLoader()
     mysuite = unittest.TestSuite()
-    mysuite.addTest(loader.loadTestsFromTestCase(TestGac2PPS))
+    mysuite.addTest(loader.loadTestsFromTestCase(TestEumgacfdr2PPS))
 
     return mysuite
