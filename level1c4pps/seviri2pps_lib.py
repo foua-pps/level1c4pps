@@ -184,8 +184,9 @@ def set_attrs(scene):
         idtag = PPS_TAGNAMES[band]
         scene[band].attrs['id_tag'] = idtag
         scene[band].attrs['description'] = 'SEVIRI ' + str(band)
-        scene[band].attrs['sun_earth_distance_correction_applied'] = False
-        scene[band].attrs['sun_earth_distance_correction_factor'] = 1.0
+        if 'sun_earth_distance_correction_factor' not in scene[band].attrs:
+            scene[band].attrs['sun_earth_distance_correction_applied'] = False
+            scene[band].attrs['sun_earth_distance_correction_factor'] = 1.0
         scene[band].attrs['sun_zenith_angle_correction_applied'] = False
         scene[band].attrs['name'] = "image{:d}".format(image_num)
 
@@ -451,7 +452,7 @@ def process_one_scan(tslot_files, out_path, rotate=True):
     scn_.save_datasets(writer='cf',
                        filename=filename,
                        header_attrs=get_header_attrs(scn_),
-                       engine='h5netcdf',
+                       engine='netcdf4',
                        encoding=get_encoding_seviri(scn_),
                        unlimited_dims=['time'],
                        include_lonlats=False,
