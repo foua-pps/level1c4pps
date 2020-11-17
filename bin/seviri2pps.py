@@ -54,5 +54,5 @@ if __name__ == "__main__":
                         help="Engine for saving netcdf files netcdf4 or h5netcdf (default).")
     options = parser.parse_args()
     process_one_scan(options.files, out_path=options.out_dir,
-                     rotate=not options.no_rotation
-                     , engine=options.nc_engine)
+                     rotate=not options.no_rotation,
+                     engine=options.nc_engine)
