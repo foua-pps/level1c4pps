@@ -113,7 +113,7 @@ def process_one_scene(scene_files, out_path):
     scn_.save_datasets(writer='cf',
                        filename=filename,
                        header_attrs=get_header_attrs(scn_, band=irch, sensor='mersi-2'),
-                       engine='netcdf4',
+                       engine='h5netcdf',
                        include_lonlats=False,
                        flatten_attrs=True,
                        encoding=get_encoding_mersi2(scn_))

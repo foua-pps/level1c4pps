@@ -137,7 +137,7 @@ def process_one_scene(scene_files, out_path, use_iband_res=False):
     scn_.save_datasets(writer='cf',
                        filename=filename,
                        header_attrs=get_header_attrs(scn_, band=irch, sensor='viirs'),
-                       engine='netcdf4',
+                       engine='h5netcdf',
                        include_lonlats=False,
                        flatten_attrs=True,
                        encoding=get_encoding_viirs(scn_))
