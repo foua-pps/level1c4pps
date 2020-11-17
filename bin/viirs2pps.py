@@ -41,5 +41,8 @@ if __name__ == "__main__":
                         help="Output directory where to store the level1c file")
     parser.add_argument('--iband', action='store_true',
                         help="Iband resolution include I01-I03, M15-M16 and optional M09, M14")
+    parser.add_argument('-ne', '--nc_engine', type=str, nargs='?',
+                        required=False, default='h5netcdf',
+                        help="Engine for saving netcdf files netcdf4 or h5netcdf (default).")
     options = parser.parse_args()
-    process_one_scene(options.files, options.out_dir, options.iband)
+    process_one_scene(options.files, options.out_dir, options.iband, engine=options.nc_engine)

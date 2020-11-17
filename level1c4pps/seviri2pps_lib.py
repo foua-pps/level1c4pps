@@ -396,7 +396,7 @@ def get_header_attrs(scene):
     return header_attrs
 
 
-def process_one_scan(tslot_files, out_path, rotate=True):
+def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf'):
     """Make level 1c files in PPS-format."""
     for fname in tslot_files:
         if not os.path.isfile(fname):
@@ -451,7 +451,7 @@ def process_one_scan(tslot_files, out_path, rotate=True):
     scn_.save_datasets(writer='cf',
                        filename=filename,
                        header_attrs=get_header_attrs(scn_),
-                       engine='h5netcdf',
+                       engine=engine,
                        encoding=get_encoding_seviri(scn_),
                        unlimited_dims=['time'],
                        include_lonlats=False,

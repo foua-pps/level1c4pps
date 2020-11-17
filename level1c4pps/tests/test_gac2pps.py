@@ -139,6 +139,43 @@ class TestGac2PPS(unittest.TestCase):
         np.testing.assert_almost_equal(pps_nc.variables['image0'].sun_earth_distance_correction_factor,
                                        0.9666, decimal=4)
 
+    def test_process_one_file_netcdf4(self):
+        """Test process one file for one example file with the netcdf4 engine."""
+        # '1 11060U 78096A   80003.54792075  .00000937  00000-0  52481-3 0  2588\r\n',
+        # '2 11060  98.9783 332.1605 0012789  88.8047 271.4583 14.11682873 63073\r\n']
+        tle_dir = './level1c4pps/tests/'
+        tle_name = 'TLE_tirosn.txt'
+        gac2pps.process_one_file(
+            './level1c4pps/tests/NSS.GHRR.TN.D80003.S1147.E1332.B0630506.GC',
+            out_path='./level1c4pps/tests/',
+            reader_kwargs={
+                'tle_dir': tle_dir,
+                'tle_name': tle_name
+            },
+            engine='netcdf4')
+        filename = './level1c4pps/tests/S_NWC_avhrr_tirosn_06305_19800103T1147154Z_19800103T1147229Z.nc'
+        pps_nc = netCDF4.Dataset(filename, 'r', format='NETCDF4')
+        self.assertEqual(sorted(pps_nc.__dict__.keys()),
+                         sorted(['date_created', 'end_time', 'history', 'instrument',
+                                 'orbit', 'orbit_number', 'platform', 'platform_name',
+                                 'sensor', 'source', 'start_time', 'Conventions',
+                                 'version_level1c4pps',
+                                 'version_level1c4pps_satpy']))
+
+        expected_vars = ['satzenith', 'azimuthdiff', 'satazimuth', 'sunazimuth', 'sunzenith',
+                         'time', 'y', 'num_flags', 'lon', 'lat', 'qual_flags',
+                         'image1', 'image3', 'image0', 'image2',
+                         'scanline_timestamps', 'time_bnds']
+        optional = ['bands_1d', 'acq_time']
+        for var in optional:
+            if var in pps_nc.variables.keys():
+                expected_vars.append(var)
+        self.assertEqual(sorted(pps_nc.variables.keys()),
+                         sorted(expected_vars))
+
+        np.testing.assert_almost_equal(pps_nc.variables['image0'].sun_earth_distance_correction_factor,
+                                       0.9666, decimal=4)
+
 
 def suite():
     """Create the test suite for test_gac2pps."""
