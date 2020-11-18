@@ -195,7 +195,7 @@ def set_header_and_band_attrs(scene):
     return nimg
 
 
-def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None):
+def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None, engine='h5netcdf'):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scn_ = Scene(reader='avhrr_l1c_eum_gac_fdr_nc',
@@ -234,7 +234,7 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None):
     scn_.save_datasets(writer='cf',
                        filename=filename,
                        header_attrs=get_header_attrs(scn_, band=irch, sensor='avhrr'),
-                       engine='h5netcdf',
+                       engine=engine,
                        flatten_attrs=True,
                        include_lonlats=False,  # Included anyway as they are datasets in scn_
                        pretty=True,
