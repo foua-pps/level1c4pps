@@ -38,6 +38,8 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--out_dir', type=str, nargs='?',
                         required=False, default='.',
                         help="Output directory where to store the level1c file")
-
+    parser.add_argument('-ne', '--nc_engine', type=str, nargs='?',
+                        required=False, default='h5netcdf',
+                        help="Engine for saving netcdf files netcdf4 or h5netcdf (default).")
     options = parser.parse_args()
-    process_one_scene(options.files, options.out_dir)
+    process_one_scene(options.files, options.out_dir, engine=options.nc_engine)

@@ -58,10 +58,14 @@ if __name__ == "__main__":
     parser.add_argument('-tn', '--tle_name', type=str, nargs='?',
                         required=False, default='.',
                         help="TLE_name.")
+    parser.add_argument('-ne', '--nc_engine', type=str, nargs='?',
+                        required=False, default='h5netcdf',
+                        help="Engine for saving netcdf files netcdf4 or h5netcdf (default).")
     options = parser.parse_args()
     process_one_file(options.file, options.out_dir,
                      reader_kwargs={'start_line': options.start_line,
                                     'end_line': options.end_line,
                                     'tle_name': options.tle_name,
                                     'tle_dir': options.tle_dir,
-                                    'strip_invalid_coords': not options.dont_strip_invalid_coords})
+                                    'strip_invalid_coords': not options.dont_strip_invalid_coords},
+                     engine=options.nc_engine)

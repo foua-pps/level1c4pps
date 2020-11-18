@@ -49,6 +49,10 @@ if __name__ == "__main__":
                         help="Output directory where to store level1c file.")
     parser.add_argument('--no-rotation', action='store_true',
                         help="Don't rotate images")
+    parser.add_argument('-ne', '--nc_engine', type=str, nargs='?',
+                        required=False, default='h5netcdf',
+                        help="Engine for saving netcdf files netcdf4 or h5netcdf (default).")
     options = parser.parse_args()
     process_one_scan(options.files, out_path=options.out_dir,
-                     rotate=not options.no_rotation)
+                     rotate=not options.no_rotation,
+                     engine=options.nc_engine)

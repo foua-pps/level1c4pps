@@ -84,7 +84,7 @@ def set_header_and_band_attrs(scene):
     return nimg
 
 
-def process_one_scene(scene_files, out_path):
+def process_one_scene(scene_files, out_path, engine='h5netcdf'):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scn_ = Scene(
@@ -119,7 +119,7 @@ def process_one_scene(scene_files, out_path):
     scn_.save_datasets(writer='cf',
                        filename=filename,
                        header_attrs=get_header_attrs(scn_, band=irch, sensor='modis'),
-                       engine='h5netcdf',
+                       engine=engine,
                        include_lonlats=False,
                        flatten_attrs=True,
                        encoding=get_encoding_modis(scn_))
