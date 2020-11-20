@@ -199,14 +199,13 @@ def set_header_and_band_attrs(scene):
 def crop(scene, start_line, end_line, time_key='scanline_timestamps'):
     """Crop datasets and update start_time end_time objects."""
     start_time_dt64 = scene[time_key].values[start_line]
-    end_time_dt64 = scene[time_key].values[end_line-1]
+    end_time_dt64 = scene[time_key].values[end_line]
     start_time = dt64_to_datetime(start_time_dt64)
     end_time = dt64_to_datetime(end_time_dt64)
-    print("time to crop the data")
     for ds in scene.keys():
         print(ds)
         if 'y' in scene[ds].dims:
-            scene[ds] = scene[ds].isel(y=slice(start_line, end_line))
+            scene[ds] = scene[ds].isel(y=slice(start_line, end_line + 1))
             try:
                 # Update scene attributes to get the filenames right
                 scene[ds].attrs['start_time'] = start_time
