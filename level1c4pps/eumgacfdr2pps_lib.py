@@ -32,6 +32,7 @@ from level1c4pps import (get_encoding, compose_filename,
                          set_header_and_band_attrs_defaults,
                          remove_attributes,
                          rename_latitude_longitude, update_angle_attributes,
+                         dt64_to_datetime,
                          get_header_attrs, convert_angles)
 import logging
 from satpy.utils import debug_on
@@ -195,7 +196,31 @@ def set_header_and_band_attrs(scene):
     return nimg
 
 
-def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None, engine='h5netcdf'):
+def crop(scene, start_line, end_line, time_key='scanline_timestamps'):
+    """Crop datasets and update start_time end_time objects."""
+    start_time_dt64 = scene[time_key].values[start_line]
+    end_time_dt64 = scene[time_key].values[end_line-1]
+    start_time = dt64_to_datetime(start_time_dt64)
+    end_time = dt64_to_datetime(end_time_dt64)
+    print("time to crop the data")
+    for ds in scene.keys():
+        print(ds)
+        if 'y' in scene[ds].dims:
+            scene[ds] = scene[ds].isel(y=slice(start_line, end_line))
+            try:
+                # Update scene attributes to get the filenames right
+                scene[ds].attrs['start_time'] = start_time
+                scene[ds].attrs['end_time'] = end_time
+            except TypeError:
+                pass
+    if start_time_dt64 != scene[time_key].values[0]:
+        raise ValueError
+    if end_time_dt64 != scene[time_key].values[-1]:
+        raise ValueError
+
+
+def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None,
+                     start_line=None, end_line=None, engine='h5netcdf'):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scn_ = Scene(reader='avhrr_l1c_eum_gac_fdr_nc',
@@ -205,13 +230,15 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None, engine='h
     scn_.load(['latitude',
                'longitude',
                'qual_flags',
-               'acq_time',
-               'overlap_free_end',
-               'overlap_free_end',
                'equator_crossing_time',
                'equator_crossing_longitude',
-               'midnight_line'] +
+               'acq_time'] +
               ANGLENAMES)
+
+    # TODO: Only load these if we do not crop data
+    scn_.load(['overlap_free_end',
+               'overlap_free_start',
+               'midnight_line'])
 
     # One ir channel
     irch = scn_['brightness_temperature_channel_4']
@@ -228,6 +255,12 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None, engine='h
 
     # Handle gac specific datasets qual_flags and scanline_timestamps
     update_ancilliary_datasets(scn_)
+
+    if start_line is not None and end_line is not None:
+        # Crop after all renaming of variables are done
+        # Problems to rename if cropping is done first.
+        crop(scn_, start_line, end_line)
+        irch = scn_['brightness_temperature_channel_4']  # Redefine, to get updated start/end_times
 
     filename = compose_filename(scn_, out_path, instrument='avhrr', band=irch)
     encoding = get_encoding_gac(scn_)
