@@ -224,8 +224,6 @@ def rename_latitude_longitude(scene):
     scene['lon'].attrs['long_name'] = 'longitude coordinate'
     scene['lat'].attrs['name'] = 'lat'
     scene['lon'].attrs['name'] = 'lon'
-    scene['lon'].attrs['name'] = 'lon'
-    scene['lon'].attrs['name'] = 'lon'
     scene['lon'].attrs['valid_range'] = np.array([-18000, 18000], dtype='float32')
     scene['lat'].attrs['valid_range'] = np.array([-9000, 90000], dtype='float32')
     for attr in ['valid_min', 'valid_max']:

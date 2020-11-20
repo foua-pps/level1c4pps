@@ -32,7 +32,8 @@ from level1c4pps import (get_encoding, compose_filename,
                          update_angle_attributes, get_header_attrs,
                          set_header_and_band_attrs_defaults,
                          convert_angles,
-                         adjust_lons_to_valid_range)
+                         adjust_lons_to_valid_range,
+                         PPS_ANGLE_TAGS)
 
 import logging
 
@@ -101,8 +102,6 @@ def process_one_scene(scene_files, out_path):
 
     # Adjust lons to valid range:
     adjust_lons_to_valid_range(scn_)
-    import numpy as np
-    print(np.max(scn_['lon'].values))
 
     # Convert angles to PPS
     convert_angles(scn_, delete_azimuth=True)
@@ -110,6 +109,13 @@ def process_one_scene(scene_files, out_path):
 
     # Apply sunz correction
     # apply_sunz_correction(scn_, REFL_BANDS)
+
+    # Transpose data to get scanlines as row dimension
+    for key in PPS_ANGLE_TAGS + BANDNAMES + ['lat', 'lon']:
+        try:
+            scn_[key] = scn_[key].transpose('num_lines', 'num_pixels')
+        except KeyError:
+            pass
 
     filename = compose_filename(scn_, out_path, instrument='metimage', band=irch)
     scn_.save_datasets(writer='cf',
