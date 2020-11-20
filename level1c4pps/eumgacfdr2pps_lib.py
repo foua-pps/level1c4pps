@@ -218,6 +218,17 @@ def crop(scene, start_line, end_line, time_key='scanline_timestamps'):
         raise ValueError
 
 
+def remove_broken_data(scene):
+    """Set low quality data to nodata."""
+    import numpy as np
+    bad_lines = np.sum(scene['qual_flags'].values[:, 1:], axis=1) > 0
+    if bad_lines.any():
+        remove = np.where(bad_lines, np.nan, 0)
+        for band in BANDNAMES:
+            if band in scene:
+                scene[band].values = scene[band].values + remove[:, np.newaxis]
+
+
 def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None,
                      start_line=None, end_line=None, engine='h5netcdf'):
     """Make level 1c files in PPS-format."""
@@ -260,6 +271,8 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None,
         # Problems to rename if cropping is done first.
         crop(scn_, start_line, end_line)
         irch = scn_['brightness_temperature_channel_4']  # Redefine, to get updated start/end_times
+
+    remove_broken_data(scn_)
 
     filename = compose_filename(scn_, out_path, instrument='avhrr', band=irch)
     encoding = get_encoding_gac(scn_)
