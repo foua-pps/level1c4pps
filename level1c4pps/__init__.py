@@ -149,6 +149,9 @@ def get_encoding(scene, bandnames, pps_tagnames, chunks=None):
         try:
             name, enc = get_band_encoding(scene[dataset['name']], bandnames, pps_tagnames,
                                           chunks=chunks)
+        except (NameError, TypeError):
+            name, enc = get_band_encoding(scene[dataset.name], bandnames, pps_tagnames,
+                                          chunks=chunks)
         except ValueError:
             continue
         encoding[name] = enc
@@ -368,9 +371,14 @@ def apply_sunz_correction(scene, REFL_BANDS):
 
 def platform_name_to_use_in_filename(platform_name):
     """Get platform name for PPS filenames from platfrom attribute."""
-    new_name = platform_name.lower().replace('-', '').replace('aqua', '2').replace('terra', '1').replace("suomi", "").replace('sga', 'metopsga')
+    new_name = platform_name.lower()
+    replace_dict = {'aqua': '2',
+                    'terra': '1',
+                    'suomi': '',
+                    'sga': 'metopsga'}
+    for orig, new in replace_dict.items():
+        new_name = new_name.replace(orig, new)
     return new_name
-
 
 
 def compose_filename(scene, out_path, instrument, band=None):
