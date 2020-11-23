@@ -34,7 +34,7 @@ try:
 except ImportError:
     pass
 
-requires = ['satpy >= 0.19', 'pyorbital', 'trollsift', 'pyspectral'],
+requires = ['satpy >= 0.19', 'pyorbital', 'trollsift', 'pyspectral', 'h5netcdf'],
 
 NAME = "level1c4pps"
 README = open('README.md', 'r').read()
@@ -54,8 +54,15 @@ setup(name=NAME,
                    "Topic :: Scientific/Engineering"],
       url="https://github.com/foua-pps/level1c4pps",
       packages=['level1c4pps', ],
-      scripts=['bin/seviri2pps.py', 'bin/gac2pps.py', 'bin/mersi22pps.py',
-               'bin/modis2pps.py', 'bin/avhrr2pps.py', 'bin/metimage2pps.py'],
+      scripts=['bin/seviri2pps.py',
+               'bin/gac2pps.py',
+               'bin/mersi22pps.py',
+               'bin/viirs2pps.py',
+               'bin/slstr2pps.py',
+               'bin/metimage2pps.py',
+               'bin/eumgacfdr2pps.py',
+               'bin/modis2pps.py',
+               'bin/avhrr2pps.py'],
       data_files=[],
       zip_safe=False,
       use_scm_version=True,

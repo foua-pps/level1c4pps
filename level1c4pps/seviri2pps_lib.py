@@ -184,8 +184,9 @@ def set_attrs(scene):
         idtag = PPS_TAGNAMES[band]
         scene[band].attrs['id_tag'] = idtag
         scene[band].attrs['description'] = 'SEVIRI ' + str(band)
-        scene[band].attrs['sun_earth_distance_correction_applied'] = False
-        scene[band].attrs['sun_earth_distance_correction_factor'] = 1.0
+        if 'sun_earth_distance_correction_factor' not in scene[band].attrs:
+            scene[band].attrs['sun_earth_distance_correction_applied'] = False
+            scene[band].attrs['sun_earth_distance_correction_factor'] = 1.0
         scene[band].attrs['sun_zenith_angle_correction_applied'] = False
         scene[band].attrs['name'] = "image{:d}".format(image_num)
 
@@ -297,10 +298,19 @@ def add_proj_satpos(scene):
     orb = scene['IR_108'].attrs['orbital_parameters']
 
     # Area extent
+    try:
+        # Traditionally a, b was included in proj_dict
+        param_a = scene.attrs['area'].proj_dict['a']
+        param_b = scene.attrs['area'].proj_dict['b']
+    except KeyError:
+        # But sometimes b is missing:
+        param_a = scene.attrs['area'].crs.ellipsoid.semi_major_metre
+        param_b = scene.attrs['area'].crs.ellipsoid.semi_minor_metre
+
     scene.attrs.update({
         'projection': 'geos',
-        'projection_semi_major_axis': scene.attrs['area'].proj_dict['a'],
-        'projection_semi_minor_axis': scene.attrs['area'].proj_dict['b'],
+        'projection_semi_major_axis': param_a,
+        'projection_semi_minor_axis': param_b,
         'projection_longitude': orb['projection_longitude'],
         'projection_latitude': orb['projection_latitude'],
         'projection_altitude': orb['projection_altitude']
@@ -387,7 +397,7 @@ def get_header_attrs(scene):
     return header_attrs
 
 
-def process_one_scan(tslot_files, out_path, rotate=True):
+def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf'):
     """Make level 1c files in PPS-format."""
     for fname in tslot_files:
         if not os.path.isfile(fname):
@@ -438,11 +448,11 @@ def process_one_scan(tslot_files, out_path, rotate=True):
     set_attrs(scn_)
 
     # Write datasets to netcdf
-    filename = compose_filename(scene=scn_, out_path=out_path, instrument='seviri')
+    filename = compose_filename(scene=scn_, out_path=out_path, instrument='seviri', band=scn_['IR_108'])
     scn_.save_datasets(writer='cf',
                        filename=filename,
                        header_attrs=get_header_attrs(scn_),
-                       engine='netcdf4',
+                       engine=engine,
                        encoding=get_encoding_seviri(scn_),
                        unlimited_dims=['time'],
                        include_lonlats=False,
@@ -455,7 +465,7 @@ def process_one_scan(tslot_files, out_path, rotate=True):
     return filename
 
 
-def process_all_scans_in_dname(dname, out_path, ok_dates=None):
+def process_all_scans_in_dname(dname, out_path, ok_dates=None, rotate=False):
     """Make level 1c files for all files in directory dname."""
     parser = Parser(HRIT_FILE_PATTERN)
     fl_ = glob(os.path.join(dname, globify(HRIT_FILE_PATTERN)))
@@ -472,6 +482,6 @@ def process_all_scans_in_dname(dname, out_path, ok_dates=None):
         tslot_files = [f for f in fl_ if parser.parse(
             os.path.basename(f))['start_time'] == uqdate]
         try:
-            process_one_scan(tslot_files, out_path)
+            process_one_scan(tslot_files, out_path, rotate=rotate)
         except Exception:
             pass

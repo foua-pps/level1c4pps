@@ -21,38 +21,30 @@
 #   Martin Raspaud <martin.raspaud@smhi.se>
 #   Nina Hakansson <nina.hakansson@smhi.se>
 #   Adam.Dybbroe <adam.dybbroe@smhi.se>
-#   Stephan Finkensieper <stephan.finkensieper@dwd.de>
 
-# This program was developed by CMSAF to be used for the processing of
-# CLAAS3.
 
-"""Script to make seviri level1c in PPS-format with pytroll"""
-
+"""Script to make EUMETSAT GAC level1c in PPS-format with pytroll."""
 
 import argparse
-from level1c4pps.seviri2pps_lib import process_one_scan
+from level1c4pps.eumgacfdr2pps_lib import process_one_file
+
 
 # -----------------------------------------------------------------------------
 # Main:
 if __name__ == "__main__":
-    """ Create PPS-format level1c data 
+    """ Create PPS-format level1c data
     From a list of hirt files hrit create a level1c file for pps.
     """
-    # python3 seviri2pps.py file1 file2 ... fileN -o output
     parser = argparse.ArgumentParser(
-        description=('Script to produce a PPS-level1c file for a list of '
-                     'SEVIRI hrit files.'))
-    parser.add_argument('files', metavar='fileN', type=str, nargs='+',
-                        help='List of hrit files to process for one scan')
-    parser.add_argument('-o', '--out_dir', type=str, default='.',
-                        required=False,
+        description=('Script to produce a PPS-level1c file for a '
+                     'GAC.'))
+    parser.add_argument('file', type=str,
+                        help='GAC file to process')
+    parser.add_argument('-o', '--out_dir', type=str, nargs='?',
+                        required=False, default='.',
                         help="Output directory where to store level1c file.")
-    parser.add_argument('--no-rotation', action='store_true',
-                        help="Don't rotate images")
     parser.add_argument('-ne', '--nc_engine', type=str, nargs='?',
                         required=False, default='h5netcdf',
                         help="Engine for saving netcdf files netcdf4 or h5netcdf (default).")
     options = parser.parse_args()
-    process_one_scan(options.files, out_path=options.out_dir,
-                     rotate=not options.no_rotation,
-                     engine=options.nc_engine)
+    process_one_file(options.file, options.out_dir, engine=options.nc_engine)

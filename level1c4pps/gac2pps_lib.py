@@ -118,9 +118,19 @@ def set_header_and_band_attrs(scene):
     return nimg
 
 
-def process_one_file(gac_file, out_path='.', reader_kwargs=None):
+def process_one_file(gac_file, out_path='.', reader_kwargs=None, engine='h5netcdf'):
     """Make level 1c files in PPS-format."""
     tic = time.time()
+    if reader_kwargs is None:
+        reader_kwargs = {}
+    if 'tle_dir' not in reader_kwargs:
+        from pygac.configuration import get_config
+        conf = get_config()
+        tle_dir = conf.get('tle', 'tledir', raw=True)
+        tle_name = conf.get('tle', 'tlename', raw=True)
+        reader_kwargs['tle_dir'] = tle_dir
+        reader_kwargs['tle_name'] = tle_name
+
     scn_ = Scene(reader='avhrr_l1b_gaclac',
                  filenames=[gac_file], reader_kwargs=reader_kwargs)
 
@@ -154,10 +164,13 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None):
     scn_.save_datasets(writer='cf',
                        filename=filename,
                        header_attrs=get_header_attrs(scn_, band=irch, sensor='avhrr'),
-                       engine='netcdf4',
+                       engine=engine,
                        flatten_attrs=True,
+                       include_lonlats=False,  # Included anyway as they are datasets in scn_
+                       pretty=True,
                        encoding=get_encoding_gac(scn_))
 
     print("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),
         time.time()-tic))
+    return filename

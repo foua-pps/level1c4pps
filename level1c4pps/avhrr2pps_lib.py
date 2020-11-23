@@ -75,7 +75,7 @@ def set_header_and_band_attrs(scene):
     return nimg
 
 
-def process_one_scene(scene_files, out_path):
+def process_one_scene(scene_files, out_path, engine='h5netcdf'):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     if 'AVHR_xxx' in scene_files[0]:
@@ -108,10 +108,11 @@ def process_one_scene(scene_files, out_path):
     scn_.save_datasets(writer='cf',
                        filename=filename,
                        header_attrs=get_header_attrs(scn_, band=irch, sensor='avhrr'),
-                       engine='netcdf4',
+                       engine=engine,
                        include_lonlats=False,
                        flatten_attrs=True,
                        encoding=get_encoding_avhrr(scn_))
     print("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),
         time.time()-tic))
+    return filename

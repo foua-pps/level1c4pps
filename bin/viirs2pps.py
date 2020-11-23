@@ -21,38 +21,28 @@
 #   Martin Raspaud <martin.raspaud@smhi.se>
 #   Nina Hakansson <nina.hakansson@smhi.se>
 #   Adam.Dybbroe <adam.dybbroe@smhi.se>
-#   Stephan Finkensieper <stephan.finkensieper@dwd.de>
 
-# This program was developed by CMSAF to be used for the processing of
-# CLAAS3.
-
-"""Script to make seviri level1c in PPS-format with pytroll"""
-
+"""Script to convert VIIRS level-1 to PPS level-1c format using Pytroll/Satpy."""
 
 import argparse
-from level1c4pps.seviri2pps_lib import process_one_scan
+from level1c4pps.viirs2pps_lib import process_one_scene
 
-# -----------------------------------------------------------------------------
-# Main:
+
 if __name__ == "__main__":
-    """ Create PPS-format level1c data 
-    From a list of hirt files hrit create a level1c file for pps.
+    """ Create PPS-format level1c data
+    From a list of VIIRS level-1 files create a NWCSAF/PPS formatet level1c file for pps.
     """
-    # python3 seviri2pps.py file1 file2 ... fileN -o output
     parser = argparse.ArgumentParser(
-        description=('Script to produce a PPS-level1c file for a list of '
-                     'SEVIRI hrit files.'))
+        description=('Script to produce a PPS-level1c file for a VIIRS level-1 scene'))
     parser.add_argument('files', metavar='fileN', type=str, nargs='+',
-                        help='List of hrit files to process for one scan')
-    parser.add_argument('-o', '--out_dir', type=str, default='.',
-                        required=False,
-                        help="Output directory where to store level1c file.")
-    parser.add_argument('--no-rotation', action='store_true',
-                        help="Don't rotate images")
+                        help='List of VIIRS files to process')
+    parser.add_argument('-o', '--out_dir', type=str, nargs='?',
+                        required=False, default='.',
+                        help="Output directory where to store the level1c file")
+    parser.add_argument('--iband', action='store_true',
+                        help="Iband resolution include I01-I03, M15-M16 and optional M09, M14")
     parser.add_argument('-ne', '--nc_engine', type=str, nargs='?',
                         required=False, default='h5netcdf',
                         help="Engine for saving netcdf files netcdf4 or h5netcdf (default).")
     options = parser.parse_args()
-    process_one_scan(options.files, out_path=options.out_dir,
-                     rotate=not options.no_rotation,
-                     engine=options.nc_engine)
+    process_one_scene(options.files, options.out_dir, options.iband, engine=options.nc_engine)
