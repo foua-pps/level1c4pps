@@ -91,6 +91,14 @@ def process_one_scene(scene_files, out_path):
     tic = time.time()
     scn_ = Scene(reader='vii_l1b_nc', filenames=scene_files)
     scn_.load(BANDNAMES + ANGLE_NAMES + ['lat_pixels', 'lon_pixels'])
+
+    # Transpose data to get scanlines as row dimension
+    for key in BANDNAMES + ANGLE_NAMES + ['lat_pixels', 'lon_pixels']:
+        try:
+            scn_[key] = scn_[key].transpose('num_lines', 'num_pixels')
+        except KeyError:
+            pass
+        
     # one ir channel
     irch = scn_['vii_10690']
 
@@ -109,13 +117,6 @@ def process_one_scene(scene_files, out_path):
 
     # Apply sunz correction
     # apply_sunz_correction(scn_, REFL_BANDS)
-
-    # Transpose data to get scanlines as row dimension
-    for key in PPS_ANGLE_TAGS + BANDNAMES + ['lat', 'lon']:
-        try:
-            scn_[key] = scn_[key].transpose('num_lines', 'num_pixels')
-        except KeyError:
-            pass
 
     filename = compose_filename(scn_, out_path, instrument='metimage', band=irch)
     scn_.save_datasets(writer='cf',
