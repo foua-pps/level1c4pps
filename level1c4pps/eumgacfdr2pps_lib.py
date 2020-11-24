@@ -24,7 +24,6 @@
 
 """Utilities to convert AVHRR GAC formattet data to PPS level-1c format."""
 
-
 import os
 import time
 from satpy.scene import Scene
@@ -41,7 +40,8 @@ import satpy
 if LooseVersion(satpy.__version__) < LooseVersion('0.24.0'):
     debug_on()
     raise ImportError("'eumgac2pps' writer requires satpy 0.24.0 or greater")
-
+# import xarray as xr
+# xr.set_options(keep_attrs=True)
 
 # AVHRR-GAC_FDR_1C_N06_19810330T005421Z_19810330T024632Z_R_O_20200101T000000Z_0100.nc
 
@@ -141,8 +141,10 @@ def update_ancilliary_datasets(scene):
     scene['qual_flags'].attrs['long_name'] = 'pygac quality flags'
     scene['qual_flags'].coords['time'] = irch.attrs['start_time']
     del scene['qual_flags'].coords['acq_time']
-    for band in ['scanline_timestamps', 'qual_flags',
-                 'overlap_free_end', 'overlap_free_end',
+    for band in ['scanline_timestamps',
+                 'qual_flags',
+                 'overlap_free_end',
+                 'overlap_free_end',
                  'equator_crossing_time',
                  'equator_crossing_longitude',
                  'midnight_line']:
@@ -228,6 +230,21 @@ def remove_broken_data(scene):
             if band in scene:
                 scene[band].values = scene[band].values + remove[:, np.newaxis]
 
+    # import xarray as xr
+    # xr.set_options(keep_attrs=True)
+    # xarray solution, but it makes program
+    # forget to use name attribute to name variables.
+    # x = scene['brightness_temperature_channel_4'].coords['x'].values
+    # qflags = scene['qual_flags'].isel(num_flags=slice(1, None))
+    # bad_lines = qflags.sum(dim='num_flags') > 0
+    # bad_pixels = bad_lines.expand_dims({'x': x})  # filled with zeros
+    # bad_pixels, _ = xr.broadcast(bad_lines, bad_pixels)
+    # for band in BANDNAMES:
+    #    if band in scene:
+    #        print(scene[band].attrs['name'])
+    #        scene[band] = scene[band].where(~bad_pixels)
+    #        print(scene[band].attrs['name'])
+
 
 def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None,
                      start_line=None, end_line=None, engine='h5netcdf'):
@@ -250,6 +267,9 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None,
                'overlap_free_start',
                'midnight_line'])
 
+    # Needs to be done before everything else to avoid problems with attributes.
+    remove_broken_data(scn_)
+    
     # One ir channel
     irch = scn_['brightness_temperature_channel_4']
 
@@ -271,8 +291,6 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None,
         # Problems to rename if cropping is done first.
         crop(scn_, start_line, end_line)
         irch = scn_['brightness_temperature_channel_4']  # Redefine, to get updated start/end_times
-
-    remove_broken_data(scn_)
 
     filename = compose_filename(scn_, out_path, instrument='avhrr', band=irch)
     encoding = get_encoding_gac(scn_)

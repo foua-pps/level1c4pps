@@ -105,10 +105,12 @@ class TestEumgacfdr2PPS(unittest.TestCase):
                 print("Missing in attributes:", key)
             self.assertTrue(key in pps_nc.__dict__.keys())
 
-        expected_vars = ['satzenith', 'azimuthdiff', 'satazimuth', 'sunazimuth', 'sunzenith',
+        expected_vars = ['satzenith', 'azimuthdiff',
+                         'satazimuth', 'sunazimuth', 'sunzenith',
                          'time', 'y', 'num_flags', 'lon', 'lat', 'qual_flags',
                          'image1', 'image3', 'image0', 'image2',
-                         'midnight_line', 'overlap_free_end', 'x',
+                         'midnight_line', 'overlap_free_end',
+                         'overlap_free_start', 'x',
                          'equator_crossing_longitude',
                          'equator_crossing_time',
                          'scanline_timestamps', 'time_bnds']
