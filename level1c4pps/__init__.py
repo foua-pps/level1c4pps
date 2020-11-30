@@ -267,10 +267,15 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
     nimg = 0  # name of first dataset is image0
     # Set some header attributes:
     scene.attrs['history'] = "Created by level1c4pps."
-    if 'platform_name' in irch.attrs and 'platform' not in scene.attrs:
-        scene.attrs['platform'] = irch.attrs['platform_name']
+
+    if 'platform' in scene.attrs:
+        platform = scene.attrs['platform']
     if 'platform' in irch.attrs and 'platform' not in scene.attrs:
-        scene.attrs['platform'] = irch.attrs['platform']
+        platform = irch.attrs['platform']
+    elif 'platform_name' in irch.attrs and 'platform' not in scene.attrs:
+        platform = irch.attrs['platform_name']
+    scene.attrs['platform'] = platform_name_to_use_in_filename(platform)
+
     if 'sensor' in irch.attrs:  # prefer channel sensor (often one)
         sensor_name = irch.attrs['sensor']
     elif 'sensor' in scene.attrs:  # might be a list
@@ -281,6 +286,7 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
     scene.attrs['sensor'] = sensor_name.upper()
     scene.attrs['instrument'] = sensor_name.upper()
     nowutc = datetime.utcnow()
+    scene.attrs['orbit_number'] = int(00000)
     scene.attrs['date_created'] = nowutc.strftime("%Y-%m-%dT%H:%M:%SZ")
     scene.attrs['version_level1c4pps_satpy'] = satpy.__version__
     scene.attrs['version_level1c4pps'] = level1c4pps.__version__
@@ -373,6 +379,7 @@ def platform_name_to_use_in_filename(platform_name):
     """Get platform name for PPS filenames from platfrom attribute."""
     new_name = platform_name.lower()
     replace_dict = {'aqua': '2',
+                    '-': '',
                     'terra': '1',
                     'suomi': '',
                     'sga': 'metopsga'}

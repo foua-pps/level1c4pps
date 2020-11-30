@@ -32,8 +32,7 @@ from level1c4pps import (get_encoding, compose_filename,
                          update_angle_attributes, get_header_attrs,
                          set_header_and_band_attrs_defaults,
                          convert_angles,
-                         adjust_lons_to_valid_range,
-                         PPS_ANGLE_TAGS)
+                         adjust_lons_to_valid_range)
 
 import logging
 
@@ -79,7 +78,6 @@ def set_header_and_band_attrs(scene):
     # Set some header attributes:
     irch = scene['vii_10690']
     scene.attrs['source'] = "metimage2pps.py"
-    scene.attrs['orbit_number'] = 00000
     nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch)
     for band in REFL_BANDS:
         scene[band].attrs['sun_zenith_angle_correction_applied'] = 'True'
@@ -98,7 +96,7 @@ def process_one_scene(scene_files, out_path):
             scn_[key] = scn_[key].transpose('num_lines', 'num_pixels')
         except KeyError:
             pass
-        
+ 
     # one ir channel
     irch = scn_['vii_10690']
 
