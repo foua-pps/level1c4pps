@@ -59,10 +59,10 @@ ATTRIBUTES_TO_DELETE_FROM_CHANNELS = [
     'disposition_mode',
     'file_type',
     'file_units',
-    'history', # explicitly copied to header
+    'history',  # explicitly copied to header
     'id',
     'institution',
-    'instrument', # explicitly copied to header
+    'instrument',  # explicitly copied to header
     'keywords',
     'keywords_vocabulary',
     'licence',
@@ -70,7 +70,7 @@ ATTRIBUTES_TO_DELETE_FROM_CHANNELS = [
     'naming_authority',
     'processing_mode',
     'product_version',
-    'sensor', # explicitly copied to header
+    'sensor',  # explicitly copied to header
     'source',
     'valid_max'
     'valid_min',
@@ -399,7 +399,7 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
         # Remove some attributes and coordinates
         for attr in RENAME_VARS:
             val = scene[band].attrs.pop(attr, None)
-            scene[band].attrs[RENAME_VARS[attr]] = val    
+            scene[band].attrs[RENAME_VARS[attr]] = val
         for attr in ATTRIBUTES_TO_DELETE_FROM_CHANNELS:
             scene[band].attrs.pop(attr, None)
         MOVE = [attr for attr in scene[band].attrs if attr not in
@@ -461,14 +461,15 @@ def apply_sunz_correction(scene, REFL_BANDS):
             scene[band].values = scene[band].values * scaler
             scene[band].attrs['sun_zenith_angle_correction_applied'] = 'True'
 
+
 def fix_too_great_attributes(attr):
     """Fix complicated symbols with > sign."""
     # EARTH REMOTE SENSING INSTRUMENTS > ... > IMAGING SPECTROMETERS-RADIOMETERS > AVHRR
-    if '>' in attr: 
+    if '>' in attr:
         attr = attr.split('>')[-1].strip()
     return attr
 
-    
+
 def platform_name_to_use_in_filename(platform_name):
     """Get platform name for PPS filenames from platfrom attribute."""
     new_name = platform_name.lower()

@@ -110,7 +110,7 @@ def update_ancilliary_datasets(scene):
         scene[band].encoding.pop('coordinates', None)
         for attr in scene[band].attrs:
             if attr not in ['_FillValue', 'long_name', 'standard_name', 'units']:
-                scene[band].attrs.pop('coordinates', None)  
+                scene[band].attrs.pop('coordinates', None)
 
 
 def set_header_and_band_attrs(scene):

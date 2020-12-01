@@ -97,7 +97,7 @@ def process_one_scene(scene_files, out_path):
             scn_[key] = scn_[key].transpose('num_lines', 'num_pixels')
         except KeyError:
             pass
- 
+
     # one ir channel
     irch = scn_['vii_10690']
 
