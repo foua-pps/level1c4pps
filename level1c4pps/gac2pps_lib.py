@@ -100,14 +100,8 @@ def set_header_and_band_attrs(scene):
     irch = scene['4']
     nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch)
     scene.attrs['source'] = "gac2pps.py"
-
-    # Are these really needed?
-    scene.attrs['platform'] = irch.attrs['platform_name']
-    scene.attrs['platform_name'] = irch.attrs['platform_name']
-    scene.attrs['orbit_number'] = irch.attrs['orbit_number']
-    scene.attrs['orbit'] = scene.attrs['orbit_number']
-    scene.attrs['instrument'] = "AVHRR"
-
+    scene.attrs['is_gac'] = 'True'
+    scene.attrs['orbit_number'] = 99999
     for band in BANDNAMES:
         if band not in scene:
             continue

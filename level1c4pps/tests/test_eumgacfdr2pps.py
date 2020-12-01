@@ -46,6 +46,8 @@ class TestEumgacfdr2PPS(unittest.TestCase):
         ir_108 = mock.MagicMock(attrs={'name': 'image1',
                                        'id_tag': 'ch_tb11',
                                        'start_time': datetime.utcnow(),
+                                       'end_time': datetime.utcnow(),
+                                       'history': 'dummy',
                                        'platform_name': 'tirosn',
                                        'orbit_number': 99999})
         qual_f = mock.MagicMock(attrs={'name': 'qual_flags',
@@ -108,7 +110,8 @@ class TestEumgacfdr2PPS(unittest.TestCase):
         expected_vars = ['satzenith', 'azimuthdiff', 'satazimuth', 'sunazimuth', 'sunzenith',
                          'time', 'y', 'num_flags', 'lon', 'lat', 'qual_flags',
                          'image1', 'image3', 'image0', 'image2',
-                         'midnight_line', 'overlap_free_end', 'x',
+                         'midnight_line', 'overlap_free_end',
+                         'overlap_free_start', 'x',
                          'equator_crossing_longitude',
                          'equator_crossing_time',
                          'scanline_timestamps', 'time_bnds']

@@ -97,8 +97,7 @@ def set_header_and_band_attrs(scene):
     irch = scene['M15']
     nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch)
     scene.attrs['source'] = "viirs2pps.py"
-    # Perhaps one can get the orbit number from the h5 file?
-    scene.attrs['orbit_number'] = 99999
+    scene.attrs['number_of_scans'] = scene['M15'].values.shape[0]/scene['M15'].attrs['rows_per_scan']
     for band in REFL_BANDS:
         if band not in scene:
             continue

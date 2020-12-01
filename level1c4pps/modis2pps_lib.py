@@ -77,10 +77,6 @@ def set_header_and_band_attrs(scene):
     irch = scene['31']
     nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch)
     scene.attrs['source'] = "modis2pps.py"
-    scene.attrs['orbit_number'] = 00000
-    # update some attrs bands
-    # for band in scene:
-    #    pass
     return nimg
 
 

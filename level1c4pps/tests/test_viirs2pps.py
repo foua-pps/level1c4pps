@@ -42,11 +42,14 @@ class TestViirs2PPS(unittest.TestCase):
         viirs2pps.BANDNAMES = ['M05', 'M15']
         vis006 = mock.MagicMock(attrs={'name': 'image0',
                                        'id_tag': 'ch_r06'})
-        ir_108 = mock.MagicMock(attrs={'name': 'image1',
-                                       'id_tag': 'ch_tb11',
-                                       'start_time': dt.datetime(2009, 7, 1, 12, 1, 0),
-                                       'platform_name': '',
-                                       'orbit_number': 99999})
+        ir_108 = mock.MagicMock(attrs={
+            'name': 'image1',
+            'id_tag': 'ch_tb11',
+            'rows_per_scan': 16,
+            'start_time': dt.datetime(2009, 7, 1, 12, 1, 0),
+            'end_time': dt.datetime(2009, 7, 1, 12, 1, 0),
+            'platform_name': '',
+            'orbit_number': 99999})
         satzenith = mock.MagicMock(attrs={'name': 'satzenith',
                                           'id_tag': 'satzenith'})
         self.scene = Scene()
