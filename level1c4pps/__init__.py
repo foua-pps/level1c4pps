@@ -310,8 +310,8 @@ def rename_latitude_longitude(scene):
     scene['lon'].attrs['long_name'] = 'longitude coordinate'
     scene['lat'].attrs['name'] = 'lat'
     scene['lon'].attrs['name'] = 'lon'
-    scene['lon'].attrs['valid_range'] = np.array([-18000, 18000], dtype='float32')
-    scene['lat'].attrs['valid_range'] = np.array([-9000, 90000], dtype='float32')
+    scene['lon'].attrs['valid_range'] = np.array([-180, 180], dtype='float32')
+    scene['lat'].attrs['valid_range'] = np.array([-90, 90], dtype='float32')
     REMOVE = [attr for attr in list(scene['lon'].attrs.keys()) + list(scene['lat'].attrs.keys()) if attr not in
               ['_FillValue',  'standard_name', 'units', 'name', 'valid_range']]
     for attr in REMOVE:
@@ -326,8 +326,9 @@ def rename_latitude_longitude(scene):
 
 
 def adjust_lons_to_valid_range(scene):
-    """Adjust lons should to range [-180, 180[."""
-    scene['lon'] = centered_modulus(scene['lon'])
+    """Adjust lons to range [-180, 180[."""
+    # scene['lon'] = centered_modulus(scene['lon']) # makes lon loose attrs satpy 0.24.0
+    scene['lon'].values = centered_modulus(scene['lon'].values)
 
 
 def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch):
