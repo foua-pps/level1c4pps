@@ -313,7 +313,7 @@ def rename_latitude_longitude(scene):
     scene['lon'].attrs['valid_range'] = np.array([-180, 180], dtype='float32')
     scene['lat'].attrs['valid_range'] = np.array([-90, 90], dtype='float32')
     REMOVE = [attr for attr in list(scene['lon'].attrs.keys()) + list(scene['lat'].attrs.keys()) if attr not in
-              ['_FillValue',  'standard_name', 'units', 'name', 'valid_range']]
+              ['_FillValue',  'standard_name', 'long_name', 'units', 'name', 'valid_range']]
     for attr in REMOVE:
         scene['lat'].attrs.pop(attr, None)
         scene['lon'].attrs.pop(attr, None)
