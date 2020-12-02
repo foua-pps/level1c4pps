@@ -46,6 +46,8 @@ class TestEumgacfdr2PPS(unittest.TestCase):
         ir_108 = mock.MagicMock(attrs={'name': 'image1',
                                        'id_tag': 'ch_tb11',
                                        'start_time': datetime.utcnow(),
+                                       'end_time': datetime.utcnow(),
+                                       'history': 'dummy',
                                        'platform_name': 'tirosn',
                                        'orbit_number': 99999})
         qual_f = mock.MagicMock(attrs={'name': 'qual_flags',

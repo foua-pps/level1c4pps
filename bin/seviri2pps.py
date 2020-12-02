@@ -26,7 +26,7 @@
 # This program was developed by CMSAF to be used for the processing of
 # CLAAS3.
 
-"""Script to make seviri level1c in PPS-format with pytroll"""
+"""Script to make seviri level1c in PPS-format with pytroll."""
 
 
 import argparse
@@ -35,7 +35,7 @@ from level1c4pps.seviri2pps_lib import process_one_scan
 # -----------------------------------------------------------------------------
 # Main:
 if __name__ == "__main__":
-    """ Create PPS-format level1c data 
+    """ Create PPS-format level1c data
     From a list of hirt files hrit create a level1c file for pps.
     """
     # python3 seviri2pps.py file1 file2 ... fileN -o output

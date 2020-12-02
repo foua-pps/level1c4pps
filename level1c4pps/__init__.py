@@ -39,6 +39,74 @@ except DistributionNotFound:
     # package is not installed
     pass
 
+ATTRIBUTES_TO_DELETE_FROM_CHANNELS = [
+    '_satpy_id',
+    '_satpy_id_calibration',
+    '_satpy_id_modifiers',
+    '_satpy_id_name',
+    '_satpy_id_resolution',
+    '_satpy_id_wavelength',
+    'ancillary_variables',
+    'area',
+    'calibration',
+    'comment',
+    'creator_email',
+    'creator_name',
+    'creator_url',
+    'dataset_group',
+    'dataset_groups',
+    'date_created',
+    'disposition_mode',
+    'file_type',
+    'file_units',
+    'history',  # explicitly copied to header
+    'id',
+    'institution',
+    'instrument',  # explicitly copied to header
+    'keywords',
+    'keywords_vocabulary',
+    'licence',
+    'modifiers',
+    'naming_authority',
+    'processing_mode',
+    'product_version',
+    'sensor',  # explicitly copied to header
+    'source',
+    'valid_max'
+    'valid_min',
+    'version_satpy',
+]
+
+RENAME_VARS = {
+    'file_name': 'lvl1_filename',
+    'file_key': 'lvl1_file_key'}
+
+REQUIRED_CHANNEL_VARS = [
+    'name',
+    '_FillValue',
+    'add_offset',
+    'coordinates',
+    'description',
+    'end_time',
+    'id_tag',
+    'long_name',
+    'scale_factor',
+    'standard_name',
+    'start_time',
+    'sun_earth_distance_correction_applied',
+    'sun_earth_distance_correction_factor',
+    'sun_zenith_angle_correction_applied',
+    'units',
+    'valid_range',
+    'wavelength'
+]
+
+ADDITIONAL_CHANNEL_VARS = [
+    'lvl1_file_key',
+    'rows_per_scan',
+    'chan_solar_index',
+    'resolution']
+
 SATPY_ANGLE_NAMES = {
     'solar_zenith': 'sunzenith',  # no _angle
     'solar_zenith_angle': 'sunzenith',
@@ -110,18 +178,39 @@ ANGLE_ATTRIBUTES = {
     }
 }
 
+LATLON_ATTRIBUTES = {
+    'lat': {
+        'name': 'lat',
+        'long_name': 'latitude coordinate',
+        'standard_name': "latitude",
+        'units': 'degrees_north',
+        'valid_range': np.array([-90, 90], dtype='float32')},
+    'lon': {
+        'name': 'lon',
+        'long_name': 'longitude coordinate',
+        'standard_name': "longitude",
+        'units': 'degrees_east',
+        'valid_range': np.array([-180, 180], dtype='float32')}
+    }
+
 
 def make_azidiff_angle(sata, suna):
     """Calculate azimuth difference angle."""
     daz = abs(sata - suna)
-    daz = daz % 360
+    return centered_modulus(daz, divisor=360)
+
+
+def centered_modulus(daz, divisor=360):
+    """Transform array to half open range ]-divisor/2, divisor/2]."""
+    half_divisor = divisor / 2.0
+    daz = daz % divisor
     if isinstance(daz, np.ndarray):
-        daz[daz > 180] = 360 - daz[daz > 180]
+        daz[daz > half_divisor] = divisor - daz[daz > half_divisor]
         return daz
     elif isinstance(daz, xr.DataArray):
-        return daz.where(daz < 180, 360 - daz)
+        return daz.where(daz < half_divisor, divisor - daz)
     else:
-        raise ValueError("Azimuth difference is neither a Numpy nor an Xarray object! Type = %s", type(daz))
+        raise ValueError("Array is neither a Numpy nor an Xarray object! Type = %s", type(daz))
 
 
 def dt64_to_datetime(dt64):
@@ -142,6 +231,9 @@ def get_encoding(scene, bandnames, pps_tagnames, chunks=None):
     for dataset in scene.keys():
         try:
             name, enc = get_band_encoding(scene[dataset['name']], bandnames, pps_tagnames,
+                                          chunks=chunks)
+        except (NameError, TypeError):
+            name, enc = get_band_encoding(scene[dataset.name], bandnames, pps_tagnames,
                                           chunks=chunks)
         except ValueError:
             continue
@@ -219,29 +311,15 @@ def rename_latitude_longitude(scene):
     for alt_lonname in ['lon_pixels', 'm_longitude', 'i_longitude']:
         if alt_lonname in scene and 'longitude' not in scene:
             lon_name_satpy = alt_lonname
-    # scene[lat_name_satpy].rename('lat')
-    # scene[lon_name_satpy].rename('lon')
     scene[lat_name_satpy].attrs['name'] = 'lat'
     scene[lon_name_satpy].attrs['name'] = 'lon'
     scene['lat'] = scene[lat_name_satpy]
     scene['lon'] = scene[lon_name_satpy]
     del scene[lat_name_satpy]
     del scene[lon_name_satpy]
-
     # Update attributes
-    scene['lat'].attrs['long_name'] = 'latitude coordinate'
-    scene['lon'].attrs['long_name'] = 'longitude coordinate'
-    scene['lat'].attrs['name'] = 'lat'
-    scene['lon'].attrs['name'] = 'lon'
-    scene['lon'].attrs['name'] = 'lon'
-    scene['lon'].attrs['name'] = 'lon'
-    scene['lon'].attrs['valid_range'] = np.array([-18000, 18000], dtype='float32')
-    scene['lat'].attrs['valid_range'] = np.array([-9000, 90000], dtype='float32')
-    for attr in ['valid_min', 'valid_max', 'coordinates',
-                 'resolution', 'calibration', 'polarization', 'level',
-                 'modifiers', '_satpy_id']:
-        scene['lat'].attrs.pop(attr, None)
-        scene['lon'].attrs.pop(attr, None)
+    scene['lat'].attrs = LATLON_ATTRIBUTES['lat']
+    scene['lon'].attrs = LATLON_ATTRIBUTES['lon']
     for coord_name in ['acq_time', 'm_latitude', 'i_latitude', 'm_latitude', 'i_latitude', 'latitude', 'longitude']:
         try:
             del scene['lat'].coords[coord_name]
@@ -250,28 +328,50 @@ def rename_latitude_longitude(scene):
             pass
 
 
+def adjust_lons_to_valid_range(scene):
+    """Adjust lons to range [-180, 180[."""
+    # scene['lon'] = centered_modulus(scene['lon']) # makes lon loose attrs satpy 0.24.0
+    scene['lon'].values = centered_modulus(scene['lon'].values)
+
+
 def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch):
     """Add some default values for band attributes."""
     nimg = 0  # name of first dataset is image0
     # Set some header attributes:
     scene.attrs['history'] = "Created by level1c4pps."
-    if 'platform_name' in irch.attrs and 'platform' not in scene.attrs:
-        scene.attrs['platform'] = irch.attrs['platform_name']
-    if 'platform' in irch.attrs and 'platform' not in scene.attrs:
-        scene.attrs['platform'] = irch.attrs['platform']
+    scene.attrs['history'] += irch.attrs.pop('history', "")
+    if 'platform' in scene.attrs:
+        platform = scene.attrs['platform']
+    elif 'platform' in irch.attrs and 'platform' not in scene.attrs:
+        platform = irch.attrs['platform']
+    elif 'platform_name' in irch.attrs and 'platform' not in scene.attrs:
+        platform = irch.attrs['platform_name']
+    else:
+        platform = scene.attrs['platform_name']
+    scene.attrs['platform'] = platform_name_to_use_in_filename(platform)
+
     if 'sensor' in irch.attrs:  # prefer channel sensor (often one)
         sensor_name = irch.attrs['sensor']
     elif 'sensor' in scene.attrs:  # might be a list
-        if isinstance(scene.attrs['sensor'], list):
-            sensor_name = scene.attrs['sensor'][0]
+        if isinstance(scene.attrs['sensor'], list) or isinstance(scene.attrs['sensor'], set):
+            sensor_name = scene.attrs['sensor'].pop()
         else:
             sensor_name = scene.attrs['sensor']
-    scene.attrs['sensor'] = sensor_name.upper()
-    scene.attrs['instrument'] = sensor_name.upper()
+    elif 'instrument' in scene.attrs:
+        sensor_name = scene.attrs['instrument']
+    else:
+        sensor_name = irch.attrs['instrument']
+    scene.attrs['sensor'] = (fix_too_great_attributes(sensor_name)).upper()
+    scene.attrs['instrument'] = scene.attrs['sensor']
     nowutc = datetime.utcnow()
+    scene.attrs['orbit_number'] = int(00000)
     scene.attrs['date_created'] = nowutc.strftime("%Y-%m-%dT%H:%M:%SZ")
     scene.attrs['version_level1c4pps_satpy'] = satpy.__version__
     scene.attrs['version_level1c4pps'] = level1c4pps.__version__
+    for attr in ['start_time', 'end_time']:
+        if attr not in scene.attrs:
+            scene.attrs[attr] = irch.attrs[attr]
+
     # bands
     for band in BANDNAMES:
         if band not in scene:
@@ -300,8 +400,16 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
         scene[band].coords['time'] = irch.attrs['start_time']
 
         # Remove some attributes and coordinates
-        for attr in ['area', 'valid_min', 'valid_max']:
+        for attr in RENAME_VARS:
+            if attr in scene[band].attrs:
+                scene[band].attrs[RENAME_VARS[attr]] = scene[band].attrs.pop(attr)
+        for attr in ATTRIBUTES_TO_DELETE_FROM_CHANNELS:
             scene[band].attrs.pop(attr, None)
+        MOVE = [attr for attr in scene[band].attrs if attr not in
+                REQUIRED_CHANNEL_VARS + ADDITIONAL_CHANNEL_VARS]
+        for attr in MOVE:
+            # Move channel attrs not deleted, required or allowed to header
+            scene.attrs[attr] = scene[band].attrs.pop(attr, None)
         for coord_name in ['acq_time', 'latitude', 'longitude']:
             try:
                 del scene[band].coords[coord_name]
@@ -357,9 +465,26 @@ def apply_sunz_correction(scene, REFL_BANDS):
             scene[band].attrs['sun_zenith_angle_correction_applied'] = 'True'
 
 
+def fix_too_great_attributes(attr):
+    """Fix complicated symbols with > sign."""
+    # EARTH REMOTE SENSING INSTRUMENTS > ... > IMAGING SPECTROMETERS-RADIOMETERS > AVHRR
+    if '>' in attr:
+        attr = attr.split('>')[-1].strip()
+    return attr
+
+
 def platform_name_to_use_in_filename(platform_name):
     """Get platform name for PPS filenames from platfrom attribute."""
-    new_name = platform_name.lower().replace('-', '').replace('aqua', '2').replace('terra', '1').replace("suomi", "")
+    new_name = platform_name.lower()
+    new_name = fix_too_great_attributes(new_name)
+    if new_name == 'sga1':
+        new_name = 'metopsga'
+    replace_dict = {'aqua': '2',
+                    '-': '',
+                    'terra': '1',
+                    'suomi': ''}
+    for orig, new in replace_dict.items():
+        new_name = new_name.replace(orig, new)
     return new_name
 
 

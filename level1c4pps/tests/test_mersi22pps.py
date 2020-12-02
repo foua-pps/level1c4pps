@@ -45,6 +45,7 @@ class TestMersi22PPS(unittest.TestCase):
         ir_108 = mock.MagicMock(attrs={'name': 'image1',
                                        'id_tag': 'ch_tb11',
                                        'start_time': dt.datetime(2009, 7, 1, 12, 1, 0),
+                                       'end_time': dt.datetime(2009, 7, 1, 12, 1, 0),
                                        'platform_name': 'fy3d',
                                        'orbit_number': 99999})
         satzenith = mock.MagicMock(attrs={'name': 'satzenith',

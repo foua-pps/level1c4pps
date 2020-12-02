@@ -7,3 +7,7 @@ So far supports
  - MODIS level-1
  - AVHRR eps level-1b
  - AVHRR AAPP level-1b
+ - VIIRS level-1b
+ - SLSTR level-1b
+ - EPS-SG MetImage level-1 test data
+ - EUMETSAT AVHRR GAC FDR

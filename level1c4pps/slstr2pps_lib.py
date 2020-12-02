@@ -89,7 +89,6 @@ def set_header_and_band_attrs(scene):
     irch = scene['S8']
     nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch)
     scene.attrs['source'] = "slstr2pps.py"
-    scene.attrs['orbit_number'] = 99999
     return nimg
 
 
