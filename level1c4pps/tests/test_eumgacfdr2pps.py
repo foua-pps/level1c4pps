@@ -99,7 +99,7 @@ class TestEumgacfdr2PPS(unittest.TestCase):
             './level1c4pps/tests/AVHRR-GAC_FDR_1C_N06_19810330T042358Z_19810330T060903Z_R_O_20200101T000000Z_0100.nc',
             out_path='./level1c4pps/tests/',
         )
-        filename = './level1c4pps/tests/S_NWC_avhrr_noaa6_99999_19810330T0423580Z_19810330T0609030Z.nc'
+        filename = './level1c4pps/tests/S_NWC_avhrr_noaa6_99999_19810330T0423582Z_19810330T0424032Z.nc'
         # written with hfnetcdf read with NETCDF4 ensure compatability
         pps_nc = netCDF4.Dataset(filename, 'r', format='NETCDF4')  # Check compatability implicitly
         for key in ['date_created', 'end_time', 'history', 'instrument',

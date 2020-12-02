@@ -64,6 +64,7 @@ ATTRIBUTES_TO_DELETE_FROM_CHANNELS = [
     'disposition_mode',
     'file_type',
     'file_units',
+    'platform',  # explicitly copied to header
     'history',  # explicitly copied to header
     'id',
     'institution',
