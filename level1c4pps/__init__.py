@@ -485,7 +485,6 @@ def platform_name_to_use_in_filename(platform_name):
                     'suomi': ''}
     for orig, new in replace_dict.items():
         new_name = new_name.replace(orig, new)
-        
     return new_name
 
 

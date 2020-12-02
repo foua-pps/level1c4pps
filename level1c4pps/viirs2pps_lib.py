@@ -99,7 +99,7 @@ def set_header_and_band_attrs(scene):
     scene.attrs['source'] = "viirs2pps.py"
     if 'I04' in scene:
         # If highresolution we should have I04,
-        scene.attrs['number_of_scans'] = scene['I04'].values.shape[0]/scene['I04'].attrs['rows_per_scan']  
+        scene.attrs['number_of_scans'] = scene['I04'].values.shape[0]/scene['I04'].attrs['rows_per_scan']
     else:
         # else use 11um.
         scene.attrs['number_of_scans'] = scene['M15'].values.shape[0]/scene['M15'].attrs['rows_per_scan']
