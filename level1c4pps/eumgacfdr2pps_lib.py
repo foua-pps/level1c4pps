@@ -110,7 +110,7 @@ def update_ancilliary_datasets(scene):
                  'midnight_line']:
         if band in scene:
             scene[band].encoding.pop('coordinates', None)
-            REMOVE = [attr for attr in scene[band].attrs if  attr not in [
+            REMOVE = [attr for attr in scene[band].attrs if attr not in [
                 '_FillValue', 'long_name', 'name', 'standard_name', 'units']]
             for attr in REMOVE:
                 scene[band].attrs.pop(attr, None)
@@ -202,7 +202,7 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None,
                'equator_crossing_longitude',
                'acq_time'] +
               ANGLENAMES)
-    
+
     # Only load these if we do not crop data
     if start_line is None and end_line is None:
         scn_.load(['overlap_free_end',
@@ -217,7 +217,6 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None,
     set_exact_time_and_crop(scn_, start_line, end_line, time_key='acq_time')
     irch = scn_['brightness_temperature_channel_4']  # Redefine, to get updated start/end_times
 
-    
     # One ir channel
     irch = scn_['brightness_temperature_channel_4']
 
