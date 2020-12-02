@@ -17,6 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with level1c4pps.  If not, see <http://www.gnu.org/licenses/>.
 
+"""Unit tests for misc functions in __init__.py."""
+
 import unittest
 import xarray as xr
 
@@ -24,7 +26,10 @@ import level1c4pps
 
 
 class TestInit(unittest.TestCase):
+    """Test functions in __init__.py."""
+
     def test_get_band_encoding(self):
+        """Test get encoding."""
         ds = xr.DataArray([], attrs={'name': 'dummy'})
         self.assertRaises(ValueError, level1c4pps.get_band_encoding, ds,
                           None, None)

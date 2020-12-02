@@ -32,6 +32,8 @@ from level1c4pps import (get_encoding, compose_filename,
                          set_header_and_band_attrs_defaults,
                          remove_attributes,
                          rename_latitude_longitude, update_angle_attributes,
+                         platform_name_to_use_in_filename,
+                         fix_too_great_attributes,
                          get_header_attrs, convert_angles)
 import logging
 from satpy.utils import debug_on
@@ -68,53 +70,11 @@ PPS_TAGNAMES = {"reflectance_channel_1": "ch_r06",
                 "brightness_temperature_channel_4": "ch_tb11",
                 "brightness_temperature_channel_5": "ch_tb12"}
 
-ATTRIBUTES_TO_DELETE = ['_satpy_id',
-                        'creator_email',
-                        'comment',
-                        'creator_url',
-                        'creator_name',
-                        'date_created',
-                        'disposition_mode',
-                        'institution',
-                        'keywords', 'keywords_vocabulary',
-                        'naming_authority',
-                        'processing_mode']
-
-MOVE_TO_HEADER = ['gac_filename',
-                  'geospatial_lat_max',
-                  'geospatial_lat_min',
-                  'geospatial_lat_units',
-                  'geospatial_lon_max',
-                  'geospatial_lon_min',
-                  'geospatial_lon_units',
-                  'geospatial_lat_resolution',
-                  'geospatial_lon_resolution',
-                  'ground_station',
-                  'history',
-                  'orbital_parameters_tle',
-                  'orbit_number_end',
-                  'orbit_number_start',
-                  'processing_level',
-                  'references',
-                  'source',
-                  'standard_name_vocabulary',
-                  'summary',
-                  'time_coverage_end',
-                  'time_coverage_start',
-                  'title',
-                  'version_calib_coeffs',
-                  'version_pygac',
-                  'version_pygac_fdr']
-
-BAND_ATTRIBUTES = ['valid_min', 'valid_max', 'coordinates', 'resolution',
-                   'calibration', 'polarization', 'level', 'modifiers']
 
 RENAME_AND_MOVE_TO_HEADER = {'id': 'euemtsat_gac_id',
                              'licence': 'eumetsat_licence',
                              'product_version': 'eumetsat_product_version',
                              'version_satpy': 'version_eumetsat_pygac_fdr_satpy'}
-
-COPY_TO_HEADER = ['start_time', 'end_time']
 
 
 def get_encoding_gac(scene):
@@ -140,58 +100,35 @@ def update_ancilliary_datasets(scene):
     scene['qual_flags'].attrs['long_name'] = 'pygac quality flags'
     scene['qual_flags'].coords['time'] = irch.attrs['start_time']
     del scene['qual_flags'].coords['acq_time']
-    for band in ['scanline_timestamps', 'qual_flags',
-                 'overlap_free_end', 'overlap_free_end',
+    for band in ['scanline_timestamps',
+                 'qual_flags',
+                 'overlap_free_end',
+                 'overlap_free_end',
                  'equator_crossing_time',
                  'equator_crossing_longitude',
                  'midnight_line']:
         scene[band].encoding.pop('coordinates', None)
-        remove_header_attributes_from_band(scene, band)
-        remove_attributes(scene, band, remove=BAND_ATTRIBUTES)
-
-
-def fix_platform_instrument_attributes(scene, bands):
-    """Fix some attributes that are very long in EUMETSAT GAC FDR."""
-    # EARTH REMOTE SENSING INSTRUMENTS > ... > IMAGING SPECTROMETERS-RADIOMETERS > AVHRR
-    for attr in ['platform', 'instrument', 'sensor']:
-        if attr in scene.attrs:
-            scene.attrs[attr] = scene.attrs[attr].pop().split('>')[-1].strip()  # This attribute is an set or list
-        for band in bands:
-            if band in scene:
-                if attr in scene[band].attrs:
-                    if '>' in scene[band].attrs[attr]:
-                        scene[band].attrs[attr] = scene[band].attrs[attr].split('>')[-1].strip()
-
-
-def remove_header_attributes_from_band(scene, band):
-    """Remove attributes from band."""
-    header_attrs_to_remove = ATTRIBUTES_TO_DELETE + MOVE_TO_HEADER + list(RENAME_AND_MOVE_TO_HEADER.keys())
-    remove_attributes(scene, band, header_attrs_to_remove)
+        for attr in scene[band].attrs:
+            if attr not in ['_FillValue', 'long_name', 'standard_name', 'units']:
+                scene[band].attrs.pop('coordinates', None)
 
 
 def set_header_and_band_attrs(scene):
     """Set and delete some attributes."""
-    fix_platform_instrument_attributes(scene, BANDNAMES)
     irch = scene['brightness_temperature_channel_4']
-    nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch)
-    scene.attrs['source'] = "eumgacfdr2pps.py"
-    scene.attrs['orbit_number'] = int(99999)
-    for attr in MOVE_TO_HEADER + COPY_TO_HEADER:
-        try:
-            scene.attrs[attr] = irch.attrs[attr]
-        except KeyError:
-            pass
-
     for attr in RENAME_AND_MOVE_TO_HEADER:
         if attr in irch.attrs:
-            scene.attrs[RENAME_AND_MOVE_TO_HEADER[attr]] = irch.attrs[attr]
+            scene.attrs[RENAME_AND_MOVE_TO_HEADER[attr]] = irch.attrs.pop(attr)
+    nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch)
+    scene.attrs['source'] = "eumgacfdr2pps.py"
+    scene.attrs['is_gac'] = 'True'
+    scene.attrs['orbit_number'] = 99999
     for band in BANDNAMES:
         if band not in scene:
             continue
         if band in REFL_BANDS:
             scene[band].attrs['sun_earth_distance_correction_applied'] = 'True'
         del scene[band].encoding['coordinates']
-        remove_header_attributes_from_band(scene, band)
     return nimg
 
 
@@ -206,7 +143,7 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None, engine='h
                'longitude',
                'qual_flags',
                'acq_time',
-               'overlap_free_end',
+               'overlap_free_start',
                'overlap_free_end',
                'equator_crossing_time',
                'equator_crossing_longitude',

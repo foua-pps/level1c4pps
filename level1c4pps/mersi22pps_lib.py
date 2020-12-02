@@ -79,9 +79,6 @@ def set_header_and_band_attrs(scene):
     irch = scene['24']
     nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch)
     scene.attrs['source'] = "mersi22pps.py"
-    # Perhaps one can get the orbit number from the hdf file?
-    # FIXME!
-    scene.attrs['orbit_number'] = 99999
     return nimg
 
 

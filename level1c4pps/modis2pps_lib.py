@@ -60,8 +60,7 @@ PPS_TAGNAMES = {'1':  'ch_r06',
                 '29': 'ch_tb85',
                 '31': 'ch_tb11',
                 '32': 'ch_tb12',
-                '33': 'ch_tb133',
-}
+                '33': 'ch_tb133'}
 
 
 def get_encoding_modis(scene):
@@ -77,10 +76,6 @@ def set_header_and_band_attrs(scene):
     irch = scene['31']
     nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch)
     scene.attrs['source'] = "modis2pps.py"
-    scene.attrs['orbit_number'] = 00000
-    # update some attrs bands
-    # for band in scene:
-    #    pass
     return nimg
 
 
