@@ -108,10 +108,12 @@ def update_ancilliary_datasets(scene):
                  'equator_crossing_time',
                  'equator_crossing_longitude',
                  'midnight_line']:
-        scene[band].encoding.pop('coordinates', None)
-        for attr in scene[band].attrs:
-            if attr not in ['_FillValue', 'long_name', 'standard_name', 'units']:
-                scene[band].attrs.pop('coordinates', None)
+        if band in scene:
+            scene[band].encoding.pop('coordinates', None)
+            REMOVE = [attr for attr in scene[band].attrs if  attr not in [
+                '_FillValue', 'long_name', 'name', 'standard_name', 'units']]
+            for attr in REMOVE:
+                scene[band].attrs.pop(attr, None)
 
 
 def set_header_and_band_attrs(scene):
@@ -133,16 +135,20 @@ def set_header_and_band_attrs(scene):
     return nimg
 
 
-def crop(scene, start_line, end_line, time_key='scanline_timestamps'):
+def set_exact_time_and_crop(scene, start_line, end_line, time_key='scanline_timestamps'):
     """Crop datasets and update start_time end_time objects."""
+    if start_line is None:
+        start_line = 0
+    if end_line is None:
+        end_line = -1
     start_time_dt64 = scene[time_key].values[start_line]
     end_time_dt64 = scene[time_key].values[end_line]
     start_time = dt64_to_datetime(start_time_dt64)
     end_time = dt64_to_datetime(end_time_dt64)
-    for ds in scene.keys():
-        print(ds)
-        if 'y' in scene[ds].dims:
-            scene[ds] = scene[ds].isel(y=slice(start_line, end_line + 1))
+    for ds in BANDNAMES + ['latitude', 'longitude', 'qual_flags', 'acq_time'] + ANGLENAMES:
+        if ds in scene and 'y' in scene[ds].dims:
+            if end_line != -1:
+                scene[ds] = scene[ds].isel(y=slice(start_line, end_line + 1))
             try:
                 # Update scene attributes to get the filenames right
                 scene[ds].attrs['start_time'] = start_time
@@ -196,14 +202,21 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None,
                'equator_crossing_longitude',
                'acq_time'] +
               ANGLENAMES)
-
-    # TODO: Only load these if we do not crop data
-    scn_.load(['overlap_free_end',
-               'overlap_free_start',
-               'midnight_line'])
+    
+    # Only load these if we do not crop data
+    if start_line is None and end_line is None:
+        scn_.load(['overlap_free_end',
+                   'overlap_free_start',
+                   'midnight_line'])
 
     # Needs to be done before everything else to avoid problems with attributes.
     remove_broken_data(scn_)
+
+    # Crop after all renaming of variables are done
+    # Problems to rename if cropping is done first.
+    set_exact_time_and_crop(scn_, start_line, end_line, time_key='acq_time')
+    irch = scn_['brightness_temperature_channel_4']  # Redefine, to get updated start/end_times
+
     
     # One ir channel
     irch = scn_['brightness_temperature_channel_4']
@@ -220,12 +233,6 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None,
 
     # Handle gac specific datasets qual_flags and scanline_timestamps
     update_ancilliary_datasets(scn_)
-
-    if start_line is not None and end_line is not None:
-        # Crop after all renaming of variables are done
-        # Problems to rename if cropping is done first.
-        crop(scn_, start_line, end_line)
-        irch = scn_['brightness_temperature_channel_4']  # Redefine, to get updated start/end_times
 
     filename = compose_filename(scn_, out_path, instrument='avhrr', band=irch)
     encoding = get_encoding_gac(scn_)

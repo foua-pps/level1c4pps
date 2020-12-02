@@ -361,8 +361,9 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
         sensor_name = scene.attrs['instrument']
     else:
         sensor_name = irch.attrs['instrument']
-    scene.attrs['sensor'] = (fix_too_great_attributes(sensor_name)).upper()
-    scene.attrs['instrument'] = scene.attrs['sensor']
+    sensor_name = (fix_too_great_attributes(sensor_name)).upper()
+    scene.attrs['sensor'] = sensor_name.upper()
+    scene.attrs['instrument'] = sensor_name.upper()
     nowutc = datetime.utcnow()
     scene.attrs['orbit_number'] = int(00000)
     scene.attrs['date_created'] = nowutc.strftime("%Y-%m-%dT%H:%M:%SZ")
