@@ -178,6 +178,21 @@ ANGLE_ATTRIBUTES = {
     }
 }
 
+LATLON_ATTRIBUTES = {
+    'lat': {
+        'name': 'lat',
+        'long_name': 'latitude coordinate',
+        'standard_name': "latitude",
+        'units': 'degrees_north',
+        'valid_range': np.array([-90, 90], dtype='float32')},
+    'lon': {
+        'name': 'lon',
+        'long_name': 'longitude coordinate',
+        'standard_name': "longitude",
+        'units': 'degrees_east',
+        'valid_range': np.array([-180, 180], dtype='float32')}
+    }
+
 
 def make_azidiff_angle(sata, suna):
     """Calculate azimuth difference angle."""
@@ -296,27 +311,15 @@ def rename_latitude_longitude(scene):
     for alt_lonname in ['lon_pixels', 'm_longitude', 'i_longitude']:
         if alt_lonname in scene and 'longitude' not in scene:
             lon_name_satpy = alt_lonname
-    # scene[lat_name_satpy].rename('lat')
-    # scene[lon_name_satpy].rename('lon')
     scene[lat_name_satpy].attrs['name'] = 'lat'
     scene[lon_name_satpy].attrs['name'] = 'lon'
     scene['lat'] = scene[lat_name_satpy]
     scene['lon'] = scene[lon_name_satpy]
     del scene[lat_name_satpy]
     del scene[lon_name_satpy]
-
     # Update attributes
-    scene['lat'].attrs['long_name'] = 'latitude coordinate'
-    scene['lon'].attrs['long_name'] = 'longitude coordinate'
-    scene['lat'].attrs['name'] = 'lat'
-    scene['lon'].attrs['name'] = 'lon'
-    scene['lon'].attrs['valid_range'] = np.array([-180, 180], dtype='float32')
-    scene['lat'].attrs['valid_range'] = np.array([-90, 90], dtype='float32')
-    REMOVE = [attr for attr in list(scene['lon'].attrs.keys()) + list(scene['lat'].attrs.keys()) if attr not in
-              ['_FillValue',  'standard_name', 'long_name', 'units', 'name', 'valid_range']]
-    for attr in REMOVE:
-        scene['lat'].attrs.pop(attr, None)
-        scene['lon'].attrs.pop(attr, None)
+    scene['lat'].attrs = LATLON_ATTRIBUTES['lat']
+    scene['lon'].attrs = LATLON_ATTRIBUTES['lon']
     for coord_name in ['acq_time', 'm_latitude', 'i_latitude', 'm_latitude', 'i_latitude', 'latitude', 'longitude']:
         try:
             del scene['lat'].coords[coord_name]
@@ -359,7 +362,7 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
     else:
         sensor_name = irch.attrs['instrument']
     scene.attrs['sensor'] = (fix_too_great_attributes(sensor_name)).upper()
-    scene.attrs['instrument'] = sensor_name.upper()
+    scene.attrs['instrument'] = scene.attrs['sensor']
     nowutc = datetime.utcnow()
     scene.attrs['orbit_number'] = int(00000)
     scene.attrs['date_created'] = nowutc.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -398,8 +401,8 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
 
         # Remove some attributes and coordinates
         for attr in RENAME_VARS:
-            val = scene[band].attrs.pop(attr, None)
-            scene[band].attrs[RENAME_VARS[attr]] = val
+            if attr in scene[band].attrs:
+                scene[band].attrs[RENAME_VARS[attr]] = scene[band].attrs.pop(attr)
         for attr in ATTRIBUTES_TO_DELETE_FROM_CHANNELS:
             scene[band].attrs.pop(attr, None)
         MOVE = [attr for attr in scene[band].attrs if attr not in
@@ -474,13 +477,15 @@ def platform_name_to_use_in_filename(platform_name):
     """Get platform name for PPS filenames from platfrom attribute."""
     new_name = platform_name.lower()
     new_name = fix_too_great_attributes(new_name)
+    if new_name == 'sga1':
+        new_name = 'metopsga'
     replace_dict = {'aqua': '2',
                     '-': '',
                     'terra': '1',
-                    'suomi': '',
-                    'sga': 'metopsga'}
+                    'suomi': ''}
     for orig, new in replace_dict.items():
         new_name = new_name.replace(orig, new)
+        
     return new_name
 
 
