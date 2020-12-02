@@ -34,8 +34,8 @@ from level1c4pps import (get_encoding, compose_filename,
                          dt64_to_datetime,
                          platform_name_to_use_in_filename,
                          fix_too_great_attributes,
+                         logger,
                          get_header_attrs, convert_angles)
-import logging
 from satpy.utils import debug_on
 from distutils.version import LooseVersion
 import satpy
@@ -46,8 +46,6 @@ if LooseVersion(satpy.__version__) < LooseVersion('0.24.0'):
 # xr.set_options(keep_attrs=True)
 
 # AVHRR-GAC_FDR_1C_N06_19810330T005421Z_19810330T024632Z_R_O_20200101T000000Z_0100.nc
-
-logger = logging.getLogger('eumgacfdr2pps')
 
 BANDNAMES = ['reflectance_channel_1',
              'reflectance_channel_2',
@@ -188,7 +186,8 @@ def remove_broken_data(scene):
 
 
 def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None,
-                     start_line=None, end_line=None, engine='h5netcdf'):
+                     start_line=None, end_line=None, engine='h5netcdf',
+                     remove_broken=True):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scn_ = Scene(reader='avhrr_l1c_eum_gac_fdr_nc',
@@ -210,7 +209,9 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None,
                    'midnight_line'])
 
     # Needs to be done before everything else to avoid problems with attributes.
-    remove_broken_data(scn_)
+    if remove_broken:
+        logger.info("Setting low quality data (qual_flags) to nodata.")
+        remove_broken_data(scn_)
 
     # Crop after all renaming of variables are done
     # Problems to rename if cropping is done first.
@@ -244,7 +245,7 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None,
                        pretty=True,
                        encoding=encoding)
 
-    print("Saved file {:s} after {:3.1f} seconds".format(
+    logger.info("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),
         time.time()-tic))
     return filename

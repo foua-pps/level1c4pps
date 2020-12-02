@@ -26,13 +26,19 @@
 from pkg_resources import get_distribution, DistributionNotFound
 import numpy as np
 import xarray as xr
+xr.set_options(keep_attrs=True)
 from datetime import datetime
 import os
 import logging
 import satpy
 import level1c4pps
-
+logging.basicConfig(
+    format='level1c4pps %(levelname)s: |%(asctime)s|: %(message)s',
+    level=logging.INFO,
+    # datefmt='%Y-%m-%d %H:%M:%S')
+    datefmt='%H:%M:%S')
 logger = logging.getLogger('level1c4pps')
+
 try:
     __version__ = get_distribution(__name__).version
 except DistributionNotFound:
