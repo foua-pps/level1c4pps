@@ -42,9 +42,11 @@ class TestEumgacfdr2PPS(unittest.TestCase):
     def setUp(self):
         """Create a test scene."""
         vis006 = mock.MagicMock(attrs={'name': 'image0',
+                                       'wavelength': [1, 2, 3, 'um'],
                                        'id_tag': 'ch_r06'})
         ir_108 = mock.MagicMock(attrs={'name': 'image1',
                                        'id_tag': 'ch_tb11',
+                                       'wavelength': [1, 2, 3, 'um'],
                                        'start_time': datetime.utcnow(),
                                        'end_time': datetime.utcnow(),
                                        'history': 'dummy',

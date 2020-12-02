@@ -41,9 +41,11 @@ class TestSlstr2PPS(unittest.TestCase):
         """Create a test scene."""
         slstr2pps.BANDNAMES = ['S2', 's8']
         vis006 = mock.MagicMock(attrs={'name': 'image0',
+                                       'wavelength': [1, 2, 3, 'um'],
                                        'id_tag': 'ch_r06'})
         ir_108 = mock.MagicMock(attrs={'name': 'image1',
                                        'id_tag': 'ch_tb11',
+                                       'wavelength': [1, 2, 3, 'um'],
                                        'start_time': dt.datetime(2009, 7, 1, 12, 1, 0),
                                        'end_time': dt.datetime(2009, 7, 1, 12, 1, 0),
                                        'platform_name': '',
