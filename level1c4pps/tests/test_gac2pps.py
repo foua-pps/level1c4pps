@@ -122,14 +122,10 @@ class TestGac2PPS(unittest.TestCase):
         filename = './level1c4pps/tests/S_NWC_avhrr_tirosn_99999_19800103T1147154Z_19800103T1147229Z.nc'
         pps_nc = netCDF4.Dataset(filename, 'r', format='NETCDF4')
         for key in ['date_created', 'end_time', 'history', 'instrument',
-                                 'orbit_number', 'platform', 'platform_name',
-                                 'sensor', 'source', 'start_time', 'Conventions',
-                                 'version_level1c4pps',
-                                 'version_level1c4pps_satpy']:
-            
+                    'orbit_number', 'platform', 'platform_name',
+                    'sensor', 'source', 'start_time', 'Conventions',
+                    'version_level1c4pps', 'version_level1c4pps_satpy']:
             self.assertTrue(key in sorted(pps_nc.__dict__.keys()))
-                        
-
         expected_vars = ['satzenith', 'azimuthdiff', 'satazimuth', 'sunazimuth', 'sunzenith',
                          'time', 'y', 'num_flags', 'lon', 'lat', 'qual_flags',
                          'image1', 'image3', 'image0', 'image2',
