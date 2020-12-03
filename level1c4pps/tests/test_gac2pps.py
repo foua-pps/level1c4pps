@@ -119,14 +119,16 @@ class TestGac2PPS(unittest.TestCase):
                 'tle_dir': tle_dir,
                 'tle_name': tle_name
             })
-        filename = './level1c4pps/tests/S_NWC_avhrr_tirosn_06305_19800103T1147154Z_19800103T1147229Z.nc'
+        filename = './level1c4pps/tests/S_NWC_avhrr_tirosn_99999_19800103T1147154Z_19800103T1147229Z.nc'
         pps_nc = netCDF4.Dataset(filename, 'r', format='NETCDF4')
-        self.assertEqual(sorted(pps_nc.__dict__.keys()),
-                         sorted(['date_created', 'end_time', 'history', 'instrument',
-                                 'orbit', 'orbit_number', 'platform', 'platform_name',
+        for key in ['date_created', 'end_time', 'history', 'instrument',
+                                 'orbit_number', 'platform', 'platform_name',
                                  'sensor', 'source', 'start_time', 'Conventions',
                                  'version_level1c4pps',
-                                 'version_level1c4pps_satpy']))
+                                 'version_level1c4pps_satpy']:
+            
+            self.assertTrue(key in sorted(pps_nc.__dict__.keys()))
+                        
 
         expected_vars = ['satzenith', 'azimuthdiff', 'satazimuth', 'sunazimuth', 'sunzenith',
                          'time', 'y', 'num_flags', 'lon', 'lat', 'qual_flags',
@@ -156,14 +158,8 @@ class TestGac2PPS(unittest.TestCase):
                 'tle_name': tle_name
             },
             engine='netcdf4')
-        filename = './level1c4pps/tests/S_NWC_avhrr_tirosn_06305_19800103T1147154Z_19800103T1147229Z.nc'
+        filename = './level1c4pps/tests/S_NWC_avhrr_tirosn_99999_19800103T1147154Z_19800103T1147229Z.nc'
         pps_nc = netCDF4.Dataset(filename, 'r', format='NETCDF4')
-        self.assertEqual(sorted(pps_nc.__dict__.keys()),
-                         sorted(['date_created', 'end_time', 'history', 'instrument',
-                                 'orbit', 'orbit_number', 'platform', 'platform_name',
-                                 'sensor', 'source', 'start_time', 'Conventions',
-                                 'version_level1c4pps',
-                                 'version_level1c4pps_satpy']))
 
         expected_vars = ['satzenith', 'azimuthdiff', 'satazimuth', 'sunazimuth', 'sunzenith',
                          'time', 'y', 'num_flags', 'lon', 'lat', 'qual_flags',
