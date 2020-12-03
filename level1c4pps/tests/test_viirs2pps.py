@@ -41,11 +41,13 @@ class TestViirs2PPS(unittest.TestCase):
         """Create a test scene."""
         viirs2pps.BANDNAMES = ['M05', 'M15']
         vis006 = mock.MagicMock(attrs={'name': 'image0',
+                                       'wavelength': [1, 2, 3, 'um'],
                                        'id_tag': 'ch_r06'})
         ir_108 = mock.MagicMock(attrs={
             'name': 'image1',
             'id_tag': 'ch_tb11',
             'rows_per_scan': 16,
+            'wavelength': [1, 2, 3, 'um'],
             'start_time': dt.datetime(2009, 7, 1, 12, 1, 0),
             'end_time': dt.datetime(2009, 7, 1, 12, 1, 0),
             'platform_name': '',

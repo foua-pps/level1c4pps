@@ -31,8 +31,13 @@ import os
 import logging
 import satpy
 import level1c4pps
-
+logging.basicConfig(
+    format='level1c4pps %(levelname)s: |%(asctime)s|: %(message)s',
+    level=logging.INFO,
+    # datefmt='%Y-%m-%d %H:%M:%S')
+    datefmt='%H:%M:%S')
 logger = logging.getLogger('level1c4pps')
+xr.set_options(keep_attrs=True)
 try:
     __version__ = get_distribution(__name__).version
 except DistributionNotFound:
@@ -59,6 +64,7 @@ ATTRIBUTES_TO_DELETE_FROM_CHANNELS = [
     'disposition_mode',
     'file_type',
     'file_units',
+    'platform',  # explicitly copied to header
     'history',  # explicitly copied to header
     'id',
     'institution',
@@ -361,8 +367,9 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
         sensor_name = scene.attrs['instrument']
     else:
         sensor_name = irch.attrs['instrument']
-    scene.attrs['sensor'] = (fix_too_great_attributes(sensor_name)).upper()
-    scene.attrs['instrument'] = scene.attrs['sensor']
+    sensor_name = (fix_too_great_attributes(sensor_name)).upper()
+    scene.attrs['sensor'] = sensor_name.upper()
+    scene.attrs['instrument'] = sensor_name.upper()
     nowutc = datetime.utcnow()
     scene.attrs['orbit_number'] = int(00000)
     scene.attrs['date_created'] = nowutc.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -386,6 +393,7 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
         else:
             # Assume factor applied if available as attribute.
             scene[band].attrs['sun_earth_distance_correction_applied'] = 'True'
+        scene[band].attrs['wavelength'] = scene[band].attrs['wavelength'][0:3]
         scene[band].attrs['sun_zenith_angle_correction_applied'] = 'False'
         scene[band].attrs['name'] = "image{:d}".format(nimg)
         scene[band].attrs['coordinates'] = 'lon lat'

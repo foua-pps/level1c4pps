@@ -24,7 +24,6 @@
 
 """Utilities to convert AVHRR GAC formattet data to PPS level-1c format."""
 
-
 import os
 import time
 from satpy.scene import Scene
@@ -32,21 +31,21 @@ from level1c4pps import (get_encoding, compose_filename,
                          set_header_and_band_attrs_defaults,
                          remove_attributes,
                          rename_latitude_longitude, update_angle_attributes,
+                         dt64_to_datetime,
                          platform_name_to_use_in_filename,
                          fix_too_great_attributes,
+                         logger,
                          get_header_attrs, convert_angles)
-import logging
 from satpy.utils import debug_on
 from distutils.version import LooseVersion
 import satpy
 if LooseVersion(satpy.__version__) < LooseVersion('0.24.0'):
     debug_on()
     raise ImportError("'eumgac2pps' writer requires satpy 0.24.0 or greater")
-
+# import xarray as xr
+# xr.set_options(keep_attrs=True)
 
 # AVHRR-GAC_FDR_1C_N06_19810330T005421Z_19810330T024632Z_R_O_20200101T000000Z_0100.nc
-
-logger = logging.getLogger('eumgacfdr2pps')
 
 BANDNAMES = ['reflectance_channel_1',
              'reflectance_channel_2',
@@ -107,10 +106,12 @@ def update_ancilliary_datasets(scene):
                  'equator_crossing_time',
                  'equator_crossing_longitude',
                  'midnight_line']:
-        scene[band].encoding.pop('coordinates', None)
-        for attr in scene[band].attrs:
-            if attr not in ['_FillValue', 'long_name', 'standard_name', 'units']:
-                scene[band].attrs.pop('coordinates', None)
+        if band in scene:
+            scene[band].encoding.pop('coordinates', None)
+            REMOVE = [attr for attr in scene[band].attrs if attr not in [
+                '_FillValue', 'long_name', 'name', 'standard_name', 'units']]
+            for attr in REMOVE:
+                scene[band].attrs.pop(attr, None)
 
 
 def set_header_and_band_attrs(scene):
@@ -132,7 +133,61 @@ def set_header_and_band_attrs(scene):
     return nimg
 
 
-def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None, engine='h5netcdf'):
+def set_exact_time_and_crop(scene, start_line, end_line, time_key='scanline_timestamps'):
+    """Crop datasets and update start_time end_time objects."""
+    if start_line is None:
+        start_line = 0
+    if end_line is None:
+        end_line = -1
+    start_time_dt64 = scene[time_key].values[start_line]
+    end_time_dt64 = scene[time_key].values[end_line]
+    start_time = dt64_to_datetime(start_time_dt64)
+    end_time = dt64_to_datetime(end_time_dt64)
+    for ds in BANDNAMES + ['latitude', 'longitude', 'qual_flags', 'acq_time'] + ANGLENAMES:
+        if ds in scene and 'y' in scene[ds].dims:
+            if end_line != -1:
+                scene[ds] = scene[ds].isel(y=slice(start_line, end_line + 1))
+            try:
+                # Update scene attributes to get the filenames right
+                scene[ds].attrs['start_time'] = start_time
+                scene[ds].attrs['end_time'] = end_time
+            except TypeError:
+                pass
+    if start_time_dt64 != scene[time_key].values[0]:
+        raise ValueError
+    if end_time_dt64 != scene[time_key].values[-1]:
+        raise ValueError
+
+
+def remove_broken_data(scene):
+    """Set low quality data to nodata."""
+    import numpy as np
+    bad_lines = np.sum(scene['qual_flags'].values[:, 1:], axis=1) > 0
+    if bad_lines.any():
+        remove = np.where(bad_lines, np.nan, 0)
+        for band in BANDNAMES:
+            if band in scene:
+                scene[band].values = scene[band].values + remove[:, np.newaxis]
+
+    # import xarray as xr
+    # xr.set_options(keep_attrs=True)
+    # xarray solution, but it makes program
+    # forget to use name attribute to name variables.
+    # x = scene['brightness_temperature_channel_4'].coords['x'].values
+    # qflags = scene['qual_flags'].isel(num_flags=slice(1, None))
+    # bad_lines = qflags.sum(dim='num_flags') > 0
+    # bad_pixels = bad_lines.expand_dims({'x': x})  # filled with zeros
+    # bad_pixels, _ = xr.broadcast(bad_lines, bad_pixels)
+    # for band in BANDNAMES:
+    #    if band in scene:
+    #        print(scene[band].attrs['name'])
+    #        scene[band] = scene[band].where(~bad_pixels)
+    #        print(scene[band].attrs['name'])
+
+
+def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None,
+                     start_line=None, end_line=None, engine='h5netcdf',
+                     remove_broken=True):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scn_ = Scene(reader='avhrr_l1c_eum_gac_fdr_nc',
@@ -142,13 +197,26 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None, engine='h
     scn_.load(['latitude',
                'longitude',
                'qual_flags',
-               'acq_time',
-               'overlap_free_start',
-               'overlap_free_end',
                'equator_crossing_time',
                'equator_crossing_longitude',
-               'midnight_line'] +
+               'acq_time'] +
               ANGLENAMES)
+
+    # Only load these if we do not crop data
+    if start_line is None and end_line is None:
+        scn_.load(['overlap_free_end',
+                   'overlap_free_start',
+                   'midnight_line'])
+
+    # Needs to be done before everything else to avoid problems with attributes.
+    if remove_broken:
+        logger.info("Setting low quality data (qual_flags) to nodata.")
+        remove_broken_data(scn_)
+
+    # Crop after all renaming of variables are done
+    # Problems to rename if cropping is done first.
+    set_exact_time_and_crop(scn_, start_line, end_line, time_key='acq_time')
+    irch = scn_['brightness_temperature_channel_4']  # Redefine, to get updated start/end_times
 
     # One ir channel
     irch = scn_['brightness_temperature_channel_4']
@@ -177,7 +245,7 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None, engine='h
                        pretty=True,
                        encoding=encoding)
 
-    print("Saved file {:s} after {:3.1f} seconds".format(
+    logger.info("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),
         time.time()-tic))
     return filename
