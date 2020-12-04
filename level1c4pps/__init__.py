@@ -486,7 +486,7 @@ def platform_name_to_use_in_filename(platform_name):
     new_name = platform_name.lower()
     new_name = fix_too_great_attributes(new_name)
     if new_name == 'sga1':
-        new_name = 'metopsga'
+        new_name = 'metopsga1'
     replace_dict = {'aqua': '2',
                     '-': '',
                     'terra': '1',
