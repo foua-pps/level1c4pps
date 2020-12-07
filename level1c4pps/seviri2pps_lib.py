@@ -35,7 +35,7 @@ import xarray as xr
 import dask.array as da
 from glob import glob
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from satpy.scene import Scene
 import satpy.utils
 from trollsift.parser import globify, Parser
@@ -78,6 +78,12 @@ PPS_TAGNAMES = {'VIS006': 'ch_r06',
 HRIT_FILE_PATTERN = ('{rate:1s}-000-{hrit_format:_<6s}-'
                      '{platform_shortname:_<12s}-{channel:_<8s}_-'
                      '{segment:_<9s}-{start_time:%Y%m%d%H%M}-__')
+# MSG4-SEVI-MSG15-0100-NA-20190409121243.927000000Z-20190409121300-1329370.nat
+# MSG4-SEVI-MSG15-0100-NA-20190409121243.927000000Z.nat
+# MSG4-SEVI-MSG15-0100-NA-20190409121243.927000000Z
+NATIVE_FILE_PATTERN = ('{platform_shortname:4s}-{instr:4s}-'
+                       'MSG{product_level:2d}-0100-NA-'
+                       '{end_time:%Y%m%d%H%M%S.%f}000Z')
 
 
 def rotate_band(scene, band):
@@ -397,24 +403,100 @@ def get_header_attrs(scene):
     return header_attrs
 
 
-def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf'):
+def _drop_seconds_milliseconds(dtime):
+    return dtime.replace(second=0, microsecond=0)
+
+
+def set_nominal_scan_time(dataset):
+    """Set time attributes in the dataset to the nominal scan time."""
+    dataset = dataset.copy()
+    start_time = _drop_seconds_milliseconds(
+        dataset.attrs['start_time'])
+    end_time = start_time + timedelta(minutes=15)
+    dataset.attrs['start_time'] = start_time
+    dataset.attrs['end_time'] = end_time
+    return dataset
+
+
+class SEVIRIFilenameParser:
+    """SEVIRI filename parser."""
+
+    default_formats = [
+        {'name': 'seviri_l1b_hrit',
+         'pattern': HRIT_FILE_PATTERN,
+         'full_match': True},
+        {'name': 'seviri_l1b_native',
+         'pattern': NATIVE_FILE_PATTERN,
+         'full_match': False},
+    ]
+
+    def __init__(self, formats=None):
+        self.formats = formats or self.default_formats
+        self.format_names = [fmt['name'] for fmt in self.formats]
+
+    def parse(self, filename):
+        """Parse the given filename.
+
+        Returns:
+            File format, filename info
+        """
+        for fmt in self.formats:
+            parser = Parser(fmt['pattern'])
+            try:
+                info = parser.parse(filename, full_match=fmt['full_match'])
+                break
+            except ValueError:
+                continue
+        else:
+            raise ValueError(
+                'Filename {} doesn\'t match any of the supported '
+                'formats {}.'.format(filename, self.format_names)
+
+            )
+        return fmt['name'], self._postproc(fmt['name'], info)
+
+    def _postproc(self, format_name, info):
+        """Postprocess filename info."""
+        if format_name == 'seviri_l1b_native':
+            return self._postproc_native(info)
+        elif format_name == 'seviri_l1b_hrit':
+            return self._postproc_hrit(info)
+        else:
+            raise NotImplementedError
+
+    def _postproc_native(self, info):
+        """Postprocess Native filename info."""
+        # Only end time available, derive start time.
+        end_time = info['end_time']
+        quarter = end_time.minute // 15
+        info['start_time'] = end_time.replace(
+            minute=quarter * 15,
+            second=0,
+            microsecond=0
+        )
+        return info
+
+    def _postproc_hrit(self, parsed):
+        """Postprocess HRIT filename info."""
+        return parsed
+
+
+def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf',
+                     use_nominal_time_in_filename=False):
     """Make level 1c files in PPS-format."""
     for fname in tslot_files:
         if not os.path.isfile(fname):
             raise FileNotFoundError('No such file: {}'.format(fname))
 
     tic = time.time()
-    parser = Parser(HRIT_FILE_PATTERN)
-    platform_shortname = parser.parse(
-        os.path.basename(tslot_files[0]))['platform_shortname']
-    start_time = parser.parse(
-        os.path.basename(tslot_files[0]))['start_time']
+    parser = SEVIRIFilenameParser()
+    file_format, info = parser.parse(os.path.basename(tslot_files[0]))
 
     # Load and calibrate data using inter-calibration coefficients from
     # Meirink et al
-    coefs = get_calibration_for_time(platform=platform_shortname,
-                                     time=start_time)
-    scn_ = Scene(reader='seviri_l1b_hrit',
+    coefs = get_calibration_for_time(platform=info['platform_shortname'],
+                                     time=info['start_time'])
+    scn_ = Scene(reader=file_format,
                  filenames=tslot_files,
                  reader_kwargs={'calib_mode': CALIB_MODE,
                                 'ext_calib_coefs': coefs})
@@ -448,7 +530,15 @@ def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf'):
     set_attrs(scn_)
 
     # Write datasets to netcdf
-    filename = compose_filename(scene=scn_, out_path=out_path, instrument='seviri', band=scn_['IR_108'])
+    ir108_for_filename = scn_['IR_108']
+    if use_nominal_time_in_filename:
+        ir108_for_filename = set_nominal_scan_time(ir108_for_filename)
+    filename = compose_filename(
+        scene=scn_,
+        out_path=out_path,
+        instrument='seviri',
+        band=ir108_for_filename
+    )
     scn_.save_datasets(writer='cf',
                        filename=filename,
                        header_attrs=get_header_attrs(scn_),

@@ -431,6 +431,17 @@ class TestSeviri2PPS(unittest.TestCase):
         np.testing.assert_array_equal(scene['satellite_latitude'], [20])
         np.testing.assert_array_equal(scene['satellite_altitude'], [30])
 
+    def test_set_nominal_scan_time(self):
+        arr = xr.DataArray(
+            [1, 2, 3],
+            attrs={
+                'start_time': dt.datetime(2009, 9, 4, 12, 0, 10, 12345),
+                'end_time': dt.datetime(2009, 9, 4, 12, 12, 10, 12345)
+            }
+        )
+        res = seviri2pps.set_nominal_scan_time(arr)
+        self.assertEqual(res.attrs['start_time'], dt.datetime(2009, 9, 4, 12))
+        self.assertEqual(res.attrs['end_time'], dt.datetime(2009, 9, 4, 12, 15))
 
 
 class TestCalibration(unittest.TestCase):
@@ -501,6 +512,33 @@ class TestCalibration(unittest.TestCase):
             self.assertAlmostEqual(coefs1[channel]['offset'],
                                    coefs2[channel]['offset'],
                                    delta=10e-8)
+
+
+class TestSEVIRIFilenameParser(unittest.TestCase):
+    def test_parse_native(self):
+        """Test parsing of Native filenames."""
+        fnames = [
+            ('MSG4-SEVI-MSG15-0100-NA-20190409124243.927000000Z-'
+             '20190409121300-1329370.nat'),
+            'MSG4-SEVI-MSG15-0100-NA-20190409124243.927000000Z.nat',
+            'MSG4-SEVI-MSG15-0100-NA-20190409124243.927000000Z',
+        ]
+        parser = seviri2pps.SEVIRIFilenameParser()
+        for fname in fnames:
+            file_format, info = parser.parse(fname)
+            self.assertEqual(file_format, 'seviri_l1b_native')
+            self.assertEqual(info['start_time'],
+                             dt.datetime(2019, 4, 9, 12, 30))
+            self.assertEqual(info['platform_shortname'], 'MSG4')
+
+    def test_parse_hrit(self):
+        """Test parsing of HRIT filenames."""
+        fname = 'H-000-MSG3__-MSG3________-IR_120___-000003___-201410051115-__'
+        parser = seviri2pps.SEVIRIFilenameParser()
+        file_format, info = parser.parse(fname)
+        self.assertEqual(file_format, 'seviri_l1b_hrit')
+        self.assertEqual(info['start_time'], dt.datetime(2014, 10, 5, 11, 15))
+        self.assertEqual(info['platform_shortname'], 'MSG3')
 
 
 def suite():

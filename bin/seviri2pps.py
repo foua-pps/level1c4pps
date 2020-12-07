@@ -52,7 +52,13 @@ if __name__ == "__main__":
     parser.add_argument('-ne', '--nc_engine', type=str, nargs='?',
                         required=False, default='h5netcdf',
                         help="Engine for saving netcdf files netcdf4 or h5netcdf (default).")
+    parser.add_argument('--use-nominal-time-in-filename', action='store_true',
+                        help='Use nominal scan timestamps in output filename.')
     options = parser.parse_args()
-    process_one_scan(options.files, out_path=options.out_dir,
-                     rotate=not options.no_rotation,
-                     engine=options.nc_engine)
+    process_one_scan(
+        options.files,
+        out_path=options.out_dir,
+        rotate=not options.no_rotation,
+        engine=options.nc_engine,
+        use_nominal_time_in_filename=options.use_nominal_time_in_filename
+    )
