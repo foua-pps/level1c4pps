@@ -37,6 +37,7 @@ from level1c4pps import (get_encoding, compose_filename,
                          logger,
                          get_header_attrs, convert_angles)
 from satpy.utils import debug_on
+debug_on()
 from distutils.version import LooseVersion
 import satpy
 if LooseVersion(satpy.__version__) < LooseVersion('0.24.0'):
@@ -50,7 +51,9 @@ if LooseVersion(satpy.__version__) < LooseVersion('0.24.0'):
 BANDNAMES = ['reflectance_channel_1',
              'reflectance_channel_2',
              'reflectance_channel_3',
+             'reflectance_channel_3a',
              'brightness_temperature_channel_3',
+             'brightness_temperature_channel_3b',
              'brightness_temperature_channel_4',
              'brightness_temperature_channel_5']
 
@@ -65,6 +68,8 @@ REFL_BANDS = ['reflectance_channel_1', 'reflectance_channel_2', 'reflectance_cha
 PPS_TAGNAMES = {"reflectance_channel_1": "ch_r06",
                 "reflectance_channel_2": "ch_r09",
                 "reflectance_channel_3": "ch_r16",
+                "reflectance_channel_3a": "ch_r16",
+                "brightness_temperature_channel_3b": "ch_tb37",
                 "brightness_temperature_channel_3": "ch_tb37",
                 "brightness_temperature_channel_4": "ch_tb11",
                 "brightness_temperature_channel_5": "ch_tb12"}
