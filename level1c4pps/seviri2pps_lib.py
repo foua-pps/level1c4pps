@@ -80,15 +80,6 @@ HRIT_FILE_PATTERN = ('{rate:1s}-000-{hrit_format:_<6s}-'
                      '{segment:_<9s}-{start_time:%Y%m%d%H%M}-__')
 
 
-def rotate_band(scene, band):
-    """Rotate band by 180 degrees."""
-    scene[band] = scene[band].reindex(x=scene[band].x[::-1],
-                                      y=scene[band].y[::-1])
-    llx, lly, urx, ury = scene[band].attrs['area'].area_extent
-    scene[band].attrs['area'] = scene[band].attrs['area'].copy(
-        area_extent=[urx, ury, llx, lly])
-
-
 def get_lonlats(dataset):
     """Get lat/lon coordinates."""
     lons, lats = dataset.attrs['area'].get_lonlats()
@@ -420,12 +411,11 @@ def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf'):
                                 'ext_calib_coefs': coefs})
     if not scn_.attrs['sensor'] == {'seviri'}:
         raise ValueError('Not SEVIRI data')
-    scn_.load(BANDNAMES)
 
-    # By default pixel (0,0) is S-E. Rotate bands so that (0,0) is N-W.
-    if rotate:
-        for band in BANDNAMES:
-            rotate_band(scn_, band)
+    # Load datasets. By default pixel (0,0) is S-E. If desired rotate bands
+    # so that (0,0) is N-W.
+    upper_right_corner = 'NE' if rotate else 'native'
+    scn_.load(BANDNAMES, upper_right_corner=upper_right_corner)
     scn_.attrs['image_rotated'] = rotate
 
     # Find lat/lon data
