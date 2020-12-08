@@ -212,7 +212,7 @@ def get_mean_acq_time(scene):
     # to NaN manually
     acq_times = []
     for band in BANDNAMES:
-        acq_time = scene[band].coords['acq_time'].drop('acq_time')
+        acq_time = scene[band].coords['acq_time'].drop_vars(['acq_time'])
         is_nat = np.isnat(acq_time.values)
         acq_time = acq_time.astype(int).where(np.logical_not(is_nat))
         acq_times.append(acq_time)
