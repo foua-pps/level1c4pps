@@ -432,16 +432,22 @@ class TestSeviri2PPS(unittest.TestCase):
         np.testing.assert_array_equal(scene['satellite_altitude'], [30])
 
     def test_set_nominal_scan_time(self):
+        start_time = dt.datetime(2009, 9, 4, 12, 0, 10, 12345)
+        end_time = dt.datetime(2009, 9, 4, 12, 12, 10, 12345)
         arr = xr.DataArray(
             [1, 2, 3],
             attrs={
-                'start_time': dt.datetime(2009, 9, 4, 12, 0, 10, 12345),
-                'end_time': dt.datetime(2009, 9, 4, 12, 12, 10, 12345)
+                'start_time': start_time,
+                'end_time': end_time
             }
         )
         res = seviri2pps.set_nominal_scan_time(arr)
         self.assertEqual(res.attrs['start_time'], dt.datetime(2009, 9, 4, 12))
         self.assertEqual(res.attrs['end_time'], dt.datetime(2009, 9, 4, 12, 15))
+
+        # Original array should not be modified
+        self.assertEqual(arr.attrs['start_time'], start_time)
+        self.assertEqual(arr.attrs['end_time'], end_time)
 
 
 class TestCalibration(unittest.TestCase):
