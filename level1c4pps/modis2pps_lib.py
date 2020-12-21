@@ -35,6 +35,8 @@ from level1c4pps import (get_encoding, compose_filename,
                          apply_sunz_correction)
 
 import logging
+from satpy.utils import debug_on
+debug_on()
 
 # Example:
 # MYD03.A2014272.0215.006.2014274124038.hdf
@@ -43,9 +45,9 @@ import logging
 
 logger = logging.getLogger('modis2pps')
 
-BANDNAMES = ['1', '2', '6', '20', '26', '28', '29', '31', '32']
+BANDNAMES = ['1', '2', '6', '7', '20', '26', '28', '29', '31', '32']
 
-REFL_BANDS = ['1', '2', '6', '26']
+REFL_BANDS = ['1', '2', '6', '7' '26']
 
 ANGLE_NAMES = ['satellite_zenith_angle', 'solar_zenith_angle',
                'satellite_azimuth_angle', 'solar_azimuth_angle']
@@ -54,6 +56,7 @@ PPS_TAGNAMES = {'1':  'ch_r06',
                 '2':  'ch_r09',
                 '26': 'ch_r13',
                 '6':  'ch_r16',
+                '7':  'ch_r21', 
                 '20': 'ch_tb37',
                 '27': 'ch_tb67',
                 '28': 'ch_tb73',
