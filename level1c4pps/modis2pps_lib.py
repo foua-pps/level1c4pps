@@ -94,10 +94,10 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf'):
     irch = scn_['31']
 
     # Remove som buggy channels:
-    if 'aqua' in irch.attrs['platform_name'].lower():
-        del(scn_['6'])  # Skip 1.6 for Aqua
-    elif 'terra' in irch.attrs['platform_name'].lower():
-        del(scn_['29'])  # Skip 8.6 for Terra
+    # if 'aqua' in irch.attrs['platform_name'].lower():
+    #     del(scn_['6'])  # Skip 1.6 for Aqua
+    # elif 'terra' in irch.attrs['platform_name'].lower():
+    #     del(scn_['29'])  # Skip 8.6 for Terra
 
     # Set header and band attributes
     set_header_and_band_attrs(scn_)
