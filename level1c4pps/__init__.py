@@ -222,7 +222,7 @@ def centered_modulus(daz, divisor=360):
         daz[daz > half_divisor] = daz[daz > half_divisor] - divisor
         return daz
     elif isinstance(daz, xr.DataArray):
-        return daz.where(daz > half_divisor, daz - divisor)
+        return daz.where(daz < half_divisor, daz - divisor)
     else:
         raise ValueError("Array is neither a Numpy nor an Xarray object! Type = %s", type(daz))
 
