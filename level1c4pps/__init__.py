@@ -200,10 +200,18 @@ LATLON_ATTRIBUTES = {
     }
 
 
-def make_azidiff_angle(sata, suna):
+def make_azidiff_angle(sata, suna, divisor=360):
     """Calculate azimuth difference angle."""
-    daz = abs(sata - suna)
-    return centered_modulus(daz, divisor=360)
+    daz = abs(sata-suna)
+    half_divisor = divisor / 2.0
+    daz = daz % divisor
+    if isinstance(daz, np.ndarray):
+        daz[daz > half_divisor] = divisor - daz[daz > half_divisor]
+        return daz
+    elif isinstance(daz, xr.DataArray):
+        return daz.where(daz < half_divisor, divisor- daz)
+    else:
+        raise ValueError("Array is neither a Numpy nor an Xarray object! Type = %s", type(daz))
 
 
 def centered_modulus(daz, divisor=360):
@@ -211,10 +219,10 @@ def centered_modulus(daz, divisor=360):
     half_divisor = divisor / 2.0
     daz = daz % divisor
     if isinstance(daz, np.ndarray):
-        daz[daz > half_divisor] = divisor - daz[daz > half_divisor]
+        daz[daz > half_divisor] = daz[daz > half_divisor] - divisor
         return daz
     elif isinstance(daz, xr.DataArray):
-        return daz.where(daz < half_divisor, divisor - daz)
+        return daz.where(daz > half_divisor, daz - divisor)
     else:
         raise ValueError("Array is neither a Numpy nor an Xarray object! Type = %s", type(daz))
 
