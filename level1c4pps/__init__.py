@@ -209,7 +209,7 @@ def make_azidiff_angle(sata, suna, divisor=360):
         daz[daz > half_divisor] = divisor - daz[daz > half_divisor]
         return daz
     elif isinstance(daz, xr.DataArray):
-        return daz.where(daz < half_divisor, divisor- daz)
+        return daz.where(daz < half_divisor, divisor - daz)
     else:
         raise ValueError("Array is neither a Numpy nor an Xarray object! Type = %s", type(daz))
 

@@ -24,6 +24,7 @@ import xarray as xr
 import level1c4pps
 import numpy as np
 
+
 class TestInit(unittest.TestCase):
     """Test functions in __init__.py."""
 
@@ -32,6 +33,7 @@ class TestInit(unittest.TestCase):
         ds = xr.DataArray([], attrs={'name': 'dummy'})
         self.assertRaises(ValueError, level1c4pps.get_band_encoding, ds,
                           None, None)
+
     def test_adjust_lons(self):
         from level1c4pps import centered_modulus
         in_lons = xr.DataArray([340.0, 10.0, -22.0])
@@ -42,6 +44,7 @@ class TestInit(unittest.TestCase):
                                    out_lons, rtol=0.00001)
         np.testing.assert_allclose(centered_modulus(in_lons_np),
                                    out_lons_np, rtol=0.00001)
+
 
 def suite():
     """Create the test suite for test_init."""
