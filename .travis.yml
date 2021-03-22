@@ -15,9 +15,9 @@ env:
 
 matrix:
   include:
-    - env: PYTHON_VERSION=3.6
+    - env: PYTHON_VERSION=3.7
       os: linux
-    - env: PYTHON_VERSION=3.6
+    - env: PYTHON_VERSION=3.7
       os: osx
       language: generic
 install:
@@ -28,7 +28,7 @@ install:
 script:
   - pytest --cov=level1c4pps level1c4pps
 after_success:
-- if [[ $PYTHON_VERSION == 3.6 ]]; then coveralls; fi
+- if [[ $PYTHON_VERSION == 3.7 ]]; then coveralls; fi
 deploy:
   - provider: pypi
     user: adybbroe
