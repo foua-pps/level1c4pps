@@ -93,7 +93,7 @@ def process_one_scene(scene_files, out_path):
 
     # Transpose data to get scanlines as row dimension
     for key in BANDNAMES + ANGLE_NAMES + ['lat_pixels', 'lon_pixels']:
-        if 'lat_pixels' in scn_[key].dims:
+        if 'num_pixels' in scn_[key].dims:
             # satpy <= 0 .26.0
             scn_[key] = scn_[key].transpose('num_lines', 'num_pixels')
         elif scn_[key].dims[0] == 'x':
