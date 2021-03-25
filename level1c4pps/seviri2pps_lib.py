@@ -74,15 +74,14 @@ PPS_TAGNAMES = {'VIS006': 'ch_r06',
                 'WV_062': 'ch_tb67',
                 'WV_073': 'ch_tb73'}
 
-# H-000-MSG3__-MSG3________-IR_120___-000003___-201410051115-__:
+
 HRIT_FILE_PATTERN = ('{rate:1s}-000-{hrit_format:_<6s}-'
                      '{platform_shortname:_<12s}-{channel:_<8s}_-'
                      '{segment:_<9s}-{start_time:%Y%m%d%H%M}-__')
-# MSG4-SEVI-MSG15-0100-NA-20190409121243.927000000Z-20190409121300-1329370.nat
-# MSG4-SEVI-MSG15-0100-NA-20190409121243.927000000Z.nat
-# MSG4-SEVI-MSG15-0100-NA-20190409121243.927000000Z
+# H-000-MSG3__-MSG3________-IR_120___-000003___-201410051115-__
+
 NATIVE_FILE_PATTERN = ('{platform_shortname:4s}-{instr:4s}-'
-                       'MSG{product_level:2d}-0100-NA-'
+                       'MSG{product_level:2d}-{base_algorithm_version:4s}-NA-'
                        '{end_time:%Y%m%d%H%M%S.%f}000Z')
 
 
