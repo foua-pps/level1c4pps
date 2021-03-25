@@ -538,12 +538,12 @@ class TestCalibration(unittest.TestCase):
                 'IR_016': {'gain': 0.0228774688,
                            'offset': -1.1667509087999999}},
             ('MSG4', dt.datetime(2019, 1, 18, 0, 0)): {
-                'VIS006': {'gain': 0.0230447858,
-                           'offset': -1.1752840757999998},
-                'VIS008': {'gain': 0.0292354541,
-                           'offset': -1.4910081591},
-                'IR_016': {'gain': 0.022253477,
-                           'offset': -1.134927327}}
+                'VIS006': {'gain': 0.0230415289,
+                           'offset': -1.1751179739},
+                'VIS008': {'gain': 0.0291916818,
+                           'offset': -1.4887757718},
+                'IR_016': {'gain': 0.022223894,
+                           'offset': -1.1334185940000001}}
         }
         for (platform, time), ref in REF.items():
             coefs = calib.get_calibration_for_time(platform=platform,

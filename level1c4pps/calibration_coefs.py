@@ -43,9 +43,9 @@ COEFS_MEIRINK = dict(
         IR_016=dict(b=23.066, a=-0.0286E-3)
     ),
     MSG4=dict(
-        VIS006=dict(b=21.101, a=0.2794E-3),
-        VIS008=dict(b=21.365, a=1.1313E-3),
-        IR_016=dict(b=19.742, a=0.3610E-3)
+        VIS006=dict(b=21.040, a=0.2877E-3),
+        VIS008=dict(b=24.966, a=0.6074E-3),
+        IR_016=dict(b=21.236, a=0.1420E-3)
     )
 )
 
