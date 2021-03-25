@@ -38,6 +38,7 @@ import time
 from datetime import datetime, timedelta
 from satpy.scene import Scene
 import satpy.utils
+from satpy.readers.utils import remove_earthsun_distance_correction
 from trollsift.parser import globify, Parser
 from pyorbital.astronomy import get_alt_az, sun_zenith_angle
 from pyorbital.orbital import get_observer_look
@@ -83,6 +84,62 @@ HRIT_FILE_PATTERN = ('{rate:1s}-000-{hrit_format:_<6s}-'
 NATIVE_FILE_PATTERN = ('{platform_shortname:4s}-{instr:4s}-'
                        'MSG{product_level:2d}-{base_algorithm_version:4s}-NA-'
                        '{end_time:%Y%m%d%H%M%S.%f}000Z')
+# MSG4-SEVI-MSG15-0100-NA-20190409121243.927000000Z-20190409121300-1329370.nat
+# MSG4-SEVI-MSG15-0201-NA-20190409121243.927000000Z.nat
+# MSG4-SEVI-MSG15-1234-NA-20190409121243.927000000Z
+
+
+def load_and_calibrate(filenames, apply_sun_earth_distance_correction):
+    """Load and calibrate data.
+
+    Uses inter-calibration coefficients from Meirink et al.
+
+    Args:
+        filenames: List of data files
+        filename_info: Corresponding information from the filenames
+        file_format: Specifies the file format (HRIT/Native)
+        apply_sun_earth_distance_correction: If True, apply sun-earth-distance-
+            correction to visible channels.
+
+    Returns:
+        Satpy scene holding calibrated channels
+    """
+    # Parse filenames
+    parser = SEVIRIFilenameParser()
+    file_format, info = parser.parse(os.path.basename(filenames[0]))
+
+    # Get calibration coefficients (time-dependent)
+    coefs = get_calibration_for_time(platform=info['platform_shortname'],
+                                     time=info['start_time'])
+
+    # Load and calibrate data
+    scn_ = Scene(reader=file_format,
+                 filenames=filenames,
+                 reader_kwargs={'calib_mode': CALIB_MODE,
+                                'ext_calib_coefs': coefs})
+    if not scn_.attrs['sensor'] == {'seviri'}:
+        raise ValueError('Not SEVIRI data')
+    scn_.load(BANDNAMES)
+    if not apply_sun_earth_distance_correction:
+        remove_sun_earth_distance_correction(scn_)
+
+    return scn_
+
+
+def remove_sun_earth_distance_correction(scene):
+    """Remove sun-earth-distance correction from visible channels.
+
+    This is required because a downstream CLAAS module (CPP) does not recognize
+    the "sun_earth_distance_correction_applied" attribute and applies the
+    correction anyway.
+    """
+    for band in BANDNAMES:
+        is_vis = scene[band].attrs['calibration'] == 'reflectance'
+        correction_applied = scene[band].attrs.get(
+            'sun_earth_distance_correction_applied', False
+        )
+        if is_vis and correction_applied:
+            scene[band] = remove_earthsun_distance_correction(scene[band])
 
 
 def rotate_band(scene, band):
@@ -481,27 +538,18 @@ class SEVIRIFilenameParser:
 
 
 def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf',
-                     use_nominal_time_in_filename=False):
+                     use_nominal_time_in_filename=False,
+                     apply_sun_earth_distance_correction=True):
     """Make level 1c files in PPS-format."""
     for fname in tslot_files:
         if not os.path.isfile(fname):
             raise FileNotFoundError('No such file: {}'.format(fname))
 
     tic = time.time()
-    parser = SEVIRIFilenameParser()
-    file_format, info = parser.parse(os.path.basename(tslot_files[0]))
-
-    # Load and calibrate data using inter-calibration coefficients from
-    # Meirink et al
-    coefs = get_calibration_for_time(platform=info['platform_shortname'],
-                                     time=info['start_time'])
-    scn_ = Scene(reader=file_format,
-                 filenames=tslot_files,
-                 reader_kwargs={'calib_mode': CALIB_MODE,
-                                'ext_calib_coefs': coefs})
-    if not scn_.attrs['sensor'] == {'seviri'}:
-        raise ValueError('Not SEVIRI data')
-    scn_.load(BANDNAMES)
+    scn_ = load_and_calibrate(
+        tslot_files,
+        apply_sun_earth_distance_correction=apply_sun_earth_distance_correction
+    )
 
     # By default pixel (0,0) is S-E. Rotate bands so that (0,0) is N-W.
     if rotate:
