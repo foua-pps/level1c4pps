@@ -41,7 +41,7 @@ class TestSeviri2PPS(unittest.TestCase):
     @mock.patch('level1c4pps.seviri2pps_lib.Scene')
     def test_load_and_calibrate(self, mocked_scene):
         """Test loading and calibrating the data."""
-        
+
         # Create test scene
         scene = Scene()
         start_time = dt.datetime(2020, 1, 1, 12)
