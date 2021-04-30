@@ -80,7 +80,7 @@ def set_header_and_band_attrs(scene):
     scene.attrs['source'] = "metimage2pps.py"
     nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch)
     for band in REFL_BANDS:
-        print("Is this correct?")
+        print("Is this correct, it was in testdata3.")
         scene[band].attrs['sun_zenith_angle_correction_applied'] = 'True'
     return nimg
 
@@ -93,10 +93,12 @@ def process_one_scene(scene_files, out_path):
 
     # Transpose data to get scanlines as row dimension
     for key in BANDNAMES + ANGLE_NAMES + ['lat_pixels', 'lon_pixels']:
-        try:
+        if 'num_pixels' in scn_[key].dims:
+            # satpy <= 0 .26.0
             scn_[key] = scn_[key].transpose('num_lines', 'num_pixels')
-        except KeyError:
-            pass
+        elif scn_[key].dims[0] == 'x':
+            # first dim should be y
+            scn_[key] = scn_[key].transpose('y', 'x')
 
     # one ir channel
     irch = scn_['vii_10690']
