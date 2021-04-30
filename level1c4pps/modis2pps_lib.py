@@ -45,9 +45,15 @@ debug_on()
 
 logger = logging.getLogger('modis2pps')
 
-BANDNAMES = ['1', '2', '6', '7', '20', '26', '27', '28', '29', '31', '32', '33']
+# Channels used and not problematic (1.6 and 8.5)
+BANDNAMES_USED = ['1', '2', '6', '26', '20', '31', '32']
 
-REFL_BANDS = ['1', '2', '6', '7' '26']
+# Default channel selection
+BANDNAMES_DEFAULT = ['1', '2', '6', '7', '20', '26', '27', '28', '29', '31', '32', '33']
+
+
+REFL_BANDS =  ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11',
+               '12', '13hi', '13lo', '14hi', '14lo', '15', '16', '17', '18', '19', '26']
 
 ANGLE_NAMES = ['satellite_zenith_angle', 'solar_zenith_angle',
                'satellite_azimuth_angle', 'solar_azimuth_angle']
@@ -63,8 +69,37 @@ PPS_TAGNAMES = {'1':  'ch_r06',
                 '29': 'ch_tb85',
                 '31': 'ch_tb11',
                 '32': 'ch_tb12',
-                '33': 'ch_tb133'}
+                '33': 'ch_tb133',
+                # Not used yet:
+                '3':  'ch_r0469',
+                '4':  'ch_r0555',
+                '5':  'ch_r124',
+                '8':  'ch_r0412',
+                '9':  'ch_r0443',
+                '10': 'ch_r0488',
+                '11': 'ch_r0531',
+                '12': 'ch_r0551',
+                '13hi': 'ch_r0667',
+                '13lo': 'ch_r0667',
+                '14hi': 'ch_r0678',
+                '14lo': 'ch_r0678',
+                '15': 'ch_r0748',
+                '16': 'ch_r0870',
+                '17': 'ch_r0905',
+                '18': 'ch_r0936',
+                '19': 'ch_r094',
+                '21': 'ch_tb39',
+                '22': 'ch_tb39',
+                '23': 'ch_tb40',                
+                '24': 'ch_tb47',
+                '25': 'ch_tb45',
+                '30': 'ch_tb97',
+                '34': 'ch_tb136',
+                '35': 'ch_tb139',
+                '36': 'ch_tb142',
+}
 
+BANDNAMES = list(PPS_TAGNAMES.keys())
 
 def get_encoding_modis(scene):
     """Get netcdf encoding for all datasets."""
@@ -82,22 +117,22 @@ def set_header_and_band_attrs(scene):
     return nimg
 
 
-def process_one_scene(scene_files, out_path, engine='h5netcdf'):
+def process_one_scene(scene_files, out_path, engine='h5netcdf', all_channels=False, used_channels=False):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scn_ = Scene(
         reader='modis_l1b',
         filenames=scene_files)
 
-    scn_.load(BANDNAMES + ['latitude', 'longitude'] + ANGLE_NAMES, resolution=1000)
+    MY_BANDNAMES = BANDNAMES_DEFAULT
+    if all_channels:
+        MY_BANDNAMES = BANDNAMES
+    if used_channels:
+        MY_BANDNAMES = BANDNAMES_USED
+
+    scn_.load(MY_BANDNAMES + ['latitude', 'longitude'] + ANGLE_NAMES, resolution=1000)
     # one ir channel
     irch = scn_['31']
-
-    # Remove som buggy channels:
-    # if 'aqua' in irch.attrs['platform_name'].lower():
-    #     del(scn_['6'])  # Skip 1.6 for Aqua
-    # elif 'terra' in irch.attrs['platform_name'].lower():
-    #     del(scn_['29'])  # Skip 8.6 for Terra
 
     # Set header and band attributes
     set_header_and_band_attrs(scn_)
@@ -113,7 +148,6 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf'):
     apply_sunz_correction(scn_, REFL_BANDS)
 
     filename = compose_filename(scn_, out_path, instrument='modis', band=irch)
-    filename = filename.replace('aqua', '2')
     scn_.save_datasets(writer='cf',
                        filename=filename,
                        header_attrs=get_header_attrs(scn_, band=irch, sensor='modis'),
