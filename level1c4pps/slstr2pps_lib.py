@@ -60,9 +60,9 @@ logger = logging.getLogger('slstr2pps')
 # 'solar_azimuth_angle_n', 'solar_azimuth_angle_o', 'solar_zenith_angle_n', 'solar_zenith_angle_o']
 
 
-BANDNAMES = ['S2', 'S3', 'S4', 'S5', 'S7', 'S8', 'S9']
+BANDNAMES = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'F1', 'F2']
 
-REFL_BANDS = ['S2', 'S3', 'S4', 'S5']
+REFL_BANDS = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6']
 
 ANGLE_NAMES = ['satellite_azimuth_angle', 'satellite_zenith_angle',
                'solar_azimuth_angle', 'solar_zenith_angle']
@@ -73,7 +73,15 @@ PPS_TAGNAMES = {'S2': 'ch_r06',  # or S1
                 'S5': 'ch_r16',
                 'S7': 'ch_tb37',
                 'S8': 'ch_tb11',
-                'S9': 'ch_tb12'}
+                'S9': 'ch_tb12',
+                # Not yet in pps:
+                'S1': 'ch_r0555', 
+                'S6': 'ch_r21',
+                'F1': 'ch_tbx',
+                'F2': 'ch_tbx'}
+
+BANDNAMES_PPS = ['S2', 'S3', 'S4', 'S5', 'S7', 'S8', 'S9']
+BANDNAMES_DEFAULT = ['S2', 'S3', 'S4', 'S5',  'S6', 'S7', 'S8', 'S9']
 
 
 def get_encoding_slstr(scene):
@@ -99,7 +107,13 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf'):
         reader='slstr_l1b',
         filenames=scene_files)
 
-    scn_.load(BANDNAMES + ['latitude', 'longitude'] + ANGLE_NAMES)
+    MY_BANDNAMES = BANDNAMES_DEFAULT
+    if all_channels:
+        MY_BANDNAMES = BANDNAMES
+    if pps_channels:
+        MY_BANDNAMES = BANDNAMES_PPS
+
+    scn_.load(MY_BANDNAMES + ['latitude', 'longitude'] + ANGLE_NAMES)
 
     # Everything should be on the same grid, to be saved as ppsleve1c
     scn_ = scn_.resample(resampler="native")
