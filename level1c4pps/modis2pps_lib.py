@@ -45,8 +45,8 @@ debug_on()
 
 logger = logging.getLogger('modis2pps')
 
-# Channels used and not problematic (1.6 and 8.5)
-BANDNAMES_USED = ['1', '2', '6', '26', '20', '31', '32']
+# Channels pps and not problematic (8.5 )
+BANDNAMES_PPS = ['1', '2', '6', '26', '20', '31', '32']
 
 # Default channel selection
 BANDNAMES_DEFAULT = ['1', '2', '6', '7', '20', '26', '27', '28', '29', '31', '32', '33']
@@ -62,7 +62,7 @@ PPS_TAGNAMES = {'1':  'ch_r06',
                 '2':  'ch_r09',
                 '26': 'ch_r13',
                 '6':  'ch_r16',
-                '7':  'ch_r21', 
+                '7':  'ch_r21',
                 '20': 'ch_tb37',
                 '27': 'ch_tb67',
                 '28': 'ch_tb73',
@@ -90,7 +90,7 @@ PPS_TAGNAMES = {'1':  'ch_r06',
                 '19': 'ch_r094',
                 '21': 'ch_tb39',
                 '22': 'ch_tb39',
-                '23': 'ch_tb40',                
+                '23': 'ch_tb40',
                 '24': 'ch_tb47',
                 '25': 'ch_tb45',
                 '30': 'ch_tb97',
@@ -117,7 +117,7 @@ def set_header_and_band_attrs(scene):
     return nimg
 
 
-def process_one_scene(scene_files, out_path, engine='h5netcdf', all_channels=False, used_channels=False):
+def process_one_scene(scene_files, out_path, engine='h5netcdf', all_channels=False, pps_channels=False):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scn_ = Scene(
@@ -127,8 +127,8 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf', all_channels=Fal
     MY_BANDNAMES = BANDNAMES_DEFAULT
     if all_channels:
         MY_BANDNAMES = BANDNAMES
-    if used_channels:
-        MY_BANDNAMES = BANDNAMES_USED
+    if pps_channels:
+        MY_BANDNAMES = BANDNAMES_PPS
 
     scn_.load(MY_BANDNAMES + ['latitude', 'longitude'] + ANGLE_NAMES, resolution=1000)
     # one ir channel

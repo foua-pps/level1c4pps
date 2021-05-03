@@ -66,7 +66,7 @@ BANDNAMES_DEFAULT = ["vii_668",
                      "vii_6725",
                      "vii_13345"]
 
-BANDNAMES_USED = ["vii_668",
+BANDNAMES_PPS = ["vii_668",
                   "vii_865",
                   "vii_1375",
                   "vii_1630",
@@ -130,7 +130,7 @@ def set_header_and_band_attrs(scene):
 
 
 def process_one_scene(scene_files, out_path,
-                      all_channels=False, used_channels=False):
+                      all_channels=False, pps_channels=False):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scn_ = Scene(reader='vii_l1b_nc', filenames=scene_files)
@@ -138,8 +138,8 @@ def process_one_scene(scene_files, out_path,
     MY_BANDNAMES = BANDNAMES_DEFAULT
     if all_channels:
         MY_BANDNAMES = BANDNAMES
-    if used_channels:
-        MY_BANDNAMES = BANDNAMES_USED
+    if pps_channels:
+        MY_BANDNAMES = BANDNAMES_PPS
 
     scn_.load(MY_BANDNAMES + ANGLE_NAMES + ['lat_pixels', 'lon_pixels'])
 
