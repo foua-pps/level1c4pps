@@ -54,26 +54,26 @@ BANDNAMES_DEFAULT = ["vii_668",
                      "vii_8540",
                      "vii_10690",
                      "vii_12020",
-                     #"vii_443",
-                     #"vii_555",
-                     #"vii_752",
-                     #"vii_763",
-                     #"vii_914",
-                     #"vii_1240",
+                     # "vii_443",
+                     # "vii_555",
+                     # "vii_752",
+                     # "vii_763",
+                     # "vii_914",
+                     # "vii_1240",
                      "vii_2250",
-                     #"vii_3959",
-                     #"vii_4050",
+                     # "vii_3959",
+                     # "vii_4050",
                      "vii_6725",
                      "vii_13345"]
 
 BANDNAMES_PPS = ["vii_668",
-                  "vii_865",
-                  "vii_1375",
-                  "vii_1630",
-                  "vii_3740",
-                  "vii_8540",
-                  "vii_10690",
-                  "vii_12020"]
+                 "vii_865",
+                 "vii_1375",
+                 "vii_1630",
+                 "vii_3740",
+                 "vii_8540",
+                 "vii_10690",
+                 "vii_12020"]
 
 REFL_BANDS = ["vii_668", "vii_865", "vii_1375", "vii_1630", "vii_443",
               "vii_555", "vii_752", "vii_763", "vii_914", "vii_1240"]
@@ -94,7 +94,6 @@ PPS_TAGNAMES = {"vii_668": "ch_r06",
                 "vii_6725": "ch_tb67",
                 "vii_13345": "ch_tb133",
                 "vii_7325": "ch_tb73",
-                "vii_763": "ch_r763",
                 "vii_443": "ch_rxx",
                 "vii_555": "ch_rxx",
                 "vii_752": "ch_rxx",
@@ -102,10 +101,7 @@ PPS_TAGNAMES = {"vii_668": "ch_r06",
                 "vii_914": "ch_rxx",
                 "vii_1240": "ch_rxx",
                 "vii_3959": "ch_tbxx",
-                "vii_4050": "ch_tbxx",
-
-
-}
+                "vii_4050": "ch_tbxx"}
 
 BANDNAMES = list(PPS_TAGNAMES.keys())
 

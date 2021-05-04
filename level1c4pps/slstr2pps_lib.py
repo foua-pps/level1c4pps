@@ -76,7 +76,7 @@ PPS_TAGNAMES = {'S2': 'ch_r06',  # or S1
                 'S9': 'ch_tb12',
                 # Not yet in pps:
                 'S6': 'ch_r21',
-                'S1': 'ch_rxx', 
+                'S1': 'ch_rxx',
                 'F1': 'ch_tbxx',
                 'F2': 'ch_tbxx'}
 
@@ -100,7 +100,8 @@ def set_header_and_band_attrs(scene):
     return nimg
 
 
-def process_one_scene(scene_files, out_path, engine='h5netcdf'):
+def process_one_scene(scene_files, out_path, engine='h5netcdf',
+                      all_channels=False, pps_channels=False):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scn_ = Scene(

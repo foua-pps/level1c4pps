@@ -52,8 +52,8 @@ BANDNAMES_PPS = ['1', '2', '6', '26', '20', '31', '32']
 BANDNAMES_DEFAULT = ['1', '2', '6', '7', '20', '26', '27', '28', '29', '31', '32', '33']
 
 
-REFL_BANDS =  ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11',
-               '12', '13hi', '13lo', '14hi', '14lo', '15', '16', '17', '18', '19', '26']
+REFL_BANDS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11',
+              '12', '13hi', '13lo', '14hi', '14lo', '15', '16', '17', '18', '19', '26']
 
 ANGLE_NAMES = ['satellite_zenith_angle', 'solar_zenith_angle',
                'satellite_azimuth_angle', 'solar_azimuth_angle']
@@ -99,6 +99,7 @@ PPS_TAGNAMES = {'1':  'ch_r06',
                 '36': 'ch_tbxx'}
 
 BANDNAMES = list(PPS_TAGNAMES.keys())
+
 
 def get_encoding_modis(scene):
     """Get netcdf encoding for all datasets."""

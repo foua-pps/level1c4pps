@@ -124,7 +124,8 @@ def set_header_and_band_attrs(scene):
     return nimg
 
 
-def process_one_scene(scene_files, out_path, use_iband_res=False, engine='h5netcdf', all_channels=False, pps_channels=False):
+def process_one_scene(scene_files, out_path, use_iband_res=False, engine='h5netcdf',
+                      all_channels=False, pps_channels=False):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scn_ = Scene(
@@ -136,9 +137,9 @@ def process_one_scene(scene_files, out_path, use_iband_res=False, engine='h5netc
     MY_IBAND_M = IBAND_DEFAULT_M
 
     if all_channels:
-            MY_MBAND = MBANDS
-            MY_IBAND_I = IBANDS
-            MY_IBAND_M = MBANDS
+        MY_MBAND = MBANDS
+        MY_IBAND_I = IBANDS
+        MY_IBAND_M = MBANDS
     if pps_channels:
         MY_MBAND = MBAND_PPS
         MY_IBAND_I = IBAND_PPS_I
