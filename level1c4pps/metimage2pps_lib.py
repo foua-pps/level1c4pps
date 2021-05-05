@@ -130,6 +130,7 @@ def set_header_and_band_attrs(scene):
 
 
 def process_one_scene(scene_files, out_path,
+                      engine='h5netcdf',
                       all_channels=False, pps_channels=False):
     """Make level 1c files in PPS-format."""
     tic = time.time()
@@ -175,7 +176,7 @@ def process_one_scene(scene_files, out_path,
     scn_.save_datasets(writer='cf',
                        filename=filename,
                        header_attrs=get_header_attrs(scn_, band=irch, sensor='metimage'),
-                       engine='h5netcdf',
+                       engine=engine,
                        include_lonlats=False,
                        flatten_attrs=True,
                        encoding=get_encoding_metimage(scn_))
