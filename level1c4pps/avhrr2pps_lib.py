@@ -74,21 +74,23 @@ def set_header_and_band_attrs(scene):
     scene.attrs['orbit_number'] = 00000
     return nimg
 
+
 def check_broken_data(scene):
     """Set bad data to nodata."""
     import numpy as np
     lat = scene['latitude']
     # If we have data in line 2 it is ok
-    if (lat[1, :].values >0).any():
+    if (lat[1, :].values > 0).any():
         return
     lon = scene['longitude']
-    part_of_lat_that_is_zero = np.sum(lat.values.ravel() == 0)/len(lat.values.ravel() )
-    part_of_lon_that_is_zero = np.sum(lon.values.ravel() == 0)/len(lon.values.ravel() )
-    if (part_of_lat_that_is_zero > 0.90 and
-        part_of_lon_that_is_zero > 0.90):
-        raise ValueError( 'More than 90% of data have (lat, lon) equal to (0,0).\n'
-                          'Most likely this is an older format of hrpt not yet suported by satpy.\n'
-                          'Stopping. File will not be written.')
+    part_of_lat_that_is_zero = np.sum(lat.values.ravel() == 0) / len(lat.values.ravel())
+    part_of_lon_that_is_zero = np.sum(lon.values.ravel() == 0) / len(lon.values.ravel())
+    if (part_of_lat_that_is_zero > 0.90 and part_of_lon_that_is_zero > 0.90):
+        raise ValueError(
+            'More than 90% of data have (lat, lon) equal to (0,0).\n'
+            'Most likely this is an older format of hrpt not yet suported by satpy.\n'
+            'Stopping. File will not be written.')
+
 
 def process_one_scene(scene_files, out_path, engine='h5netcdf'):
     """Make level 1c files in PPS-format."""

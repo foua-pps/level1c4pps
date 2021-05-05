@@ -81,6 +81,7 @@ def set_header_and_band_attrs(scene):
     scene.attrs['source'] = "mersi22pps.py"
     return nimg
 
+
 def remove_broken_data(scene):
     """Set bad data to nodata."""
     import numpy as np
@@ -90,7 +91,8 @@ def remove_broken_data(scene):
         if band in scene:
             remove = np.where(scene[band].values < 1, np.nan, 0)  # 1K very cold
             scene[band].values = scene[band].values + remove
-                    
+
+
 def process_one_scene(scene_files, out_path, engine='h5netcdf'):
     """Make level 1c files in PPS-format."""
     tic = time.time()
