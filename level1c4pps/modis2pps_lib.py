@@ -35,6 +35,8 @@ from level1c4pps import (get_encoding, compose_filename,
                          apply_sunz_correction)
 
 import logging
+from satpy.utils import debug_on
+debug_on()
 
 # Example:
 # MYD03.A2014272.0215.006.2014274124038.hdf
@@ -43,9 +45,15 @@ import logging
 
 logger = logging.getLogger('modis2pps')
 
-BANDNAMES = ['1', '2', '6', '20', '26', '28', '29', '31', '32']
+# Channels pps and not problematic (8.5 )
+BANDNAMES_PPS = ['1', '2', '6', '26', '20', '31', '32']
 
-REFL_BANDS = ['1', '2', '6', '26']
+# Default channel selection
+BANDNAMES_DEFAULT = ['1', '2', '6', '7', '20', '26', '27', '28', '29', '31', '32', '33']
+
+
+REFL_BANDS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11',
+              '12', '13hi', '13lo', '14hi', '14lo', '15', '16', '17', '18', '19', '26']
 
 ANGLE_NAMES = ['satellite_zenith_angle', 'solar_zenith_angle',
                'satellite_azimuth_angle', 'solar_azimuth_angle']
@@ -55,12 +63,42 @@ PPS_TAGNAMES = {'1':  'ch_r06',
                 '26': 'ch_r13',
                 '6':  'ch_r16',
                 '20': 'ch_tb37',
-                '27': 'ch_tb67',
-                '28': 'ch_tb73',
                 '29': 'ch_tb85',
                 '31': 'ch_tb11',
                 '32': 'ch_tb12',
-                '33': 'ch_tb133'}
+                # Not used yet:
+                '7':  'ch_r21',
+                '27': 'ch_tb67',
+                '28': 'ch_tb73',
+                '33': 'ch_tb133',
+                '3':  'ch_rxx',
+                '4':  'ch_rxx',
+                '5':  'ch_rxx',
+                '8':  'ch_rxx',
+                '9':  'ch_rxx',
+                '10': 'ch_rxx',
+                '11': 'ch_rxx',
+                '12': 'ch_rxx',
+                '13hi': 'ch_rxx',
+                '13lo': 'ch_rxx',
+                '14hi': 'ch_rxx',
+                '14lo': 'ch_rxx',
+                '15': 'ch_rxx',
+                '16': 'ch_rxx',
+                '17': 'ch_rxx',
+                '18': 'ch_rxx',
+                '19': 'ch_rxx',
+                '21': 'ch_tbxx',
+                '22': 'ch_tbxx',
+                '23': 'ch_tbxx',
+                '24': 'ch_tbxx',
+                '25': 'ch_tbxx',
+                '30': 'ch_tbxx',
+                '34': 'ch_tbxx',
+                '35': 'ch_tbxx',
+                '36': 'ch_tbxx'}
+
+BANDNAMES = list(PPS_TAGNAMES.keys())
 
 
 def get_encoding_modis(scene):
@@ -79,22 +117,22 @@ def set_header_and_band_attrs(scene):
     return nimg
 
 
-def process_one_scene(scene_files, out_path, engine='h5netcdf'):
+def process_one_scene(scene_files, out_path, engine='h5netcdf', all_channels=False, pps_channels=False):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scn_ = Scene(
         reader='modis_l1b',
         filenames=scene_files)
 
-    scn_.load(BANDNAMES + ['latitude', 'longitude'] + ANGLE_NAMES, resolution=1000)
+    MY_BANDNAMES = BANDNAMES_DEFAULT
+    if all_channels:
+        MY_BANDNAMES = BANDNAMES
+    if pps_channels:
+        MY_BANDNAMES = BANDNAMES_PPS
+
+    scn_.load(MY_BANDNAMES + ['latitude', 'longitude'] + ANGLE_NAMES, resolution=1000)
     # one ir channel
     irch = scn_['31']
-
-    # Remove som buggy channels:
-    if 'aqua' in irch.attrs['platform_name'].lower():
-        del(scn_['6'])  # Skip 1.6 for Aqua
-    elif 'terra' in irch.attrs['platform_name'].lower():
-        del(scn_['29'])  # Skip 8.6 for Terra
 
     # Set header and band attributes
     set_header_and_band_attrs(scn_)
@@ -110,7 +148,6 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf'):
     apply_sunz_correction(scn_, REFL_BANDS)
 
     filename = compose_filename(scn_, out_path, instrument='modis', band=irch)
-    filename = filename.replace('aqua', '2')
     scn_.save_datasets(writer='cf',
                        filename=filename,
                        header_attrs=get_header_attrs(scn_, band=irch, sensor='modis'),

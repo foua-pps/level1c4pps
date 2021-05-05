@@ -39,6 +39,10 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--out_dir', type=str, nargs='?',
                         required=False, default='.',
                         help="Output directory where to store the level1c file")
-
+    parser.add_argument('-all_ch', '--all_channels', action='store_true',
+                        help="Save all 20 channels to level1c4pps file.")
+    parser.add_argument('-pps_ch', '--pps_channels', action='store_true',
+                        help="Save only the necessary (for PPS) channels to level1c4pps file.")
     options = parser.parse_args()
-    process_one_scene(options.files, options.out_dir)
+    process_one_scene(options.files, options.out_dir,
+                      all_channels=options.all_channels, pps_channels=options.pps_channels)
