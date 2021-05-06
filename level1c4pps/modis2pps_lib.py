@@ -46,7 +46,7 @@ debug_on()
 logger = logging.getLogger('modis2pps')
 
 # Channels pps and not problematic (8.5 )
-BANDNAMES_PPS = ['1', '2', '6', '26', '20', '31', '32']
+BANDNAMES_PPS = ['1', '2', '6', '26', '20', '29', '31', '32']
 
 # Default channel selection
 BANDNAMES_DEFAULT = ['1', '2', '6', '7', '20', '26', '27', '28', '29', '31', '32', '33']
