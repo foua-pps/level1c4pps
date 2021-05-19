@@ -1,4 +1,4 @@
-# Releasing activefires-pp
+# Releasing level1c4pps
 
 prerequisites: `pip install setuptools twine`
 
