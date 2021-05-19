@@ -25,6 +25,7 @@
 """Scripts to convert various satellite level-1 data formats to NWCSAF/PPS level-1c format."""
 
 from setuptools import setup
+from setuptools import find_packages
 
 try:
     # HACK: https://github.com/pypa/setuptools_scm/issues/190#issuecomment-351181286
@@ -53,7 +54,7 @@ setup(name=NAME,
                    "Programming Language :: Python",
                    "Topic :: Scientific/Engineering"],
       url="https://github.com/foua-pps/level1c4pps",
-      packages=['level1c4pps', ],
+      packages=find_packages(),
       scripts=['bin/seviri2pps.py',
                'bin/gac2pps.py',
                'bin/mersi22pps.py',
