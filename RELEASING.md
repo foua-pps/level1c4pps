@@ -3,7 +3,7 @@
 prerequisites: `pip install setuptools twine`
 
 
-1. checkout main
+1. checkout master
 2. pull from repo
 3. run the unittests
 4. run `loghub` and update the `CHANGELOG.md` file:
