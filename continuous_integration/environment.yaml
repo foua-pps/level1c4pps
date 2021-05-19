@@ -6,6 +6,14 @@ dependencies:
   - toolz
   - sphinx
   - dask
+  - scipy
+  - h5py
+  - requests
+  - six
+  - python-geotiepoints
+  - docutils
+  - pyresample
+  - pykdtree
   - pyyaml
   - pyproj
   - coveralls
@@ -24,3 +32,4 @@ dependencies:
   - pip
   - pip:
     - trollsift
+
