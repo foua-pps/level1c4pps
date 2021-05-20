@@ -28,7 +28,7 @@ See [semver.org](http://semver.org/) on how to write a version number.
 7. Verify the Github actions unit tests passed
 
 8. Create a "Release" on GitHub by going to
-   https://github.com/adybbroe/activefires-pp/releases and clicking "Draft a new
+   https://github.com/foua-pps/level1c4pps/releases and clicking "Draft a new
    release". On the next page enter the newly created tag in the "Tag version"
    field, "Version X.Y.Z" in the "Release title" field, and paste the markdown
    from the changelog (the portion under the version section header) in the
