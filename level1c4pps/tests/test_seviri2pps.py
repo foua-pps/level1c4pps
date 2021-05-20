@@ -38,6 +38,8 @@ import level1c4pps.calibration_coefs as calib
 
 
 class TestSeviri2PPS(unittest.TestCase):
+    """Test for SEVIRI converter."""
+
     def test_rotate_band(self):
         """Test rotation of bands."""
         area = AreaDefinition(area_id='test',
@@ -432,8 +434,9 @@ class TestSeviri2PPS(unittest.TestCase):
         np.testing.assert_array_equal(scene['satellite_altitude'], [30])
 
 
-
 class TestCalibration(unittest.TestCase):
+    """Test SEVIRI calibration."""
+
     def test_get_calibration_for_date(self):
         """Test MODIS-intercalibrated gain and offset for specific date."""
         coefs = calib.get_calibration_for_date(

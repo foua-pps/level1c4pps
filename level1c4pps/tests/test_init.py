@@ -35,6 +35,7 @@ class TestInit(unittest.TestCase):
                           None, None)
 
     def test_adjust_lons(self):
+        """Test adjusted longitudes."""
         from level1c4pps import centered_modulus
         in_lons = xr.DataArray([340.0, 10.0, -22.0])
         out_lons = xr.DataArray([-20.0, 10.0, -22.0])
