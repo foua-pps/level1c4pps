@@ -12,6 +12,10 @@ prerequisites: `pip install setuptools twine`
 loghub foua-pps/level1c4pps --token <personal access token (see https://github.com/settings/tokens)>  -st v<previous version> -plg bug "Bugs fixed" -plg enhancement "Features added" -plg documentation "Documentation changes"
 ```
 
+The  "--token <personal access token (see https://github.com/settings/tokens)>" somtimes can be excluded.
+
+Paste CHANGELOG.temp to CHANGELOG.md and update RELEASE-VERSION to the version that will be released.
+
 Don't forget to commit!
 
 5. Create a tag with the new version number, starting with a 'v', eg:
@@ -23,7 +27,7 @@ git tag -a v0.1.1 -m "Version 0.1.1"
 See [semver.org](http://semver.org/) on how to write a version number.
 
 
-6. push changes to github `git push --follow-tags`
+6. push changes to github `git push name-of-foua-pps-repo master --follow-tags`
 
 7. Verify the Github actions unit tests passed
 
