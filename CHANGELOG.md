@@ -4,7 +4,7 @@
 
 ### Pull Requests Merged
 
-	#### Features addedes
+#### Features addeded
 
 * [PR 60](https://github.com/foua-pps/level1c4pps/pull/60) - Add support for github-ci and prepare releasing on PyPi
 
