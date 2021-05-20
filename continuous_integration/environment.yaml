@@ -1,0 +1,36 @@
+name: test-environment
+channels:
+  - conda-forge
+dependencies:
+  - distributed
+  - toolz
+  - sphinx
+  - dask
+  - scipy
+  - h5py
+  - requests
+  - six
+  - python-geotiepoints
+  - docutils
+  - pyresample
+  - pykdtree
+  - pyyaml
+  - pyproj
+  - coveralls
+  - coverage
+  - codecov
+  - behave
+  - mock
+  - numpy
+  - xarray
+  - satpy
+  - pyspectral
+  - h5netcdf
+  - pyorbital
+  - pytest
+  - pytest-cov
+  - pip
+  - pip:
+    - trollsift
+    - pygac
+
