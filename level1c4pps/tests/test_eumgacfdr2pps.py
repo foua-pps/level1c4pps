@@ -82,6 +82,7 @@ class TestEumgacfdr2PPS(unittest.TestCase):
             'qual_flags':  {'dtype': 'int16', 'zlib': True,
                             'complevel': 4, '_FillValue': -32001.0},
             'scanline_timestamps': {'dtype': 'int64', 'zlib': True,
+                                    'units': 'Milliseconds since 1970-01-01',
                                     'complevel': 4, '_FillValue': -1.0},
         }
         encoding = eumgacfdr2pps.get_encoding_gac(self.scene)

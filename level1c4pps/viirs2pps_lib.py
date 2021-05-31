@@ -63,9 +63,12 @@ REFL_BANDS = ["M01", "M02", "M03", "M04", "M05", "M06", "M07", "M08",
               "M09", "M10", "M11", "I01", "I02", "I03"]
 
 MBAND_PPS = ["M05", "M07", "M09", "M10", "M12", "M14", "M15", "M16"]
-
 IBAND_PPS_I = ["I01", "I02", "I03", "I04"]
 IBAND_PPS_M = ["M09", "M14", "M15", "M16"]
+
+MBAND_DEFAULT = ["M05", "M07", "M09", "M10",  "M11", "M12", "M14", "M15", "M16"]
+IBAND_DEFAULT_I = ["I01", "I02", "I03", "I04"]
+IBAND_DEFAULT_M = ["M09",   "M11", "M14", "M15", "M16"]
 
 ANGLE_NAMES = ['satellite_zenith_angle', 'solar_zenith_angle',
                'satellite_azimuth_angle', 'solar_azimuth_angle']
@@ -81,7 +84,17 @@ PPS_TAGNAMES = {"M05": 'ch_r06',
                 "I01": 'ch_r06',
                 "I02": 'ch_r09',
                 "I03": 'ch_r16',
-                "I04": 'ch_tb37'}
+                "I04": 'ch_tb37',
+                # Not used by pps:
+                "M11": 'ch_r21',
+                "I05": 'ch_tbxx',
+                "M01": 'ch_rxx',
+                "M02": 'ch_rxx',
+                "M03": 'ch_rxx',
+                "M04": 'ch_rxx',
+                "M06": 'ch_rxx',
+                "M08": 'ch_rxx',
+                "M13": 'ch_tbxx'}
 
 
 def get_encoding_viirs(scene):
@@ -111,18 +124,33 @@ def set_header_and_band_attrs(scene):
     return nimg
 
 
-def process_one_scene(scene_files, out_path, use_iband_res=False, engine='h5netcdf'):
+def process_one_scene(scene_files, out_path, use_iband_res=False, engine='h5netcdf',
+                      all_channels=False, pps_channels=False):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scn_ = Scene(
         reader='viirs_sdr',
         filenames=scene_files)
+
+    MY_MBAND = MBAND_DEFAULT
+    MY_IBAND_I = IBAND_DEFAULT_I
+    MY_IBAND_M = IBAND_DEFAULT_M
+
+    if all_channels:
+        MY_MBAND = MBANDS
+        MY_IBAND_I = IBANDS
+        MY_IBAND_M = MBANDS
+    if pps_channels:
+        MY_MBAND = MBAND_PPS
+        MY_IBAND_I = IBAND_PPS_I
+        MY_IBAND_M = IBAND_PPS_M
+
     if use_iband_res:
-        scn_.load(IBAND_PPS_I + ANGLE_NAMES + ['i_latitude', 'i_longitude'], resolution=371)
-        scn_.load(IBAND_PPS_M, resolution=742)
+        scn_.load(MY_IBAND_I + ANGLE_NAMES + ['i_latitude', 'i_longitude'], resolution=371)
+        scn_.load(MY_IBAND_M, resolution=742)
         scn_ = scn_.resample(resampler='native')
     else:
-        scn_.load(MBAND_PPS + ANGLE_NAMES + ['m_latitude', 'm_longitude'], resolution=742)
+        scn_.load(MY_MBAND + ANGLE_NAMES + ['m_latitude', 'm_longitude'], resolution=742)
 
     # one ir channel
     irch = scn_['M15']
@@ -148,3 +176,4 @@ def process_one_scene(scene_files, out_path, use_iband_res=False, engine='h5netc
     print("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),
         time.time()-tic))
+    return filename

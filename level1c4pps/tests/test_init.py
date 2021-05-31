@@ -21,8 +21,8 @@
 
 import unittest
 import xarray as xr
-
 import level1c4pps
+import numpy as np
 
 
 class TestInit(unittest.TestCase):
@@ -33,6 +33,18 @@ class TestInit(unittest.TestCase):
         ds = xr.DataArray([], attrs={'name': 'dummy'})
         self.assertRaises(ValueError, level1c4pps.get_band_encoding, ds,
                           None, None)
+
+    def test_adjust_lons(self):
+        """Test adjusted longitudes."""
+        from level1c4pps import centered_modulus
+        in_lons = xr.DataArray([340.0, 10.0, -22.0])
+        out_lons = xr.DataArray([-20.0, 10.0, -22.0])
+        in_lons_np = np.array([340.0, 10.0, -22.0])
+        out_lons_np = np.array([-20.0, 10.0, -22.0])
+        np.testing.assert_allclose(centered_modulus(in_lons),
+                                   out_lons, rtol=0.00001)
+        np.testing.assert_allclose(centered_modulus(in_lons_np),
+                                   out_lons_np, rtol=0.00001)
 
 
 def suite():

@@ -200,14 +200,9 @@ LATLON_ATTRIBUTES = {
     }
 
 
-def make_azidiff_angle(sata, suna):
+def make_azidiff_angle(sata, suna, divisor=360):
     """Calculate azimuth difference angle."""
-    daz = abs(sata - suna)
-    return centered_modulus(daz, divisor=360)
-
-
-def centered_modulus(daz, divisor=360):
-    """Transform array to half open range ]-divisor/2, divisor/2]."""
+    daz = abs(sata-suna)
     half_divisor = divisor / 2.0
     daz = daz % divisor
     if isinstance(daz, np.ndarray):
@@ -215,6 +210,19 @@ def centered_modulus(daz, divisor=360):
         return daz
     elif isinstance(daz, xr.DataArray):
         return daz.where(daz < half_divisor, divisor - daz)
+    else:
+        raise ValueError("Array is neither a Numpy nor an Xarray object! Type = %s", type(daz))
+
+
+def centered_modulus(daz, divisor=360):
+    """Transform array to half open range ]-divisor/2, divisor/2]."""
+    half_divisor = divisor / 2.0
+    daz = daz % divisor
+    if isinstance(daz, np.ndarray):
+        daz[daz > half_divisor] = daz[daz > half_divisor] - divisor
+        return daz
+    elif isinstance(daz, xr.DataArray):
+        return daz.where(daz < half_divisor, daz - divisor)
     else:
         raise ValueError("Array is neither a Numpy nor an Xarray object! Type = %s", type(daz))
 
@@ -295,6 +303,7 @@ def get_band_encoding(dataset, bandnames, pps_tagnames, chunks=None):
     elif name in ['scanline_timestamps']:
         # pygac scanline_timestamps
         enc = {'dtype': 'int64', 'zlib': True,
+               'units': 'Milliseconds since 1970-01-01',
                'complevel': 4, '_FillValue': -1.0}
     if not enc:
         raise ValueError('Unsupported band: {}'.format(name))
