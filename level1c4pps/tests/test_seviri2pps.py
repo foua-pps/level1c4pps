@@ -39,6 +39,56 @@ import level1c4pps.calibration_coefs as calib
 
 class TestSeviri2PPS(unittest.TestCase):
     """Test for SEVIRI converter."""
+    
+
+    @mock.patch('level1c4pps.seviri2pps_lib.Scene')
+    def test_load_and_calibrate(self, mocked_scene):
+        """Test loading and calibrating the data."""
+
+        # Create test scene
+        scene = Scene()
+        start_time = dt.datetime(2020, 1, 1, 12)
+        scene['VIS006'] = xr.DataArray(
+            [[1, 2],
+             [3, 4]],
+            dims=('y', 'x'),
+            attrs={'calibration': 'reflectance',
+                   'sun_earth_distance_correction_applied': True,
+                   'start_time': start_time}
+        )
+        scene['IR_108'] = xr.DataArray(
+            [[5, 6],
+             [7, 8]],
+            dims=('y', 'x'),
+            attrs={'calibration': 'brightness_temperature',
+                   'start_time': start_time}
+        )
+        scene.attrs['sensor'] = {'seviri'}
+        mocked_scene.return_value = scene
+
+        # Load and calibrate
+        filenames = ['MSG4-SEVI-MSG15-1234-NA-20190409121243.927000000Z']
+        res = seviri2pps.load_and_calibrate(
+            filenames,
+            apply_sun_earth_distance_correction=False
+        )
+
+        # Compare results and expectations
+        vis006_exp = xr.DataArray(
+            [[1.07025268, 2.14050537],
+             [3.21075805, 4.28101074]],
+            dims=('y', 'x')
+        )
+        ir_108_exp = xr.DataArray(
+            [[5, 6],
+             [7, 8]],
+            dims=('y', 'x')
+        )
+        xr.testing.assert_allclose(res['VIS006'], vis006_exp)
+        xr.testing.assert_equal(res['IR_108'], ir_108_exp)
+        self.assertFalse(
+            res['VIS006'].attrs['sun_earth_distance_correction_applied'],
+        )
 
     def test_rotate_band(self):
         """Test rotation of bands."""
@@ -433,6 +483,23 @@ class TestSeviri2PPS(unittest.TestCase):
         np.testing.assert_array_equal(scene['satellite_latitude'], [20])
         np.testing.assert_array_equal(scene['satellite_altitude'], [30])
 
+    def test_set_nominal_scan_time(self):
+        start_time = dt.datetime(2009, 9, 4, 12, 0, 10, 12345)
+        end_time = dt.datetime(2009, 9, 4, 12, 12, 10, 12345)
+        arr = xr.DataArray(
+            [1, 2, 3],
+            attrs={
+                'start_time': start_time,
+                'end_time': end_time
+            }
+        )
+        res = seviri2pps.set_nominal_scan_time(arr)
+        self.assertEqual(res.attrs['start_time'], dt.datetime(2009, 9, 4, 12))
+        self.assertEqual(res.attrs['end_time'], dt.datetime(2009, 9, 4, 12, 15))
+
+        # Original array should not be modified
+        self.assertEqual(arr.attrs['start_time'], start_time)
+        self.assertEqual(arr.attrs['end_time'], end_time)
 
 class TestCalibration(unittest.TestCase):
     """Test SEVIRI calibration."""
@@ -504,6 +571,34 @@ class TestCalibration(unittest.TestCase):
             self.assertAlmostEqual(coefs1[channel]['offset'],
                                    coefs2[channel]['offset'],
                                    delta=10e-8)
+
+
+class TestSEVIRIFilenameParser(unittest.TestCase):
+    def test_parse_native(self):
+        """Test parsing of Native filenames."""
+        fnames = [
+            ('MSG4-SEVI-MSG15-1234-NA-20190409124243.927000000Z-'
+             '20190409121300-1329370.nat'),
+            'MSG4-SEVI-MSG15-1234-NA-20190409124243.927000000Z.nat',
+            'MSG4-SEVI-MSG15-1234-NA-20190409124243.927000000Z',
+        ]
+        parser = seviri2pps.SEVIRIFilenameParser()
+        for fname in fnames:
+            file_format, info = parser.parse(fname)
+            self.assertEqual(file_format, 'seviri_l1b_native')
+            self.assertEqual(info['start_time'],
+                             dt.datetime(2019, 4, 9, 12, 30))
+            self.assertEqual(info['platform_shortname'], 'MSG4')
+            self.assertEqual(info['base_algorithm_version'], '1234')
+
+    def test_parse_hrit(self):
+        """Test parsing of HRIT filenames."""
+        fname = 'H-000-MSG3__-MSG3________-IR_120___-000003___-201410051115-__'
+        parser = seviri2pps.SEVIRIFilenameParser()
+        file_format, info = parser.parse(fname)
+        self.assertEqual(file_format, 'seviri_l1b_hrit')
+        self.assertEqual(info['start_time'], dt.datetime(2014, 10, 5, 11, 15))
+        self.assertEqual(info['platform_shortname'], 'MSG3')
 
 
 def suite():

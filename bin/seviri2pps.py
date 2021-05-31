@@ -52,7 +52,17 @@ if __name__ == "__main__":
     parser.add_argument('-ne', '--nc_engine', type=str, nargs='?',
                         required=False, default='h5netcdf',
                         help="Engine for saving netcdf files netcdf4 or h5netcdf (default).")
+    parser.add_argument('--use-nominal-time-in-filename', action='store_true',
+                        help='Use nominal scan timestamps in output filename.')
+    parser.add_argument('--no-sun-earth-distance-correction',
+                        action='store_true',
+                        help='Do not apply sun earth distance correction.')
     options = parser.parse_args()
-    process_one_scan(options.files, out_path=options.out_dir,
-                     rotate=not options.no_rotation,
-                     engine=options.nc_engine)
+    process_one_scan(
+        options.files,
+        out_path=options.out_dir,
+        rotate=not options.no_rotation,
+        engine=options.nc_engine,
+        use_nominal_time_in_filename=options.use_nominal_time_in_filename,
+        apply_sun_earth_distance_correction=not options.no_sun_earth_distance_correction
+    )

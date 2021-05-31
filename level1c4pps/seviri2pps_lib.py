@@ -35,9 +35,10 @@ import xarray as xr
 import dask.array as da
 from glob import glob
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from satpy.scene import Scene
 import satpy.utils
+from satpy.readers.utils import remove_earthsun_distance_correction
 from trollsift.parser import globify, Parser
 from pyorbital.astronomy import get_alt_az, sun_zenith_angle
 from pyorbital.orbital import get_observer_look
@@ -74,10 +75,71 @@ PPS_TAGNAMES = {'VIS006': 'ch_r06',
                 'WV_062': 'ch_tb67',
                 'WV_073': 'ch_tb73'}
 
-# H-000-MSG3__-MSG3________-IR_120___-000003___-201410051115-__:
+
 HRIT_FILE_PATTERN = ('{rate:1s}-000-{hrit_format:_<6s}-'
                      '{platform_shortname:_<12s}-{channel:_<8s}_-'
                      '{segment:_<9s}-{start_time:%Y%m%d%H%M}-__')
+# H-000-MSG3__-MSG3________-IR_120___-000003___-201410051115-__
+
+NATIVE_FILE_PATTERN = ('{platform_shortname:4s}-{instr:4s}-'
+                       'MSG{product_level:2d}-{base_algorithm_version:4s}-NA-'
+                       '{end_time:%Y%m%d%H%M%S.%f}000Z')
+# MSG4-SEVI-MSG15-0100-NA-20190409121243.927000000Z-20190409121300-1329370.nat
+# MSG4-SEVI-MSG15-0201-NA-20190409121243.927000000Z.nat
+# MSG4-SEVI-MSG15-1234-NA-20190409121243.927000000Z
+
+
+def load_and_calibrate(filenames, apply_sun_earth_distance_correction):
+    """Load and calibrate data.
+
+    Uses inter-calibration coefficients from Meirink et al.
+
+    Args:
+        filenames: List of data files
+        filename_info: Corresponding information from the filenames
+        file_format: Specifies the file format (HRIT/Native)
+        apply_sun_earth_distance_correction: If True, apply sun-earth-distance-
+            correction to visible channels.
+
+    Returns:
+        Satpy scene holding calibrated channels
+    """
+    # Parse filenames
+    parser = SEVIRIFilenameParser()
+    file_format, info = parser.parse(os.path.basename(filenames[0]))
+
+    # Get calibration coefficients (time-dependent)
+    coefs = get_calibration_for_time(platform=info['platform_shortname'],
+                                     time=info['start_time'])
+
+    # Load and calibrate data
+    scn_ = Scene(reader=file_format,
+                 filenames=filenames,
+                 reader_kwargs={'calib_mode': CALIB_MODE,
+                                'ext_calib_coefs': coefs})
+    if not scn_.attrs['sensor'] == {'seviri'}:
+        raise ValueError('Not SEVIRI data')
+    scn_.load(BANDNAMES)
+    if not apply_sun_earth_distance_correction:
+        remove_sun_earth_distance_correction(scn_)
+
+    return scn_
+
+
+def remove_sun_earth_distance_correction(scene):
+    """Remove sun-earth-distance correction from visible channels.
+
+    This is required because a downstream CLAAS module (CPP) does not recognize
+    the "sun_earth_distance_correction_applied" attribute and applies the
+    correction anyway.
+    """
+    for band in BANDNAMES:
+        is_vis = scene[band].attrs['calibration'] == 'reflectance'
+        correction_applied = scene[band].attrs.get(
+            'sun_earth_distance_correction_applied', False
+        )
+        if is_vis and correction_applied:
+            scene[band] = remove_earthsun_distance_correction(scene[band])
 
 
 def rotate_band(scene, band):
@@ -206,7 +268,7 @@ def get_mean_acq_time(scene):
     # to NaN manually
     acq_times = []
     for band in BANDNAMES:
-        acq_time = scene[band].coords['acq_time'].drop('acq_time')
+        acq_time = scene[band].coords['acq_time'].drop_vars(['acq_time'])
         is_nat = np.isnat(acq_time.values)
         acq_time = acq_time.astype(int).where(np.logical_not(is_nat))
         acq_times.append(acq_time)
@@ -397,30 +459,97 @@ def get_header_attrs(scene):
     return header_attrs
 
 
-def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf'):
+def _drop_seconds_milliseconds(dtime):
+    return dtime.replace(second=0, microsecond=0)
+
+
+def set_nominal_scan_time(dataset):
+    """Set time attributes in the dataset to the nominal scan time."""
+    dataset = dataset.copy()
+    start_time = _drop_seconds_milliseconds(
+        dataset.attrs['start_time'])
+    end_time = start_time + timedelta(minutes=15)
+    dataset.attrs['start_time'] = start_time
+    dataset.attrs['end_time'] = end_time
+    return dataset
+
+
+class SEVIRIFilenameParser:
+    """SEVIRI filename parser."""
+
+    default_formats = [
+        {'name': 'seviri_l1b_hrit',
+         'pattern': HRIT_FILE_PATTERN,
+         'full_match': True},
+        {'name': 'seviri_l1b_native',
+         'pattern': NATIVE_FILE_PATTERN,
+         'full_match': False},
+    ]
+
+    def __init__(self, formats=None):
+        self.formats = formats or self.default_formats
+        self.format_names = [fmt['name'] for fmt in self.formats]
+
+    def parse(self, filename):
+        """Parse the given filename.
+
+        Returns:
+            File format, filename info
+        """
+        for fmt in self.formats:
+            parser = Parser(fmt['pattern'])
+            try:
+                info = parser.parse(filename, full_match=fmt['full_match'])
+                break
+            except ValueError:
+                continue
+        else:
+            raise ValueError(
+                'Filename {} doesn\'t match any of the supported '
+                'formats {}.'.format(filename, self.format_names)
+
+            )
+        return fmt['name'], self._postproc(fmt['name'], info)
+
+    def _postproc(self, format_name, info):
+        """Postprocess filename info."""
+        if format_name == 'seviri_l1b_native':
+            return self._postproc_native(info)
+        elif format_name == 'seviri_l1b_hrit':
+            return self._postproc_hrit(info)
+        else:
+            raise NotImplementedError
+
+    def _postproc_native(self, info):
+        """Postprocess Native filename info."""
+        # Only end time available, derive start time.
+        end_time = info['end_time']
+        quarter = end_time.minute // 15
+        info['start_time'] = end_time.replace(
+            minute=quarter * 15,
+            second=0,
+            microsecond=0
+        )
+        return info
+
+    def _postproc_hrit(self, parsed):
+        """Postprocess HRIT filename info."""
+        return parsed
+
+
+def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf',
+                     use_nominal_time_in_filename=False,
+                     apply_sun_earth_distance_correction=True):
     """Make level 1c files in PPS-format."""
     for fname in tslot_files:
         if not os.path.isfile(fname):
             raise FileNotFoundError('No such file: {}'.format(fname))
 
     tic = time.time()
-    parser = Parser(HRIT_FILE_PATTERN)
-    platform_shortname = parser.parse(
-        os.path.basename(tslot_files[0]))['platform_shortname']
-    start_time = parser.parse(
-        os.path.basename(tslot_files[0]))['start_time']
-
-    # Load and calibrate data using inter-calibration coefficients from
-    # Meirink et al
-    coefs = get_calibration_for_time(platform=platform_shortname,
-                                     time=start_time)
-    scn_ = Scene(reader='seviri_l1b_hrit',
-                 filenames=tslot_files,
-                 reader_kwargs={'calib_mode': CALIB_MODE,
-                                'ext_calib_coefs': coefs})
-    if not scn_.attrs['sensor'] == {'seviri'}:
-        raise ValueError('Not SEVIRI data')
-    scn_.load(BANDNAMES)
+    scn_ = load_and_calibrate(
+        tslot_files,
+        apply_sun_earth_distance_correction=apply_sun_earth_distance_correction
+    )
 
     # By default pixel (0,0) is S-E. Rotate bands so that (0,0) is N-W.
     if rotate:
@@ -448,7 +577,15 @@ def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf'):
     set_attrs(scn_)
 
     # Write datasets to netcdf
-    filename = compose_filename(scene=scn_, out_path=out_path, instrument='seviri', band=scn_['IR_108'])
+    ir108_for_filename = scn_['IR_108']
+    if use_nominal_time_in_filename:
+        ir108_for_filename = set_nominal_scan_time(ir108_for_filename)
+    filename = compose_filename(
+        scene=scn_,
+        out_path=out_path,
+        instrument='seviri',
+        band=ir108_for_filename
+    )
     scn_.save_datasets(writer='cf',
                        filename=filename,
                        header_attrs=get_header_attrs(scn_),
