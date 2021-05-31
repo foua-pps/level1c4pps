@@ -38,6 +38,9 @@ import level1c4pps.calibration_coefs as calib
 
 
 class TestSeviri2PPS(unittest.TestCase):
+    """Test for SEVIRI converter."""
+    
+
     @mock.patch('level1c4pps.seviri2pps_lib.Scene')
     def test_load_and_calibrate(self, mocked_scene):
         """Test loading and calibrating the data."""
@@ -498,8 +501,9 @@ class TestSeviri2PPS(unittest.TestCase):
         self.assertEqual(arr.attrs['start_time'], start_time)
         self.assertEqual(arr.attrs['end_time'], end_time)
 
-
 class TestCalibration(unittest.TestCase):
+    """Test SEVIRI calibration."""
+
     def test_get_calibration_for_date(self):
         """Test MODIS-intercalibrated gain and offset for specific date."""
         coefs = calib.get_calibration_for_date(

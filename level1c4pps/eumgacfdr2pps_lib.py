@@ -26,20 +26,17 @@
 
 import os
 import time
+import satpy
 from satpy.scene import Scene
 from level1c4pps import (get_encoding, compose_filename,
                          set_header_and_band_attrs_defaults,
-                         remove_attributes,
                          rename_latitude_longitude, update_angle_attributes,
                          dt64_to_datetime,
-                         platform_name_to_use_in_filename,
-                         fix_too_great_attributes,
                          logger,
                          get_header_attrs, convert_angles)
 from satpy.utils import debug_on
-debug_on()
 from distutils.version import LooseVersion
-import satpy
+
 if LooseVersion(satpy.__version__) < LooseVersion('0.24.0'):
     debug_on()
     raise ImportError("'eumgac2pps' writer requires satpy 0.24.0 or greater")

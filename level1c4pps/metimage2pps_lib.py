@@ -45,8 +45,38 @@ import logging
 
 logger = logging.getLogger('metimage2pps')
 
+BANDNAMES_DEFAULT = ["vii_668",
+                     "vii_865",
+                     "vii_1375",
+                     "vii_1630",
+                     "vii_3740",
+                     "vii_7325",
+                     "vii_8540",
+                     "vii_10690",
+                     "vii_12020",
+                     # "vii_443",
+                     # "vii_555",
+                     # "vii_752",
+                     # "vii_763",
+                     # "vii_914",
+                     # "vii_1240",
+                     "vii_2250",
+                     # "vii_3959",
+                     # "vii_4050",
+                     "vii_6725",
+                     "vii_13345"]
 
-REFL_BANDS = ["vii_668", "vii_865", "vii_1375", "vii_1630"]
+BANDNAMES_PPS = ["vii_668",
+                 "vii_865",
+                 "vii_1375",
+                 "vii_1630",
+                 "vii_3740",
+                 "vii_8540",
+                 "vii_10690",
+                 "vii_12020"]
+
+REFL_BANDS = ["vii_668", "vii_865", "vii_1375", "vii_1630", "vii_443",
+              "vii_555", "vii_752", "vii_763", "vii_914", "vii_1240"]
 
 ANGLE_NAMES = ['observation_zenith', 'solar_zenith',
                'observation_azimuth', 'solar_azimuth']
@@ -56,10 +86,22 @@ PPS_TAGNAMES = {"vii_668": "ch_r06",
                 "vii_1375": "ch_r13",
                 "vii_1630": "ch_r16",
                 "vii_3740": "ch_tb37",
-                "vii_7325": "ch_tb73",
                 "vii_8540": "ch_tb85",
                 "vii_10690": "ch_tb11",
-                "vii_12020": "ch_tb12"}
+                "vii_12020": "ch_tb12",
+                # Not used yet:
+                "vii_2250": "ch_r21",
+                "vii_6725": "ch_tb67",
+                "vii_13345": "ch_tb133",
+                "vii_7325": "ch_tb73",
+                "vii_443": "ch_rxx",
+                "vii_555": "ch_rxx",
+                "vii_752": "ch_rxx",
+                "vii_763": "ch_rx",
+                "vii_914": "ch_rxx",
+                "vii_1240": "ch_rxx",
+                "vii_3959": "ch_tbxx",
+                "vii_4050": "ch_tbxx"}
 
 BANDNAMES = list(PPS_TAGNAMES.keys())
 
@@ -80,19 +122,30 @@ def set_header_and_band_attrs(scene):
     scene.attrs['source'] = "metimage2pps.py"
     nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch)
     for band in REFL_BANDS:
+        if band not in scene:
+            continue
         print("Is this correct, it was in testdata3.")
         scene[band].attrs['sun_zenith_angle_correction_applied'] = 'True'
     return nimg
 
 
-def process_one_scene(scene_files, out_path):
+def process_one_scene(scene_files, out_path,
+                      engine='h5netcdf',
+                      all_channels=False, pps_channels=False):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scn_ = Scene(reader='vii_l1b_nc', filenames=scene_files)
-    scn_.load(BANDNAMES + ANGLE_NAMES + ['lat_pixels', 'lon_pixels'])
+
+    MY_BANDNAMES = BANDNAMES_DEFAULT
+    if all_channels:
+        MY_BANDNAMES = BANDNAMES
+    if pps_channels:
+        MY_BANDNAMES = BANDNAMES_PPS
+
+    scn_.load(MY_BANDNAMES + ANGLE_NAMES + ['lat_pixels', 'lon_pixels'])
 
     # Transpose data to get scanlines as row dimension
-    for key in BANDNAMES + ANGLE_NAMES + ['lat_pixels', 'lon_pixels']:
+    for key in MY_BANDNAMES + ANGLE_NAMES + ['lat_pixels', 'lon_pixels']:
         if 'num_pixels' in scn_[key].dims:
             # satpy <= 0 .26.0
             scn_[key] = scn_[key].transpose('num_lines', 'num_pixels')
@@ -123,7 +176,7 @@ def process_one_scene(scene_files, out_path):
     scn_.save_datasets(writer='cf',
                        filename=filename,
                        header_attrs=get_header_attrs(scn_, band=irch, sensor='metimage'),
-                       engine='h5netcdf',
+                       engine=engine,
                        include_lonlats=False,
                        flatten_attrs=True,
                        encoding=get_encoding_metimage(scn_))
