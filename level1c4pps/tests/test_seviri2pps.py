@@ -24,7 +24,6 @@
 
 import datetime as dt
 import numpy as np
-from pyresample.geometry import AreaDefinition
 import unittest
 try:
     from unittest import mock
@@ -37,40 +36,43 @@ import level1c4pps.seviri2pps_lib as seviri2pps
 import level1c4pps.calibration_coefs as calib
 
 
+def get_fake_scene():
+    scene = Scene()
+    start_time = dt.datetime(2020, 1, 1, 12)
+    scene['VIS006'] = xr.DataArray(
+        [[1, 2],
+         [3, 4]],
+        dims=('y', 'x'),
+        attrs={'calibration': 'reflectance',
+               'sun_earth_distance_correction_applied': True,
+               'start_time': start_time}
+    )
+    scene['IR_108'] = xr.DataArray(
+        [[5, 6],
+         [7, 8]],
+        dims=('y', 'x'),
+        attrs={'calibration': 'brightness_temperature',
+               'start_time': start_time}
+    )
+    scene.attrs['sensor'] = {'seviri'}
+    return scene
+
+
 class TestSeviri2PPS(unittest.TestCase):
     """Test for SEVIRI converter."""
-    
 
     @mock.patch('level1c4pps.seviri2pps_lib.Scene')
     def test_load_and_calibrate(self, mocked_scene):
         """Test loading and calibrating the data."""
 
-        # Create test scene
-        scene = Scene()
-        start_time = dt.datetime(2020, 1, 1, 12)
-        scene['VIS006'] = xr.DataArray(
-            [[1, 2],
-             [3, 4]],
-            dims=('y', 'x'),
-            attrs={'calibration': 'reflectance',
-                   'sun_earth_distance_correction_applied': True,
-                   'start_time': start_time}
-        )
-        scene['IR_108'] = xr.DataArray(
-            [[5, 6],
-             [7, 8]],
-            dims=('y', 'x'),
-            attrs={'calibration': 'brightness_temperature',
-                   'start_time': start_time}
-        )
-        scene.attrs['sensor'] = {'seviri'}
-        mocked_scene.return_value = scene
+        mocked_scene.return_value = get_fake_scene()
 
         # Load and calibrate
         filenames = ['MSG4-SEVI-MSG15-1234-NA-20190409121243.927000000Z']
         res = seviri2pps.load_and_calibrate(
             filenames,
-            apply_sun_earth_distance_correction=False
+            apply_sun_earth_distance_correction=False,
+            rotate=False
         )
 
         # Compare results and expectations
@@ -90,39 +92,19 @@ class TestSeviri2PPS(unittest.TestCase):
             res['VIS006'].attrs['sun_earth_distance_correction_applied'],
         )
 
-    def test_rotate_band(self):
-        """Test rotation of bands."""
-        area = AreaDefinition(area_id='test',
-                              description='test',
-                              proj_id='test',
-                              projection={'proj': 'geos', 'h': 12345},
-                              width=3,
-                              height=3,
-                              area_extent=[1001, 1002, -1003, -1004])
-        data = xr.DataArray(data=[[1, 2, 3],
-                                  [4, 5, 6],
-                                  [7, 8, 9]],
-                            dims=('y', 'x'),
-                            coords=[('y', [1.1, 0, -1.1]), ('x', [1, 0, -1])],
-                            attrs={'area': area})
-        scene = {'data': data}
-
-        # Rotate
-        seviri2pps.rotate_band(scene, 'data')
-
-        # Check results
-        self.assertTupleEqual(scene['data'].attrs['area'].area_extent,
-                              (-1003, -1004, 1001, 1002))
-        np.testing.assert_array_equal(scene['data']['x'], [-1, 0, 1])
-        np.testing.assert_array_equal(scene['data']['y'], [-1.1, 0, 1.1])
-        np.testing.assert_array_equal(scene['data'], [[9, 8, 7],
-                                                      [6, 5, 4],
-                                                      [3, 2, 1]])
-        lons, lats = scene['data'].attrs['area'].get_lonlats()
-        self.assertTrue(lons[0, 0] < 0)
-        self.assertTrue(lons[0, 2] > 0)
-        self.assertTrue(lats[0, 0] > 0)
-        self.assertTrue(lons[2, 0] < 0)
+    @mock.patch('level1c4pps.seviri2pps_lib.Scene')
+    def test_load_and_calibrate_with_rotation(self, mocked_scene):
+        scene = get_fake_scene()
+        scene.load = mock.MagicMock()
+        mocked_scene.return_value = scene
+        filenames = ['MSG4-SEVI-MSG15-1234-NA-20190409121243.927000000Z']
+        res = seviri2pps.load_and_calibrate(
+            filenames,
+            apply_sun_earth_distance_correction=False,
+            rotate=True
+        )
+        scene.load.assert_called_with(mock.ANY, upper_right_corner='NE')
+        self.assertTrue(res.attrs['image_rotated'])
 
     def test_get_lonlats(self):
         """Test getting lat/lon coordinates."""

@@ -89,17 +89,16 @@ NATIVE_FILE_PATTERN = ('{platform_shortname:4s}-{instr:4s}-'
 # MSG4-SEVI-MSG15-1234-NA-20190409121243.927000000Z
 
 
-def load_and_calibrate(filenames, apply_sun_earth_distance_correction):
+def load_and_calibrate(filenames, apply_sun_earth_distance_correction, rotate):
     """Load and calibrate data.
 
     Uses inter-calibration coefficients from Meirink et al.
 
     Args:
         filenames: List of data files
-        filename_info: Corresponding information from the filenames
-        file_format: Specifies the file format (HRIT/Native)
         apply_sun_earth_distance_correction: If True, apply sun-earth-distance-
             correction to visible channels.
+        rotate: Rotate image so that pixel (0, 0) is N-W.
 
     Returns:
         Satpy scene holding calibrated channels
@@ -108,22 +107,46 @@ def load_and_calibrate(filenames, apply_sun_earth_distance_correction):
     parser = SEVIRIFilenameParser()
     file_format, info = parser.parse(os.path.basename(filenames[0]))
 
-    # Get calibration coefficients (time-dependent)
-    coefs = get_calibration_for_time(platform=info['platform_shortname'],
-                                     time=info['start_time'])
+    calib_coefs = get_calibration_for_time(
+        platform=info['platform_shortname'],
+        time=info['start_time']
+    )
+    scn_ = _create_scene(file_format, filenames, calib_coefs)
+    _check_is_seviri_data(scn_)
+    _load_bands(scn_, rotate)
+    _update_scene_attrs(scn_, {'image_rotated': rotate})
 
-    # Load and calibrate data
-    scn_ = Scene(reader=file_format,
-                 filenames=filenames,
-                 reader_kwargs={'calib_mode': CALIB_MODE,
-                                'ext_calib_coefs': coefs})
-    if not scn_.attrs['sensor'] == {'seviri'}:
-        raise ValueError('Not SEVIRI data')
-    scn_.load(BANDNAMES)
     if not apply_sun_earth_distance_correction:
         remove_sun_earth_distance_correction(scn_)
 
     return scn_
+
+
+def _create_scene(file_format, filenames, calib_coefs):
+    return Scene(reader=file_format,
+                 filenames=filenames,
+                 reader_kwargs={'calib_mode': CALIB_MODE,
+                                'ext_calib_coefs': calib_coefs})
+
+
+def _check_is_seviri_data(scene):
+    if not scene.attrs['sensor'] == {'seviri'}:
+        raise ValueError('Not SEVIRI data')
+
+
+def _load_bands(scene, rotate):
+    scene.load(
+        BANDNAMES,
+        upper_right_corner=_get_upper_right_corner(rotate)
+    )
+
+
+def _get_upper_right_corner(rotation_flag):
+    return 'NE' if rotation_flag else 'native'
+
+
+def _update_scene_attrs(scene, attrs):
+    scene.attrs.update(attrs)
 
 
 def remove_sun_earth_distance_correction(scene):
@@ -140,15 +163,6 @@ def remove_sun_earth_distance_correction(scene):
         )
         if is_vis and correction_applied:
             scene[band] = remove_earthsun_distance_correction(scene[band])
-
-
-def rotate_band(scene, band):
-    """Rotate band by 180 degrees."""
-    scene[band] = scene[band].reindex(x=scene[band].x[::-1],
-                                      y=scene[band].y[::-1])
-    llx, lly, urx, ury = scene[band].attrs['area'].area_extent
-    scene[band].attrs['area'] = scene[band].attrs['area'].copy(
-        area_extent=[urx, ury, llx, lly])
 
 
 def get_lonlats(dataset):
@@ -548,14 +562,9 @@ def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf',
     tic = time.time()
     scn_ = load_and_calibrate(
         tslot_files,
-        apply_sun_earth_distance_correction=apply_sun_earth_distance_correction
+        apply_sun_earth_distance_correction=apply_sun_earth_distance_correction,
+        rotate=rotate
     )
-
-    # By default pixel (0,0) is S-E. Rotate bands so that (0,0) is N-W.
-    if rotate:
-        for band in BANDNAMES:
-            rotate_band(scn_, band)
-    scn_.attrs['image_rotated'] = rotate
 
     # Find lat/lon data
     lons, lats = get_lonlats(scn_['IR_108'])
