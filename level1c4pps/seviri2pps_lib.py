@@ -260,6 +260,7 @@ def set_attrs(scene):
         idtag = PPS_TAGNAMES[band]
         scene[band].attrs['id_tag'] = idtag
         scene[band].attrs['description'] = 'SEVIRI ' + str(band)
+        scene[band].attrs['wavelength'] = scene[band].attrs['wavelength'][0:3]
         if 'sun_earth_distance_correction_factor' not in scene[band].attrs:
             scene[band].attrs['sun_earth_distance_correction_applied'] = False
             scene[band].attrs['sun_earth_distance_correction_factor'] = 1.0
