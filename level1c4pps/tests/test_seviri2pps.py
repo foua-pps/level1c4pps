@@ -34,7 +34,7 @@ from satpy import Scene
 
 import level1c4pps.seviri2pps_lib as seviri2pps
 import level1c4pps.calibration_coefs as calib
-
+from satpy.dataset.dataid import WavelengthRange
 
 def get_fake_scene():
     scene = Scene()
@@ -46,7 +46,7 @@ def get_fake_scene():
         attrs={'calibration': 'reflectance',
                'sun_earth_distance_correction_applied': True,
                'start_time': start_time,
-               'wavelength': [0.56, 0.635, 0.71, 'um']}
+               'wavelength': WavelengthRange(0.56, 0.635, 0.71)}
     )
     scene['IR_108'] = xr.DataArray(
         [[5, 6],
@@ -54,7 +54,7 @@ def get_fake_scene():
         dims=('y', 'x'),
         attrs={'calibration': 'brightness_temperature',
                'start_time': start_time,
-               'wavelength': [9.8, 10.8, 11.8, 'um']}
+               'wavelength': WavelengthRange(9.8, 10.8, 11.8)}
     )
     scene.attrs['sensor'] = {'seviri'}
     return scene
@@ -198,9 +198,9 @@ class TestSeviri2PPS(unittest.TestCase):
     def test_set_attrs(self):
         """Test setting scene attributes."""
         seviri2pps.BANDNAMES = ['VIS006', 'IR_108']
-        vis006 = mock.MagicMock(attrs={'wavelength': [0.56, 0.635, 0.71, 'um']})
+        vis006 = mock.MagicMock(attrs={ 'wavelength': WavelengthRange(0.56, 0.635, 0.71)})
         ir108 = mock.MagicMock(attrs={'platform_name': 'myplatform',
-                                      'wavelength': [9.8, 10.8, 11.8, 'um'],
+                                      'wavelength': WavelengthRange(9.8, 10.8, 11.8),
                                       'orbital_parameters': {'orb_a': 1,
                                                              'orb_b': 2},
                                       'georef_offset_corrected': True})
@@ -248,13 +248,13 @@ class TestSeviri2PPS(unittest.TestCase):
                               dims=('x',),
                               coords={'acq_time': ('x', [0, 0, 0])},
                               attrs={'area': 'myarea',
-                                     'wavelength': [0.56, 0.635, 0.71, 'um'],
+                                      'wavelength': WavelengthRange(0.56, 0.635, 0.71),
                                      'start_time': dt.datetime(2009, 7, 1, 0)})
         ir_108 = xr.DataArray(data=[4, 5, 6],
                               dims=('x',),
                               coords={'acq_time': ('x', [0, 0, 0])},
                               attrs={'start_time': dt.datetime(2009, 7, 1, 1),
-                                     'wavelength': [9.8, 10.8, 11.8, 'um']})
+                                     'wavelength': WavelengthRange(9.8, 10.8, 11.8)})
         scene_dict = {'VIS006': vis006.copy(), 'IR_108': ir_108.copy()}
         scene = mock.MagicMock(attrs={})
         scene.__getitem__.side_effect = scene_dict.__getitem__
