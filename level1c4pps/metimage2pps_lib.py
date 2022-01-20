@@ -70,13 +70,15 @@ BANDNAMES_PPS = ["vii_668",
                  "vii_865",
                  "vii_1375",
                  "vii_1630",
+                 "vii_2250",
                  "vii_3740",
                  "vii_8540",
                  "vii_10690",
                  "vii_12020"]
 
 REFL_BANDS = ["vii_668", "vii_865", "vii_1375", "vii_1630", "vii_443",
-              "vii_555", "vii_752", "vii_763", "vii_914", "vii_1240"]
+              "vii_555", "vii_752", "vii_763", "vii_914", "vii_1240",
+              "vii_2250"]
 
 ANGLE_NAMES = ['observation_zenith', 'solar_zenith',
                'observation_azimuth', 'solar_azimuth']
@@ -89,8 +91,8 @@ PPS_TAGNAMES = {"vii_668": "ch_r06",
                 "vii_8540": "ch_tb85",
                 "vii_10690": "ch_tb11",
                 "vii_12020": "ch_tb12",
+                "vii_2250": "ch_r22",
                 # Not used yet:
-                "vii_2250": "ch_r21",
                 "vii_6725": "ch_tb67",
                 "vii_13345": "ch_tb133",
                 "vii_7325": "ch_tb73",
