@@ -116,16 +116,15 @@ def update_ancilliary_datasets(scene):
                 scene[band].attrs.pop(attr, None)
 
 
-def set_header_and_band_attrs(scene):
+def set_header_and_band_attrs(scene, orbit_n=99999):
     """Set and delete some attributes."""
     irch = scene['brightness_temperature_channel_4']
     for attr in RENAME_AND_MOVE_TO_HEADER:
         if attr in irch.attrs:
             scene.attrs[RENAME_AND_MOVE_TO_HEADER[attr]] = irch.attrs.pop(attr)
-    nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch)
+    nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch, orbit_n=orbit_n)
     scene.attrs['source'] = "eumgacfdr2pps.py"
     scene.attrs['is_gac'] = 'True'
-    scene.attrs['orbit_number'] = 99999
     for band in BANDNAMES:
         if band not in scene:
             continue
@@ -189,7 +188,7 @@ def remove_broken_data(scene):
 
 def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None,
                      start_line=None, end_line=None, engine='h5netcdf',
-                     remove_broken=True):
+                     remove_broken=True, orbit_n=99999):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scn_ = Scene(reader='avhrr_l1c_eum_gac_fdr_nc',
@@ -224,7 +223,7 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None,
     irch = scn_['brightness_temperature_channel_4']
 
     # Set header and band attributes
-    set_header_and_band_attrs(scn_)
+    set_header_and_band_attrs(scn_, orbit_n=orbit_n)
 
     # Rename longitude, latitude to lon, lat.
     rename_latitude_longitude(scn_)
