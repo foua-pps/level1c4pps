@@ -142,9 +142,7 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None, engine='h5netcd
 
     # Set header and band attributes
     set_header_and_band_attrs(scn_, orbit_n=orbit_n)
-    
-    filename = compose_filename(scn_, out_path, instrument='avhrr', band=irch)
-    
+
     # Rename longitude, latitude to lon, lat.
     rename_latitude_longitude(scn_)
 
@@ -152,12 +150,10 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None, engine='h5netcd
     convert_angles(scn_)
     update_angle_attributes(scn_, irch)
 
- 
-        
     # Handle gac specific datasets qual_flags and scanline_timestamps
     update_ancilliary_datasets(scn_)
 
-
+    filename = compose_filename(scn_, out_path, instrument='avhrr', band=irch)
 
     encoding = get_encoding_gac(scn_)
     encoding['scanline_timestamps'].pop('units')
