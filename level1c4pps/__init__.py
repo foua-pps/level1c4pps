@@ -349,7 +349,7 @@ def adjust_lons_to_valid_range(scene):
     scene['lon'].values = centered_modulus(scene['lon'].values)
 
 
-def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch):
+def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch, orbit_n=0):
     """Add some default values for band attributes."""
     nimg = 0  # name of first dataset is image0
     # Set some header attributes:
@@ -380,7 +380,7 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
     scene.attrs['sensor'] = sensor_name.upper()
     scene.attrs['instrument'] = sensor_name.upper()
     nowutc = datetime.utcnow()
-    scene.attrs['orbit_number'] = int(00000)
+    scene.attrs['orbit_number'] = int(orbit_n)
     scene.attrs['date_created'] = nowutc.strftime("%Y-%m-%dT%H:%M:%SZ")
     scene.attrs['version_level1c4pps_satpy'] = satpy.__version__
     scene.attrs['version_level1c4pps'] = level1c4pps.__version__
@@ -426,7 +426,9 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
                 REQUIRED_CHANNEL_VARS + ADDITIONAL_CHANNEL_VARS]
         for attr in MOVE:
             # Move channel attrs not deleted, required or allowed to header
-            scene.attrs[attr] = scene[band].attrs.pop(attr, None)
+            attr_value = scene[band].attrs.pop(attr, None)
+            if attr not in scene.attrs:
+                scene.attrs[attr] = attr_value
         for coord_name in ['acq_time', 'latitude', 'longitude']:
             try:
                 del scene[band].coords[coord_name]

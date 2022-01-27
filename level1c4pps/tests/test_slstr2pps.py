@@ -88,8 +88,9 @@ class TestSlstr2PPS(unittest.TestCase):
 
     def test_set_header_and_band_attrs(self):
         """Test to set header_and_band_attrs."""
-        slstr2pps.set_header_and_band_attrs(self.scene)
+        slstr2pps.set_header_and_band_attrs(self.scene, orbit_n='12345')
         self.assertTrue(isinstance(self.scene.attrs['orbit_number'], int))
+        self.assertEqual(self.scene.attrs['orbit_number'], 12345)
 
 
 def suite():

@@ -46,6 +46,11 @@ if __name__ == "__main__":
                         help="Save all 36 channels to level1c4pps file.")
     parser.add_argument('-pps_ch', '--pps_channels', action='store_true',
                         help="Save only the necessary (for PPS) channels to level1c4pps file.")
+    parser.add_argument('-on', '--orbit_number', type=int, nargs='?',
+                        required=False, default=0,
+                        help="Orbit number (default is 00000).")
     options = parser.parse_args()
     process_one_scene(options.files, options.out_dir, engine=options.nc_engine,
-                      all_channels=options.all_channels, pps_channels=options.pps_channels)
+                      all_channels=options.all_channels,
+                      pps_channels=options.pps_channels,
+                      orbit_n=options.orbit_number)

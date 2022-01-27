@@ -105,10 +105,10 @@ def get_encoding_viirs(scene):
                         chunks=None)
 
 
-def set_header_and_band_attrs(scene):
+def set_header_and_band_attrs(scene, orbit_n=0):
     """Set and delete some attributes."""
     irch = scene['M15']
-    nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch)
+    nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch, orbit_n=orbit_n)
     scene.attrs['source'] = "viirs2pps.py"
     if 'I04' in scene:
         # If highresolution we should have I04,
@@ -125,7 +125,7 @@ def set_header_and_band_attrs(scene):
 
 
 def process_one_scene(scene_files, out_path, use_iband_res=False, engine='h5netcdf',
-                      all_channels=False, pps_channels=False):
+                      all_channels=False, pps_channels=False, orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scn_ = Scene(
@@ -156,7 +156,7 @@ def process_one_scene(scene_files, out_path, use_iband_res=False, engine='h5netc
     irch = scn_['M15']
 
     # Set header and band attributes
-    set_header_and_band_attrs(scn_)
+    set_header_and_band_attrs(scn_, orbit_n=orbit_n)
 
     # Rename longitude, latitude to lon, lat.
     rename_latitude_longitude(scn_)

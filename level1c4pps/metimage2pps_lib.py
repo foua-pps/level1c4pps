@@ -116,13 +116,13 @@ def get_encoding_metimage(scene):
                         chunks=None)
 
 
-def set_header_and_band_attrs(scene):
+def set_header_and_band_attrs(scene, orbit_n=00000):
     """Set and delete some attributes."""
     nimg = 0  # name of first dataset is image0
     # Set some header attributes:
     irch = scene['vii_10690']
     scene.attrs['source'] = "metimage2pps.py"
-    nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch)
+    nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch, orbit_n=orbit_n)
     for band in REFL_BANDS:
         if band not in scene:
             continue
@@ -133,7 +133,8 @@ def set_header_and_band_attrs(scene):
 
 def process_one_scene(scene_files, out_path,
                       engine='h5netcdf',
-                      all_channels=False, pps_channels=False):
+                      all_channels=False, pps_channels=False,
+                      orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scn_ = Scene(reader='vii_l1b_nc', filenames=scene_files)
@@ -159,7 +160,7 @@ def process_one_scene(scene_files, out_path,
     irch = scn_['vii_10690']
 
     # Set header and band attributes
-    set_header_and_band_attrs(scn_)
+    set_header_and_band_attrs(scn_, orbit_n=orbit_n)
 
     # Rename longitude, latitude to lon, lat.
     rename_latitude_longitude(scn_)

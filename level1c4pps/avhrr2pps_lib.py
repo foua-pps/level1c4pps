@@ -66,12 +66,11 @@ def get_encoding_avhrr(scene):
                         chunks=None)
 
 
-def set_header_and_band_attrs(scene):
+def set_header_and_band_attrs(scene, orbit_n=0):
     """Set and delete some attributes."""
     irch = scene['4']
-    nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch)
+    nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch, orbit_n=orbit_n)
     scene.attrs['source'] = "avhrr2pps.py"
-    scene.attrs['orbit_number'] = 00000
     return nimg
 
 
@@ -92,7 +91,7 @@ def check_broken_data(scene):
             'Stopping. File will not be written.')
 
 
-def process_one_scene(scene_files, out_path, engine='h5netcdf'):
+def process_one_scene(scene_files, out_path, engine='h5netcdf', orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     if 'AVHR_xxx' in scene_files[0]:
@@ -112,7 +111,7 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf'):
     check_broken_data(scn_)
 
     # Set header and band attributes
-    set_header_and_band_attrs(scn_)
+    set_header_and_band_attrs(scn_, orbit_n=orbit_n)
 
     # Rename longitude, latitude to lon, lat.
     rename_latitude_longitude(scn_)

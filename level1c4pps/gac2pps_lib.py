@@ -95,13 +95,12 @@ def update_ancilliary_datasets(scene):
     del scene['qual_flags'].coords['acq_time']
 
 
-def set_header_and_band_attrs(scene):
+def set_header_and_band_attrs(scene, orbit_n=99999):
     """Set and delete some attributes."""
     irch = scene['4']
-    nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch)
+    nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch, orbit_n=orbit_n)
     scene.attrs['source'] = "gac2pps.py"
     scene.attrs['is_gac'] = 'True'
-    scene.attrs['orbit_number'] = 99999
     for band in BANDNAMES:
         if band not in scene:
             continue
@@ -112,7 +111,7 @@ def set_header_and_band_attrs(scene):
     return nimg
 
 
-def process_one_file(gac_file, out_path='.', reader_kwargs=None, engine='h5netcdf'):
+def process_one_file(gac_file, out_path='.', reader_kwargs=None, engine='h5netcdf', orbit_n=99999):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     if reader_kwargs is None:
@@ -142,7 +141,7 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None, engine='h5netcd
     irch = scn_['4']
 
     # Set header and band attributes
-    set_header_and_band_attrs(scn_)
+    set_header_and_band_attrs(scn_, orbit_n=orbit_n)
 
     # Rename longitude, latitude to lon, lat.
     rename_latitude_longitude(scn_)

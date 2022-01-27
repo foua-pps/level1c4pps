@@ -105,7 +105,8 @@ class TestGac2PPS(unittest.TestCase):
 
     def test_set_header_and_band_attrs(self):
         """Test to set header_and_band_attrs."""
-        gac2pps.set_header_and_band_attrs(self.scene)
+        gac2pps.set_header_and_band_attrs(self.scene, orbit_n='12345')
+        self.assertEqual(self.scene.attrs['orbit_number'], 12345)
 
     def test_process_one_file(self):
         """Test process one file for one example file."""

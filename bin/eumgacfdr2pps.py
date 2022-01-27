@@ -54,7 +54,11 @@ if __name__ == "__main__":
                         help="Engine for saving netcdf files netcdf4 or h5netcdf (default).")
     parser.add_argument('--no_remove_bad', action='store_true',
                         help="Don't remove bad (qual_flags) data.")
+    parser.add_argument('-on', '--orbit_number', type=int, nargs='?',
+                        required=False, default=99999,
+                        help="Orbit number (default is 99999).")
     options = parser.parse_args()
     process_one_file(options.file, options.out_dir,  start_line=options.start_line,
                      end_line=options.end_line, engine=options.nc_engine,
-                     remove_broken=not options.no_remove_bad)
+                     remove_broken=not options.no_remove_bad,
+                     orbit_n=options.orbit_number)
