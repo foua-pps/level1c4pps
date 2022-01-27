@@ -1,3 +1,18 @@
+## Version <v.0.2.28> (2022/01/27)
+
+### Issues Closed
+
+* [Issue 65](https://github.com/foua-pps/level1c4pps/issues/65) - Missmatch in orbitnumber in netcdf filename and posttroll message tag 'orbit_number' VIIRS when using level 1c runner in pytroll pps runner
+* [Issue 51](https://github.com/foua-pps/level1c4pps/issues/51) - Seviri2pps fails with h5netcdf backend
+
+In this release 4 issues were closed.
+
+### Pull Requests Merged
+
+#### Bugs fixed
+
+In this release 1 pull request was closed.
+
 ## Version <v0.2.27> (2021/06/21)
 
 ### Issues Closed
