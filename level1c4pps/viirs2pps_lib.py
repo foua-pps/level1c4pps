@@ -86,7 +86,7 @@ PPS_TAGNAMES = {"M05": 'ch_r06',
                 "I03": 'ch_r16',
                 "I04": 'ch_tb37',
                 # Not used by pps:
-                "M11": 'ch_r21',
+                "M11": 'ch_r22',
                 "I05": 'ch_tbxx',
                 "M01": 'ch_rxx',
                 "M02": 'ch_rxx',
@@ -105,10 +105,10 @@ def get_encoding_viirs(scene):
                         chunks=None)
 
 
-def set_header_and_band_attrs(scene, orbit_n=0):
+def set_header_and_band_attrs(scene, MY_BANDNAMES, orbit_n=0):
     """Set and delete some attributes."""
     irch = scene['M15']
-    nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch, orbit_n=orbit_n)
+    nimg = set_header_and_band_attrs_defaults(scene, MY_BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch, orbit_n=orbit_n)
     scene.attrs['source'] = "viirs2pps.py"
     if 'I04' in scene:
         # If highresolution we should have I04,
@@ -149,14 +149,16 @@ def process_one_scene(scene_files, out_path, use_iband_res=False, engine='h5netc
         scn_.load(MY_IBAND_I + ANGLE_NAMES + ['i_latitude', 'i_longitude'], resolution=371)
         scn_.load(MY_IBAND_M, resolution=742)
         scn_ = scn_.resample(resampler='native')
+        MY_BANDNAMES = MY_IBAND_I + MY_IBAND_M
     else:
         scn_.load(MY_MBAND + ANGLE_NAMES + ['m_latitude', 'm_longitude'], resolution=742)
-
+        MY_BANDNAMES = MY_MBAND
+        
     # one ir channel
     irch = scn_['M15']
 
     # Set header and band attributes
-    set_header_and_band_attrs(scn_, orbit_n=orbit_n)
+    set_header_and_band_attrs(scn_, MY_BANDNAMES, orbit_n=orbit_n)
 
     # Rename longitude, latitude to lon, lat.
     rename_latitude_longitude(scn_)
