@@ -351,7 +351,6 @@ def adjust_lons_to_valid_range(scene):
 
 def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch, orbit_n=0):
     """Add some default values for band attributes."""
-    nimg = 0  # name of first dataset is image0
     # Set some header attributes:
     scene.attrs['history'] = "Created by level1c4pps."
     scene.attrs['history'] += irch.attrs.pop('history', "")
@@ -389,7 +388,9 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
             scene.attrs[attr] = irch.attrs[attr]
 
     # bands
+    nimg = -1  # name of first dataset is image0
     for band in BANDNAMES:
+        nimg += 1
         if band not in scene:
             continue
         idtag = PPS_TAGNAMES.get(band, None)
@@ -434,8 +435,6 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
                 del scene[band].coords[coord_name]
             except KeyError:
                 pass
-
-        nimg += 1
     return nimg
 
 
