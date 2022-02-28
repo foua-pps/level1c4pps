@@ -153,7 +153,7 @@ def process_one_scene(scene_files, out_path, use_iband_res=False, engine='h5netc
     else:
         scn_.load(MY_MBAND + ANGLE_NAMES + ['m_latitude', 'm_longitude'], resolution=742)
         MY_BANDNAMES = MY_MBAND
-        
+
     # one ir channel
     irch = scn_['M15']
 
