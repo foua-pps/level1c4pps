@@ -130,7 +130,7 @@ class TestGac2PPS(unittest.TestCase):
             self.assertTrue(key in sorted(pps_nc.__dict__.keys()))
         expected_vars = ['satzenith', 'azimuthdiff', 'satazimuth', 'sunazimuth', 'sunzenith',
                          'time', 'y', 'num_flags', 'lon', 'lat', 'qual_flags',
-                         'image1', 'image3', 'image0', 'image2',
+                         'image1', 'image5', 'image0', 'image2',
                          'scanline_timestamps', 'time_bnds']
         optional = ['bands_1d', 'acq_time']
         for var in optional:
@@ -161,7 +161,7 @@ class TestGac2PPS(unittest.TestCase):
 
         expected_vars = ['satzenith', 'azimuthdiff', 'satazimuth', 'sunazimuth', 'sunzenith',
                          'time', 'y', 'num_flags', 'lon', 'lat', 'qual_flags',
-                         'image1', 'image3', 'image0', 'image2',
+                         'image1', 'image5', 'image0', 'image2',
                          'scanline_timestamps', 'time_bnds']
         optional = ['bands_1d', 'acq_time']
         for var in optional:
