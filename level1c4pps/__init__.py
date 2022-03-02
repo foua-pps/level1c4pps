@@ -44,6 +44,20 @@ except DistributionNotFound:
     # package is not installed
     pass
 
+PPS_TAGNAMES_TO_IMAGE_NR = {'ch_r06': 'image1',
+                            'ch_r09': 'image2',
+                            'ch_tb11': 'image3',
+                            'ch_tb12': 'image4',
+                            'ch_tb37': 'image5',
+                            'ch_r16': 'image6',
+                            'ch_tb85': 'image7',
+                            'ch_r13': 'image8',
+                            'ch_r22': 'image9',
+                            'ch_r21': 'image10',
+                            'ch_tb67': 'image11',
+                            'ch_tb73': 'image12',
+                            'ch_tb133': 'image13'}
+
 ATTRIBUTES_TO_DELETE_FROM_CHANNELS = [
     '_satpy_id',
     '_satpy_id_calibration',
@@ -388,9 +402,8 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
             scene.attrs[attr] = irch.attrs[attr]
 
     # bands
-    nimg = -1  # name of first dataset is image0
+    nimg = 20  # name of first dataset id_tag ch_rxx or ch_tbxx is image20
     for band in BANDNAMES:
-        nimg += 1
         if band not in scene:
             continue
         idtag = PPS_TAGNAMES.get(band, None)
@@ -405,7 +418,11 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
             scene[band].attrs['sun_earth_distance_correction_applied'] = 'True'
         scene[band].attrs['wavelength'] = scene[band].attrs['wavelength'][0:3]
         scene[band].attrs['sun_zenith_angle_correction_applied'] = 'False'
-        scene[band].attrs['name'] = "image{:d}".format(nimg)
+        if idtag in PPS_TAGNAMES_TO_IMAGE_NR:
+            scene[band].attrs['name'] = PPS_TAGNAMES_TO_IMAGE_NR[idtag]
+        else:
+            scene[band].attrs['name'] = "image{:d}".format(nimg)
+            nimg += 1
         scene[band].attrs['coordinates'] = 'lon lat'
         if band in REFL_BANDS:
             scene[band].attrs['valid_range'] = np.array([0, 20000], dtype='int16')
