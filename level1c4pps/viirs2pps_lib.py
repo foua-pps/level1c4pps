@@ -86,7 +86,7 @@ PPS_TAGNAMES = {"M05": 'ch_r06',
                 "I03": 'ch_r16',
                 "I04": 'ch_tb37',
                 # Not used by pps:
-                "M11": 'ch_r21',
+                "M11": 'ch_r22',
                 "I05": 'ch_tbxx',
                 "M01": 'ch_rxx',
                 "M02": 'ch_rxx',

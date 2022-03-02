@@ -114,7 +114,7 @@ class TestEumgacfdr2PPS(unittest.TestCase):
         expected_vars = ['satzenith', 'azimuthdiff',
                          'satazimuth', 'sunazimuth', 'sunzenith',
                          'time', 'y', 'num_flags', 'lon', 'lat', 'qual_flags',
-                         'image1', 'image3', 'image0', 'image2',
+                         'image1', 'image3', 'image2', 'image5',
                          'midnight_line', 'overlap_free_end',
                          'overlap_free_start', 'x',
                          'equator_crossing_longitude',
@@ -127,7 +127,7 @@ class TestEumgacfdr2PPS(unittest.TestCase):
         self.assertEqual(sorted(pps_nc.variables.keys()),
                          sorted(expected_vars))
 
-        np.testing.assert_almost_equal(pps_nc.variables['image0'].sun_earth_distance_correction_factor,
+        np.testing.assert_almost_equal(pps_nc.variables['image1'].sun_earth_distance_correction_factor,
                                        0.9975245, decimal=4)
 
 
