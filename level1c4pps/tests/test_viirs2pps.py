@@ -90,7 +90,7 @@ class TestViirs2PPS(unittest.TestCase):
 
     def test_set_header_and_band_attrs(self):
         """Test to set header_and_band_attrs."""
-        viirs2pps.set_header_and_band_attrs(self.scene, viirs2pps.MBAND_PPS)
+        viirs2pps.set_header_and_band_attrs(self.scene)
         self.assertTrue(isinstance(self.scene.attrs['orbit_number'], int))
         self.assertTrue(self.scene["M05"].attrs['sun_zenith_angle_correction_applied'])
 
