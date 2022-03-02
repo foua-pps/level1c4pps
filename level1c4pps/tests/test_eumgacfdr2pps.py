@@ -114,7 +114,7 @@ class TestEumgacfdr2PPS(unittest.TestCase):
         expected_vars = ['satzenith', 'azimuthdiff',
                          'satazimuth', 'sunazimuth', 'sunzenith',
                          'time', 'y', 'num_flags', 'lon', 'lat', 'qual_flags',
-                         'image1', 'image3', 'image0', 'image2',
+                         'image1', 'image4', 'image0', 'image6',
                          'midnight_line', 'overlap_free_end',
                          'overlap_free_start', 'x',
                          'equator_crossing_longitude',
