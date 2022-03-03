@@ -1,3 +1,11 @@
+## Version <RELEASE_VERSION> (2022/03/03)
+
+### Issues Closed
+
+* [Issue 68](https://github.com/foua-pps/level1c4pps/issues/68) - FOr AVHRR data missing ch3a/b gives no image5 dataset
+
+In this release 1 issue was closed.
+
 ## Version <v.0.2.28> (2022/01/27)
 
 ### Issues Closed
