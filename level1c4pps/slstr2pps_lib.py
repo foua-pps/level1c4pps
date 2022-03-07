@@ -75,7 +75,7 @@ PPS_TAGNAMES = {'S2': 'ch_r06',  # or S1
                 'S8': 'ch_tb11',
                 'S9': 'ch_tb12',
                 # Not yet in pps:
-                'S6': 'ch_r21',
+                'S6': 'ch_r22',
                 'S1': 'ch_rxx',
                 'F1': 'ch_tbxx',
                 'F2': 'ch_tbxx'}
