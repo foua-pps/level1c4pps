@@ -62,7 +62,7 @@ IBANDS = ["I01", "I02", "I03", "I04", "I05"]
 REFL_BANDS = ["M01", "M02", "M03", "M04", "M05", "M06", "M07", "M08",
               "M09", "M10", "M11", "I01", "I02", "I03"]
 
-MBAND_PPS = ["M05", "M07", "M09", "M10", "M12", "M14", "M15", "M16"]
+MBAND_PPS = ["M05", "M07", "M09", "M10", "M11", "M12", "M14", "M15", "M16"]
 IBAND_PPS_I = ["I01", "I02", "I03", "I04"]
 IBAND_PPS_M = ["M09", "M14", "M15", "M16"]
 
@@ -78,6 +78,7 @@ PPS_TAGNAMES = {"M05": 'ch_r06',
                 "M09": 'ch_r13',
                 "M10": 'ch_r16',
                 "M12": 'ch_tb37',
+                "M11": 'ch_r22',
                 "M14": 'ch_tb85',
                 "M15": 'ch_tb11',
                 "M16": 'ch_tb12',
@@ -86,7 +87,6 @@ PPS_TAGNAMES = {"M05": 'ch_r06',
                 "I03": 'ch_r16',
                 "I04": 'ch_tb37',
                 # Not used by pps:
-                "M11": 'ch_r22',
                 "I05": 'ch_tbxx',
                 "M01": 'ch_rxx',
                 "M02": 'ch_rxx',

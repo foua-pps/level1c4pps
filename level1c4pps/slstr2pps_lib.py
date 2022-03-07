@@ -71,16 +71,16 @@ PPS_TAGNAMES = {'S2': 'ch_r06',  # or S1
                 'S3': 'ch_r09',
                 'S4': 'ch_r13',
                 'S5': 'ch_r16',
+                'S6': 'ch_r22',
                 'S7': 'ch_tb37',
                 'S8': 'ch_tb11',
                 'S9': 'ch_tb12',
                 # Not yet in pps:
-                'S6': 'ch_r22',
                 'S1': 'ch_rxx',
                 'F1': 'ch_tbxx',
                 'F2': 'ch_tbxx'}
 
-BANDNAMES_PPS = ['S2', 'S3', 'S4', 'S5', 'S7', 'S8', 'S9']
+BANDNAMES_PPS = ['S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9']
 BANDNAMES_DEFAULT = ['S2', 'S3', 'S4', 'S5',  'S6', 'S7', 'S8', 'S9']
 
 
