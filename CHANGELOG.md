@@ -1,4 +1,14 @@
-## Version <RELEASE_VERSION> (2022/03/03)
+## Version <v.0.2.30> (2022/04/29)
+
+
+### Pull Requests Merged
+
+* [PR 70](https://github.com/foua-pps/level1c4pps/pull/70) - Usage ch r22, by [@shornqui](https://github.com/shornqui)
+
+In this release 1 pull request was closed.
+
+
+## Version <v.0.2.29> (2022/03/03)
 
 ### Issues Closed
 
