@@ -49,7 +49,6 @@ COEFS_MEIRINK = dict(
     )
 )
 
-REF_DATE = datetime.date(2000, 1, 1)
 REF_TIME = datetime.datetime(2000, 1, 1, 0, 0)
 
 
@@ -60,10 +59,11 @@ def calib_meirink(platform, channel, time):
 
     :returns: gain, offset [mW m-2 sr-1 (cm-1)-1]
     """
+    if isinstance(time, datetime.date):
+        time = datetime.datetime.combine(time, datetime.time(0))
     if time < REF_TIME:
         raise ValueError('Given time ({0}) is < reference time ({1})'.format(
             time, REF_TIME))
-
     a = COEFS_MEIRINK[platform][channel]['a']
     b = COEFS_MEIRINK[platform][channel]['b']
     delta_days = (time - REF_TIME).total_seconds() / 3600.0 / 24.0
@@ -73,42 +73,12 @@ def calib_meirink(platform, channel, time):
     return gain, offset
 
 
-def calib_meirink_date(platform, channel, date):
-    """Get MODIS-intercalibrated gain and offset for SEVIRI VIS channels.
-
-    Reference: http://msgcpp.knmi.nl/mediawiki/index.php/MSG-SEVIRI_solar_channel_calibration
-
-    :returns: gain, offset [mW m-2 sr-1 (cm-1)-1]
-    """
-    if date < REF_DATE:
-        raise ValueError('Given date ({0}) is < reference date ({1})'.format(
-            date, REF_DATE))
-
-    a = COEFS_MEIRINK[platform][channel]['a']
-    b = COEFS_MEIRINK[platform][channel]['b']
-    gain = (b + a*(date - REF_DATE).days) / 1000.0  # micro Watts -> milli Watts
-    offset = -51.0 * gain  # Space count is 51
-
-    return gain, offset
-
-
-def get_calibration_for_time(platform, time):
+def get_calibration(platform, time):
     """Get MODIS-intercalibrated gain and offset for specific time."""
     coefs = {}
     for channel in ('VIS006', 'VIS008', 'IR_016'):
         gain, offset = calib_meirink(platform=platform, channel=channel,
                                      time=time)
-        coefs[channel] = {'gain': gain, 'offset': offset}
-
-    return coefs
-
-
-def get_calibration_for_date(platform, date):
-    """Get MODIS-intercalibrated gain and offset for specific date."""
-    coefs = {}
-    for channel in ('VIS006', 'VIS008', 'IR_016'):
-        gain, offset = calib_meirink_date(platform=platform, channel=channel,
-                                          date=date)
         coefs[channel] = {'gain': gain, 'offset': offset}
 
     return coefs

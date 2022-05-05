@@ -494,10 +494,14 @@ class TestSeviri2PPS(unittest.TestCase):
 class TestCalibration:
     """Test SEVIRI calibration."""
 
-    def test_get_calibration_for_date(self):
+    @pytest.mark.parametrize(
+        "time",
+        (dt.date(2018, 1, 18), dt.datetime(2018, 1, 18))
+    )
+    def test_get_calibration_for_date(self, time):
         """Test MODIS-intercalibrated gain and offset for specific date."""
-        coefs = calib.get_calibration_for_date(
-            platform='MSG3', date=dt.date(2018, 1, 18))
+        coefs = calib.get_calibration(
+            platform='MSG3', time=time)
         REF = {
             'VIS006': {'gain': 0.023689275200000002, 'offset': -1.2081530352},
             'VIS008': {'gain': 0.029757990399999996,
@@ -505,12 +509,14 @@ class TestCalibration:
             'IR_016': {'gain': 0.0228774688, 'offset': -1.1667509087999999}}
         self._assert_coefs_close(coefs, REF)
 
-    def _assert_coefs_close(self, coefs, expected):
+    def _assert_coefs_close(self, coefs, expected, **tol):
         for channel in expected.keys():
             np.testing.assert_allclose(coefs[channel]['gain'],
-                                       expected[channel]['gain'])
+                                       expected[channel]['gain'],
+                                       **tol)
             np.testing.assert_allclose(coefs[channel]['offset'],
-                                       expected[channel]['offset'])
+                                       expected[channel]['offset'],
+                                       **tol)
 
     @pytest.mark.parametrize(
         "platform,timestamp,expected",
@@ -569,17 +575,16 @@ class TestCalibration:
     )
     def test_get_calibration_for_time(self, platform, timestamp, expected):
         """Test MODIS-intercalibrated gain and offset for specific time."""
-        coefs = calib.get_calibration_for_time(platform=platform,
-                                               time=timestamp)
+        coefs = calib.get_calibration(platform=platform, time=timestamp)
         self._assert_coefs_close(coefs, expected)
 
     def test_calibration_is_smooth(self):
         """Test that calibration is smooth in time."""
-        coefs1 = calib.get_calibration_for_time(
+        coefs1 = calib.get_calibration(
             platform='MSG3', time=dt.datetime(2018, 1, 18, 23, 59))
-        coefs2 = calib.get_calibration_for_date(
-            platform='MSG3', date=dt.date(2018, 1, 19))
-        self._assert_coefs_close(coefs1, coefs2)
+        coefs2 = calib.get_calibration(
+            platform='MSG3', time=dt.datetime(2018, 1, 19))
+        self._assert_coefs_close(coefs1, coefs2, atol=1e-4)
 
 
 class TestSEVIRIFilenameParser(unittest.TestCase):
