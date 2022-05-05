@@ -24,6 +24,7 @@
 
 import datetime as dt
 import numpy as np
+import pytest
 import unittest
 try:
     from unittest import mock
@@ -490,7 +491,7 @@ class TestSeviri2PPS(unittest.TestCase):
         self.assertEqual(arr.attrs['end_time'], end_time)
 
 
-class TestCalibration(unittest.TestCase):
+class TestCalibration:
     """Test SEVIRI calibration."""
 
     def test_get_calibration_for_date(self):
@@ -502,64 +503,83 @@ class TestCalibration(unittest.TestCase):
             'VIS008': {'gain': 0.029757990399999996,
                        'offset': -1.5176575103999999},
             'IR_016': {'gain': 0.0228774688, 'offset': -1.1667509087999999}}
-        for channel in REF.keys():
-            self.assertEqual(coefs[channel]['gain'], REF[channel]['gain'])
-            self.assertEqual(coefs[channel]['offset'], REF[channel]['offset'])
+        self._assert_coefs_close(coefs, REF)
 
-    def test_get_calibration_for_time(self):
+    def _assert_coefs_close(self, coefs, expected):
+        for channel in expected.keys():
+            np.testing.assert_allclose(coefs[channel]['gain'],
+                                       expected[channel]['gain'])
+            np.testing.assert_allclose(coefs[channel]['offset'],
+                                       expected[channel]['offset'])
+
+    @pytest.mark.parametrize(
+        "platform,timestamp,expected",
+        (
+            [
+                (
+                    "MSG1",
+                    dt.datetime(2005, 1, 18, 0, 0),
+                    {
+                        'VIS006': {'gain': 0.0250354716,
+                                   'offset': -1.2768090516000001},
+                        'VIS008': {'gain': 0.0315626684,
+                                   'offset': -1.6096960884},
+                        'IR_016': {'gain': 0.022880986,
+                                   'offset': -1.166930286}
+                    }
+                ),
+                (
+                    "MSG2",
+                    dt.datetime(2010, 1, 18, 0, 0),
+                    {
+                        'VIS006': {'gain': 0.021964051999999998,
+                                   'offset': -1.120166652},
+                        'VIS008': {'gain': 0.027548445,
+                                   'offset': -1.404970695},
+                        'IR_016': {'gain': 0.021576766,
+                                   'offset': -1.100415066}
+                    },
+                ),
+                (
+                    'MSG3',
+                    dt.datetime(2018, 1, 18, 0, 0),
+                    {
+                        'VIS006': {'gain': 0.023689275200000002,
+                                   'offset': -1.2081530352},
+                        'VIS008': {'gain': 0.029757990399999996,
+                                   'offset': -1.5176575103999999},
+                        'IR_016': {'gain': 0.0228774688,
+                                   'offset': -1.1667509087999999}
+                    }
+                ),
+                (
+                    'MSG4',
+                    dt.datetime(2019, 1, 18, 0, 0),
+                    {
+                        'VIS006': {'gain': 0.0230415289,
+                                   'offset': -1.1751179739},
+                        'VIS008': {'gain': 0.0291916818,
+                                   'offset': -1.4887757718},
+                        'IR_016': {'gain': 0.022223894,
+                                   'offset': -1.1334185940000001}
+                    }
+                )
+            ]
+        )
+    )
+    def test_get_calibration_for_time(self, platform, timestamp, expected):
         """Test MODIS-intercalibrated gain and offset for specific time."""
-        REF = {
-            ('MSG1', dt.datetime(2005, 1, 18, 0, 0)): {
-                'VIS006': {'gain': 0.0250354716,
-                           'offset': -1.2768090516000001},
-                'VIS008': {'gain': 0.0315626684,
-                           'offset': -1.6096960884},
-                'IR_016': {'gain': 0.022880986,
-                           'offset': -1.166930286}},
-            ('MSG2', dt.datetime(2010, 1, 18, 0, 0)): {
-                'VIS006': {'gain': 0.021964051999999998,
-                           'offset': -1.120166652},
-                'VIS008': {'gain': 0.027548445,
-                           'offset': -1.404970695},
-                'IR_016': {'gain': 0.021576766,
-                           'offset': -1.100415066}},
-            ('MSG3', dt.datetime(2018, 1, 18, 0, 0)): {
-                'VIS006': {'gain': 0.023689275200000002,
-                           'offset': -1.2081530352},
-                'VIS008': {'gain': 0.029757990399999996,
-                           'offset': -1.5176575103999999},
-                'IR_016': {'gain': 0.0228774688,
-                           'offset': -1.1667509087999999}},
-            ('MSG4', dt.datetime(2019, 1, 18, 0, 0)): {
-                'VIS006': {'gain': 0.0230415289,
-                           'offset': -1.1751179739},
-                'VIS008': {'gain': 0.0291916818,
-                           'offset': -1.4887757718},
-                'IR_016': {'gain': 0.022223894,
-                           'offset': -1.1334185940000001}}
-        }
-        for (platform, time), ref in REF.items():
-            coefs = calib.get_calibration_for_time(platform=platform,
-                                                   time=time)
-            for channel in ref.keys():
-                np.testing.assert_allclose(coefs[channel]['gain'],
-                                           ref[channel]['gain'])
-                np.testing.assert_allclose(coefs[channel]['offset'],
-                                           ref[channel]['offset'])
+        coefs = calib.get_calibration_for_time(platform=platform,
+                                               time=timestamp)
+        self._assert_coefs_close(coefs, expected)
 
-    def test_get_calibration(self):
-        """Test MODIS-intercalibrated for date and time."""
+    def test_calibration_is_smooth(self):
+        """Test that calibration is smooth in time."""
         coefs1 = calib.get_calibration_for_time(
             platform='MSG3', time=dt.datetime(2018, 1, 18, 23, 59))
         coefs2 = calib.get_calibration_for_date(
             platform='MSG3', date=dt.date(2018, 1, 19))
-        for channel in coefs1.keys():
-            self.assertAlmostEqual(coefs1[channel]['gain'],
-                                   coefs2[channel]['gain'],
-                                   delta=10e-8)
-            self.assertAlmostEqual(coefs1[channel]['offset'],
-                                   coefs2[channel]['offset'],
-                                   delta=10e-8)
+        self._assert_coefs_close(coefs1, coefs2)
 
 
 class TestSEVIRIFilenameParser(unittest.TestCase):
