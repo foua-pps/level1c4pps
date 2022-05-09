@@ -89,19 +89,24 @@ def _get_single_channel_calibration(platform, channel, time, clip):
 
 def _prepare_time(time, clip):
     time = _convert_to_datetime(time)
-    _check_time(time)
+    _check_is_valid_time(time)
     if clip:
         time = _clip_at_coverage_bounds(time)
     return time
 
 
 def _convert_to_datetime(date_or_time):
-    if isinstance(date_or_time, datetime.date):
+    if _is_date(date_or_time):
         return datetime.datetime.combine(date_or_time, datetime.time(0))
     return date_or_time
 
 
-def _check_time(time):
+def _is_date(date_or_time):
+    # datetime is a subclass of date, therefore we cannot use isinstance here
+    return type(date_or_time) == datetime.date
+
+
+def _check_is_valid_time(time):
     ref_time = CalibrationData.REF_TIME.value
     if time < ref_time:
         raise ValueError('Given time ({0}) is < reference time ({1})'.format(

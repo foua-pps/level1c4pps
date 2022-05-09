@@ -606,6 +606,13 @@ class TestCalibration:
         )
         self._assert_coefs_close(coefs1, coefs2)
 
+    def test_fails_with_invalid_time(self):
+        with pytest.raises(ValueError):
+            calib.get_calibration(
+                platform='MSG1',
+                time=dt.datetime(1999, 1, 1)
+            )
+
 
 class TestSEVIRIFilenameParser(unittest.TestCase):
     def test_parse_native(self):
