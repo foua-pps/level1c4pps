@@ -586,6 +586,24 @@ class TestCalibration:
             platform='MSG3', time=dt.datetime(2018, 1, 19))
         self._assert_coefs_close(coefs1, coefs2, atol=1e-4)
 
+    @pytest.mark.parametrize(
+        "coverage_boundary,outside_coverage",
+        [
+            (dt.datetime(2004, 1, 1), dt.datetime(2003, 1, 1)),
+            (dt.datetime(2021, 1, 1), dt.datetime(2022, 1, 1)),
+        ]
+    )
+    def test_clip_at_time_coverage_bounds(self, coverage_boundary, outside_coverage):
+        coefs1 = calib.get_calibration(
+            platform='MSG1',
+            time=coverage_boundary
+        )
+        coefs2 = calib.get_calibration(
+            platform='MSG1',
+            time=outside_coverage
+        )
+        self._assert_coefs_close(coefs1, coefs2)
+
 
 class TestSEVIRIFilenameParser(unittest.TestCase):
     def test_parse_native(self):

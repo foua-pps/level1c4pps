@@ -43,7 +43,7 @@ from trollsift.parser import globify, Parser
 from pyorbital.astronomy import get_alt_az, sun_zenith_angle
 from pyorbital.orbital import get_observer_look
 
-from level1c4pps.calibration_coefs import get_calibration, CALIB_MODE
+from level1c4pps.calibration_coefs import get_calibration, CalibrationData
 from level1c4pps import make_azidiff_angle, get_encoding, compose_filename, update_angle_attributes
 
 
@@ -123,10 +123,12 @@ def load_and_calibrate(filenames, apply_sun_earth_distance_correction, rotate):
 
 
 def _create_scene(file_format, filenames, calib_coefs):
-    return Scene(reader=file_format,
-                 filenames=filenames,
-                 reader_kwargs={'calib_mode': CALIB_MODE,
-                                'ext_calib_coefs': calib_coefs})
+    return Scene(
+        reader=file_format,
+        filenames=filenames,
+        reader_kwargs={'calib_mode': CalibrationData.SATPY_CALIB_MODE.value,
+                       'ext_calib_coefs': calib_coefs}
+    )
 
 
 def _check_is_seviri_data(scene):
