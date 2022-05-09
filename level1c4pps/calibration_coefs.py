@@ -50,6 +50,7 @@ COEFS_MEIRINK = dict(
 )
 
 REF_TIME = datetime.datetime(2000, 1, 1, 0, 0)
+SPACE_COUNT = -51.0
 
 
 def calib_meirink(platform, channel, time):
@@ -59,18 +60,39 @@ def calib_meirink(platform, channel, time):
 
     :returns: gain, offset [mW m-2 sr-1 (cm-1)-1]
     """
-    if isinstance(time, datetime.date):
-        time = datetime.datetime.combine(time, datetime.time(0))
+    time = _convert_to_datetime(time)
+    _check_time(time)
+    a = COEFS_MEIRINK[platform][channel]['a']
+    b = COEFS_MEIRINK[platform][channel]['b']
+    days_since_ref_time = _get_days_since_ref_time(time)
+    return _calc_gain_offset(a, b, days_since_ref_time)
+
+
+def _check_time(time):
     if time < REF_TIME:
         raise ValueError('Given time ({0}) is < reference time ({1})'.format(
             time, REF_TIME))
-    a = COEFS_MEIRINK[platform][channel]['a']
-    b = COEFS_MEIRINK[platform][channel]['b']
-    delta_days = (time - REF_TIME).total_seconds() / 3600.0 / 24.0
-    gain = (b + a * delta_days) / 1000.0  # micro Watts -> milli Watts
-    offset = -51.0 * gain  # Space count is 51
 
+
+def _convert_to_datetime(date_or_time):
+    if isinstance(date_or_time, datetime.date):
+        return datetime.datetime.combine(date_or_time, datetime.time(0))
+    return date_or_time
+
+
+def _get_days_since_ref_time(time):
+    return (time - REF_TIME).total_seconds() / 3600.0 / 24.0
+
+
+def _calc_gain_offset(a, b, days_since_ref_time):
+    gain = (b + a * days_since_ref_time)
+    gain = _microwatts_to_milliwatts(gain)
+    offset = SPACE_COUNT * gain
     return gain, offset
+
+
+def _microwatts_to_milliwatts(microwatts):
+    return microwatts / 1000.0
 
 
 def get_calibration(platform, time):
