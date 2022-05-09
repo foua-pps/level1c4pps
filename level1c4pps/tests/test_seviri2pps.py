@@ -76,7 +76,8 @@ class TestSeviri2PPS(unittest.TestCase):
         res = seviri2pps.load_and_calibrate(
             filenames,
             apply_sun_earth_distance_correction=False,
-            rotate=False
+            rotate=False,
+            clip_calib=False
         )
 
         # Compare results and expectations
@@ -105,7 +106,8 @@ class TestSeviri2PPS(unittest.TestCase):
         res = seviri2pps.load_and_calibrate(
             filenames,
             apply_sun_earth_distance_correction=False,
-            rotate=True
+            rotate=True,
+            clip_calib=False
         )
         scene.load.assert_called_with(mock.ANY, upper_right_corner='NE')
         self.assertTrue(res.attrs['image_rotated'])
