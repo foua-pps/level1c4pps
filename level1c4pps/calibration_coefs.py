@@ -56,7 +56,7 @@ SPACE_COUNT = -51.0
 def calib_meirink(platform, channel, time):
     """Get MODIS-intercalibrated gain and offset for SEVIRI VIS channels.
 
-    Reference: http://msgcpp.knmi.nl/mediawiki/index.php/MSG-SEVIRI_solar_channel_calibration
+    Reference: https://msgcpp.knmi.nl/solar-channel-calibration.html
 
     :returns: gain, offset [mW m-2 sr-1 (cm-1)-1]
     """
