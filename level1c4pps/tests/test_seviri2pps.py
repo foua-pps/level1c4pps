@@ -500,7 +500,7 @@ class TestCalibration:
         "time",
         (dt.date(2018, 1, 18), dt.datetime(2018, 1, 18))
     )
-    def test_get_calibration_for_date(self, time):
+    def test_get_calibration_can_handle_both_date_and_time(self, time):
         """Test MODIS-intercalibrated gain and offset for specific date."""
         coefs = calib.get_calibration(
             platform='MSG3', time=time)
@@ -575,7 +575,7 @@ class TestCalibration:
             ]
         )
     )
-    def test_get_calibration_for_time(self, platform, timestamp, expected):
+    def test_get_calibration(self, platform, timestamp, expected):
         """Test MODIS-intercalibrated gain and offset for specific time."""
         coefs = calib.get_calibration(platform=platform, time=timestamp)
         self._assert_coefs_close(coefs, expected)
