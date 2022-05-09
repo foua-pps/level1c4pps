@@ -59,16 +59,16 @@ class CalibrationData(Enum):
     SATPY_CALIB_MODE = 'Nominal'
 
 
-def get_calibration(platform, time, clip_time=True):
+def get_calibration(platform, time, clip=True):
     """Get MODIS-intercalibrated gain and offset for specific time.
 
     Args:
         platform: Platform name.
         time: Date or time of observations to be calibrated.
-        clip_time: If True, do not extrapolate calibration
-            coefficients beyond the time coverage of the calibration dataset.
-            Instead, clip at the boundaries, that means return the boundary
-            coefficients for timestamps outside the coverage.
+        clip: If True, do not extrapolate calibration coefficients beyond the
+            time coverage of the calibration dataset. Instead, clip at the
+            boundaries, that means return the boundary coefficients for
+            timestamps outside the coverage.
     """
     coefs = {}
     for channel in ('VIS006', 'VIS008', 'IR_016'):
@@ -76,22 +76,22 @@ def get_calibration(platform, time, clip_time=True):
             platform=platform,
             channel=channel,
             time=time,
-            clip_time=clip_time
+            clip=clip
         )
     return coefs
 
 
-def _get_single_channel_calibration(platform, channel, time, clip_time):
-    time = _prepare_time(time, clip_time)
+def _get_single_channel_calibration(platform, channel, time, clip):
+    time = _prepare_time(time, clip)
     gain, offset = calib_meirink(platform, channel, time)
     return {'gain': gain, 'offset': offset}
 
 
-def _prepare_time(time, clip_time):
+def _prepare_time(time, clip):
     time = _convert_to_datetime(time)
     _check_time(time)
-    if clip_time:
-        time = _clip_time_at_coverage_bounds(time)
+    if clip:
+        time = _clip_at_coverage_bounds(time)
     return time
 
 
@@ -108,7 +108,7 @@ def _check_time(time):
             time, ref_time))
 
 
-def _clip_time_at_coverage_bounds(time):
+def _clip_at_coverage_bounds(time):
     time_cov = CalibrationData.TIME_COVERAGE.value
     time = max(time, time_cov["start"])
     time = min(time, time_cov["end"])
