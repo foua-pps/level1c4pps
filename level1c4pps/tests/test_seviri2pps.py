@@ -621,6 +621,7 @@ class TestCalibration:
         self._assert_coefs_close(coefs1, coefs2)
 
     def test_fails_with_invalid_time(self):
+        """Test that calibration fails with timestamps < reference time."""
         with pytest.raises(ValueError):
             calib.get_calibration(
                 platform='MSG1',

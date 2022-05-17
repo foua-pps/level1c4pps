@@ -82,6 +82,14 @@ def get_calibration(platform, time, clip=False):
 
 
 def _get_single_channel_calibration(platform, channel, time, clip):
+    """Get calibration coefficients for a single channel.
+
+    Args:
+        platform: Platform name.
+        channel: Channel name.
+        time: Observation date or time.
+        clip: Clip at time coverage boundaries of the calibration dataset.
+    """
     time = _prepare_time(time, clip)
     gain, offset = calib_meirink(platform, channel, time)
     return {'gain': gain, 'offset': offset}
