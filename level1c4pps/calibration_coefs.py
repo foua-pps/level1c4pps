@@ -59,7 +59,7 @@ class CalibrationData(Enum):
     SATPY_CALIB_MODE = 'Nominal'
 
 
-def get_calibration(platform, time, clip=True):
+def get_calibration(platform, time, clip=False):
     """Get MODIS-intercalibrated gain and offset for specific time.
 
     Args:

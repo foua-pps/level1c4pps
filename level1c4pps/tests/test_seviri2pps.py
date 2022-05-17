@@ -571,6 +571,18 @@ class TestCalibration:
                         'IR_016': {'gain': 0.022223894,
                                    'offset': -1.1334185940000001}
                     }
+                ),
+                (
+                    'MSG4',
+                    dt.datetime(2024, 1, 18, 0, 0),
+                    {
+                        'VIS006': {'gain': 0.0235668691,
+                                   'offset': -1.2019103241},
+                        'VIS008': {'gain': 0.0303007942,
+                                   'offset': -1.5453405042000001},
+                        'IR_016': {'gain': 0.022483186,
+                                   'offset': -1.146642486}
+                    }  # extrapolation beyond time coverage of calib. dataset
                 )
             ]
         )
@@ -596,13 +608,15 @@ class TestCalibration:
         ]
     )
     def test_clip_at_time_coverage_bounds(self, coverage_boundary, outside_coverage):
+        """Test clipping beyond time coverage of the calibration dataset."""
         coefs1 = calib.get_calibration(
             platform='MSG1',
             time=coverage_boundary
         )
         coefs2 = calib.get_calibration(
             platform='MSG1',
-            time=outside_coverage
+            time=outside_coverage,
+            clip=True
         )
         self._assert_coefs_close(coefs1, coefs2)
 
