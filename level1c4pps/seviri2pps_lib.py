@@ -43,7 +43,7 @@ from trollsift.parser import globify, Parser
 from pyorbital.astronomy import get_alt_az, sun_zenith_angle
 from pyorbital.orbital import get_observer_look
 
-from level1c4pps.calibration_coefs import get_calibration_for_time, CALIB_MODE
+from level1c4pps.calibration_coefs import get_calibration, CalibrationData
 from level1c4pps import make_azidiff_angle, get_encoding, compose_filename, update_angle_attributes
 
 
@@ -89,7 +89,8 @@ NATIVE_FILE_PATTERN = ('{platform_shortname:4s}-{instr:4s}-'
 # MSG4-SEVI-MSG15-1234-NA-20190409121243.927000000Z
 
 
-def load_and_calibrate(filenames, apply_sun_earth_distance_correction, rotate):
+def load_and_calibrate(filenames, apply_sun_earth_distance_correction, rotate,
+                       clip_calib):
     """Load and calibrate data.
 
     Uses inter-calibration coefficients from Meirink et al.
@@ -99,6 +100,9 @@ def load_and_calibrate(filenames, apply_sun_earth_distance_correction, rotate):
         apply_sun_earth_distance_correction: If True, apply sun-earth-distance-
             correction to visible channels.
         rotate: Rotate image so that pixel (0, 0) is N-W.
+        clip_calib: If True, do not extrapolate calibration coefficients beyond
+            the time coverage of the calibration dataset. Instead, clip at the
+            boundaries.
 
     Returns:
         Satpy scene holding calibrated channels
@@ -107,9 +111,10 @@ def load_and_calibrate(filenames, apply_sun_earth_distance_correction, rotate):
     parser = SEVIRIFilenameParser()
     file_format, info = parser.parse(os.path.basename(filenames[0]))
 
-    calib_coefs = get_calibration_for_time(
+    calib_coefs = get_calibration(
         platform=info['platform_shortname'],
-        time=info['start_time']
+        time=info['start_time'],
+        clip=clip_calib
     )
     scn_ = _create_scene(file_format, filenames, calib_coefs)
     _check_is_seviri_data(scn_)
@@ -123,10 +128,12 @@ def load_and_calibrate(filenames, apply_sun_earth_distance_correction, rotate):
 
 
 def _create_scene(file_format, filenames, calib_coefs):
-    return Scene(reader=file_format,
-                 filenames=filenames,
-                 reader_kwargs={'calib_mode': CALIB_MODE,
-                                'ext_calib_coefs': calib_coefs})
+    return Scene(
+        reader=file_format,
+        filenames=filenames,
+        reader_kwargs={'calib_mode': CalibrationData.SATPY_CALIB_MODE.value,
+                       'ext_calib_coefs': calib_coefs}
+    )
 
 
 def _check_is_seviri_data(scene):
@@ -556,7 +563,8 @@ class SEVIRIFilenameParser:
 
 def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf',
                      use_nominal_time_in_filename=False,
-                     apply_sun_earth_distance_correction=True):
+                     apply_sun_earth_distance_correction=True,
+                     clip_calib=False):
     """Make level 1c files in PPS-format."""
     for fname in tslot_files:
         if not os.path.isfile(fname):
@@ -566,7 +574,8 @@ def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf',
     scn_ = load_and_calibrate(
         tslot_files,
         apply_sun_earth_distance_correction=apply_sun_earth_distance_correction,
-        rotate=rotate
+        rotate=rotate,
+        clip_calib=clip_calib
     )
 
     # Find lat/lon data
