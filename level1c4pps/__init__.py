@@ -416,7 +416,8 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
         else:
             # Assume factor applied if available as attribute.
             scene[band].attrs['sun_earth_distance_correction_applied'] = 'True'
-        scene[band].attrs['wavelength'] = scene[band].attrs['wavelength'][0:3]
+        if 'wavelength' in  scene[band].attrs:   
+            scene[band].attrs['wavelength'] = scene[band].attrs['wavelength'][0:3]
         scene[band].attrs['sun_zenith_angle_correction_applied'] = 'False'
         if idtag in PPS_TAGNAMES_TO_IMAGE_NR:
             scene[band].attrs['name'] = PPS_TAGNAMES_TO_IMAGE_NR[idtag]
@@ -433,7 +434,7 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
 
         # Add time coordinate. To make cfwriter aware that we want 3D data.
         scene[band].coords['time'] = irch.attrs['start_time']
-
+        
         # Remove some attributes and coordinates
         for attr in RENAME_VARS:
             if attr in scene[band].attrs:
