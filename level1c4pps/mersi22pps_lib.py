@@ -46,7 +46,7 @@ logger = logging.getLogger('mersi22pps')
 
 PLATFORM_SHORTNAMES = {'FY3D': 'FY-3D'}
 # BANDNAMES = ['%d' % (chn+1) for chn in range(25)]
-BANDNAMES = ['3', '4', '5', '6', '20', '23', '24', '25']
+BANDNAMES = ['3', '4', '5', '6', '20', '22', '23', '24', '25']
 
 REFL_BANDS = ['3', '4', '5', '6']
 
