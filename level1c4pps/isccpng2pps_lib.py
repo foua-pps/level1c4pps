@@ -28,6 +28,7 @@ import xarray as xr
 import numpy as np
 from satpy.scene import Scene
 from level1c4pps import (get_encoding, compose_filename,
+                         apply_sunz_correction,
                          rename_latitude_longitude,
                          update_angle_attributes, get_header_attrs,
                          set_header_and_band_attrs_defaults,
@@ -101,7 +102,7 @@ def set_header_and_band_attrs(scene, orbit_n=00000):
         if band not in scene:
             continue
         print("Is this correct, I have no clue!")
-        scene[band].attrs['sun_zenith_angle_correction_applied'] = 'True'
+        scene[band].attrs['sun_zenith_angle_correction_applied'] = 'False'
     return nimg
 
 
@@ -146,7 +147,7 @@ def process_one_scene(scene_files, out_path,
     update_angle_attributes(scn_, irch)
 
     # Apply sunz correction
-    # apply_sunz_correction(scn_, REFL_BANDS)
+    apply_sunz_correction(scn_, REFL_BANDS)
 
     filename = compose_filename(scn_, out_path, instrument='seviri', band=irch)
     scn_.save_datasets(writer='cf',
