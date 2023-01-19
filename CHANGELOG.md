@@ -1,3 +1,15 @@
+
+## Version <v.0.2.31> (2023/01/19)
+
+
+### Pull Requests Merged
+
+* [PR 73](https://github.com/foua-pps/level1c4pps/pull/73) - Fixing channel unit, by [@ninahakansson](https://github.com/ninahakansson)
+* [PR 72](https://github.com/foua-pps/level1c4pps/pull/72) - Read also channel 7.3µm MERSI2, by [@ninahakansson](https://github.com/ninahakansson)
+* [PR 71](https://github.com/foua-pps/level1c4pps/pull/71) - Add clipping for SEVIRI calibration coefficients, by [@sfinkens](https://github.com/sfinkens)
+
+In this release 3 pull requests were closed.
+
 ## Version <v.0.2.30> (2022/04/29)
 
 
