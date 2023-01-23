@@ -23,7 +23,7 @@ dependencies:
   - mock
   - numpy
   - xarray
-  - satpy
+  - satpy=0.37
   - pyspectral
   - h5netcdf
   - pyorbital
