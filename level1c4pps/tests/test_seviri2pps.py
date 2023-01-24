@@ -97,6 +97,7 @@ class TestSeviri2PPS(unittest.TestCase):
             dims=('y', 'x')
         )
         if res['VIS006'][0, 0] > 1.04:
+            # pyspectral 1.7.1 and older
             xr.testing.assert_allclose(res['VIS006'], vis006_exp_pyspectral_1_7_1)
         else:
             xr.testing.assert_allclose(res['VIS006'], vis006_exp)
