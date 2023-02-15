@@ -17,6 +17,11 @@ Example:
 loghub foua-pps/level1c4pps -st v0.2.28 -plg bug "Bugs fixed" -plg enhancement "Features added" -plg documentation "Documentation changes"
 ```
 
+Or only:
+```
+loghub foua-pps/level1c4pps  -st v0.2.31 
+```
+
 The  "--token <personal access token (see https://github.com/settings/tokens)>" somtimes can be excluded.
 
 Paste CHANGELOG.temp to CHANGELOG.md and update RELEASE-VERSION to the version that will be released.

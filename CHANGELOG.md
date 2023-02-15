@@ -1,3 +1,11 @@
+## Version <v.0.2.32> (2023/02/15)
+
+
+### Pull Requests Merged
+
+* [PR 75](https://github.com/foua-pps/level1c4pps/pull/75) - Pyspectral 1.7.2 and satpy <= 0.37 for gac data, by [@ninahakansson](https://github.com/ninahakansson)
+
+In this release 1 pull request was closed.
 
 ## Version <v.0.2.31> (2023/01/19)
 
