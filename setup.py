@@ -35,7 +35,7 @@ try:
 except ImportError:
     pass
 
-requires = ['satpy <= 0.37', 'pyorbital', 'trollsift', 'pyspectral', 'h5netcdf'],
+requires = ['satpy', 'pyorbital', 'trollsift', 'pyspectral', 'h5netcdf'],
 
 NAME = "level1c4pps"
 README = open('README.md', 'r').read()
@@ -59,6 +59,7 @@ setup(name=NAME,
                'bin/gac2pps.py',
                'bin/mersi22pps.py',
                'bin/viirs2pps.py',
+               'bin/vgac2pps.py',
                'bin/slstr2pps.py',
                'bin/metimage2pps.py',
                'bin/eumgacfdr2pps.py',
