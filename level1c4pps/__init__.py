@@ -130,14 +130,18 @@ ADDITIONAL_CHANNEL_VARS = [
 SATPY_ANGLE_NAMES = {
     'solar_zenith': 'sunzenith',  # no _angle
     'solar_zenith_angle': 'sunzenith',
+    'sza': 'sunzenith',
     'solar_azimuth': 'sunazimuth',  # no _angle
     'solar_azimuth_angle': 'sunazimuth',
+    'azn': 'sunazimuth',
     'satellite_zenith_angle': 'satzenith',
     'sensor_zenith_angle': 'satzenith',
     'observation_zenith': 'satzenith',
+    'vza': 'satzenith',
     'satellite_azimuth_angle': 'satazimuth',
     'sensor_azimuth_angle': 'satazimuth',
     'observation_azimuth': 'satazimuth',
+    'azi': 'satazimuth',
     'sun_sensor_azimuth_difference_angle': 'azimuthdiff',
 }
 
@@ -250,6 +254,10 @@ def dt64_to_datetime(dt64):
         seconds_since_epoch = (dt64 - unix_epoch) / one_second
         dt = datetime.utcfromtimestamp(seconds_since_epoch)
         return dt
+    elif type(dt64) == np.float64:
+        seconds_since_epoch = dt64
+        dt = datetime.utcfromtimestamp(seconds_since_epoch)
+        return dt  
     return dt64
 
 
@@ -516,6 +524,7 @@ def platform_name_to_use_in_filename(platform_name):
         new_name = 'metopsga1'
     replace_dict = {'aqua': '2',
                     '-': '',
+                    'jpss1': 'noaa20',
                     'terra': '1',
                     'suomi': ''}
     for orig, new in replace_dict.items():
