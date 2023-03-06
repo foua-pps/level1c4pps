@@ -44,6 +44,8 @@ if __name__ == "__main__":
                         help="Engine for saving netcdf files netcdf4 or h5netcdf (default).")
     parser.add_argument('-all_ch', '--all_channels', action='store_true',
                         help="Save all 36 channels to level1c4pps file.")
+    parser.add_argument('-n19', '--as_noaa19', action='store_true',
+                        help="Save all 36 channels to level1c4pps file.")
     parser.add_argument('-pps_ch', '--pps_channels', action='store_true',
                         help="Save only the necessary (for PPS) channels to level1c4pps file.")
     parser.add_argument('-on', '--orbit_number', type=int, nargs='?',
@@ -53,4 +55,4 @@ if __name__ == "__main__":
     options = parser.parse_args()
     process_one_scene(options.files, options.out_dir, engine=options.nc_engine,
                       all_channels=options.all_channels, pps_channels=options.pps_channels,
-                      orbit_n=options.orbit_number)
+                      orbit_n=options.orbit_number, as_noaa19=options.as_noaa19)

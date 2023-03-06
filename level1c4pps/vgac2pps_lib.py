@@ -65,6 +65,8 @@ REFL_BANDS = ["M01", "M02", "M03", "M04", "M05", "M06", "M07", "M08",
 
 MBAND_PPS = ["M05", "M07", "M09", "M10", "M11", "M12", "M14", "M15", "M16"]
 
+MBAND_AVHRR = ["M05", "M07", "M12", "M15", "M16"]
+
 MBAND_DEFAULT = ["M05", "M07", "M09", "M10",  "M11", "M12", "M14", "M15", "M16"]
 
 
@@ -93,6 +95,21 @@ PPS_TAGNAMES = {"M05": 'ch_r06',
                 "M08": 'ch_rxx',
                 "M13": 'ch_tbxx'}
 
+def convert_to_noaa19(scene):
+    """
+    N19_ch1 = 1.022*M5 (corr-coeff 0.9995)
+    N19_ch2 = 0.729*M6 (corr-coeff 0.9987)
+    N19_ch3b = -1.1603*10^2 + 1.8362 * M12 – 1.501*10^3*M12^2 (corr-coeff 0.9942)
+    N19_ch4 = 1.0003*M15 (corr-coeff 1.0!)
+    N19_ch5 = 0.8 + 0.9956*M16 (corr-coeff 1.0!)
+    """
+    scene["M05"].values = 1.022*scene["M05"]
+    scene["M07"].values = 0.729*scene["M07"]
+    scene["M15"].values = 1.0003*scene["M15"]
+    scene["M16"].values = 0.8 + 0.9956 * scene["M16"] 
+    scene["M12"].values = -1.1603*100 + 1.8362 * scene["M12"] - 1.501 * 0.001 * scene["M12"] * scene["M12"]
+    scene.attrs["platform"] = "noaa19"
+
 
 def get_encoding_viirs(scene):
     """Get netcdf encoding for all datasets."""
@@ -116,7 +133,7 @@ def set_header_and_band_attrs(scene, orbit_n=0):
 
 
 def process_one_scene(scene_files, out_path, engine='h5netcdf',
-                      all_channels=False, pps_channels=False, orbit_n=0):
+                      all_channels=False, pps_channels=False, orbit_n=0, as_noaa19=False):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scn_ = Scene(
@@ -129,6 +146,8 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf',
         MY_MBAND = MBANDS
     if pps_channels:
         MY_MBAND = MBAND_PPS
+    if as_noaa19:
+        MY_MBAND = MBAND_AVHRR 
 
     scn_.load(MY_MBAND
               + ANGLE_NAMES
@@ -145,13 +164,19 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf',
     rename_latitude_longitude(scn_)
 
     # Convert angles to PPS
-    convert_angles(scn_, delete_azimuth=True)
+    convert_angles(scn_, delete_azimuth=False)
     update_angle_attributes(scn_, irch)
 
-    filename = compose_filename(scn_, out_path, instrument='viirs', band=irch)
+    # Adjust to noaa19 with sbafs from KG
+    sensor = "viirs"
+    if as_noaa19:
+        sensor = "avhrr"
+        convert_to_noaa19(scn_)
+    
+    filename = compose_filename(scn_, out_path, instrument=sensor, band=irch)
     scn_.save_datasets(writer='cf',
                        filename=filename,
-                       header_attrs=get_header_attrs(scn_, band=irch, sensor='viirs'),
+                       header_attrs=get_header_attrs(scn_, band=irch, sensor=sensor),
                        engine=engine,
                        include_lonlats=False,
                        flatten_attrs=True,
