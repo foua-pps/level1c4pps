@@ -65,7 +65,7 @@ REFL_BANDS = ["M01", "M02", "M03", "M04", "M05", "M06", "M07", "M08",
 
 MBAND_PPS = ["M05", "M07", "M09", "M10", "M11", "M12", "M14", "M15", "M16"]
 
-MBAND_AVHRR = ["M05", "M07", "M12", "M15", "M16"]
+MBAND_AVHRR = ["M05", "M06", "M12", "M15", "M16"]
 
 MBAND_DEFAULT = ["M05", "M07", "M09", "M10",  "M11", "M12", "M14", "M15", "M16"]
 
@@ -104,15 +104,15 @@ def convert_to_noaa19(scene):
     N19_ch5 = 0.8 + 0.9956*M16 (corr-coeff 1.0!)
     """
     scene["M05"].values = 1.022*scene["M05"]
-    scene["M07"].values = 0.729*scene["M07"]
+    scene["M06"].values = 0.729*scene["M06"]
     scene["M15"].values = 1.0003*scene["M15"]
     scene["M16"].values = 0.8 + 0.9956 * scene["M16"] 
-    scene["M12"].values = -1.1603*100 + 1.8362 * scene["M12"] - 1.501 * 0.001 * scene["M12"] * scene["M12"]
+    scene["M12"].values = -1.1603 * 100 + 1.8362 * scene["M12"] - 1.501 * 0.001 * scene["M12"] * scene["M12"]
     if "npp" in scene.attrs["platform"].lower():
         scene.attrs["platform"] = "vgacsnpp" 
     scene.attrs["platform"] = scene.attrs["platform"].replace("noaa", "vgac")
-    #scene.attrs["platform"] = "noaa19"
-
+    scene["M06"].attrs['id_tag'] =  'ch_r09'  # Set here as M06 not used as ch_r09 normally in PPS
+    
 def get_encoding_viirs(scene):
     """Get netcdf encoding for all datasets."""
     return get_encoding(scene,
