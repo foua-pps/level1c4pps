@@ -108,8 +108,10 @@ def convert_to_noaa19(scene):
     scene["M15"].values = 1.0003*scene["M15"]
     scene["M16"].values = 0.8 + 0.9956 * scene["M16"] 
     scene["M12"].values = -1.1603*100 + 1.8362 * scene["M12"] - 1.501 * 0.001 * scene["M12"] * scene["M12"]
-    scene.attrs["platform"] = "noaa19"
-
+    if "npp" in scene.attrs["platform"].lower():
+        scene.attrs["platform"] = "vgacsnpp" 
+    scene.attrs["platform"] = scene.attrs["platform"].replace("noaa", "vgac")
+    #scene.attrs["platform"] = "noaa19"
 
 def get_encoding_viirs(scene):
     """Get netcdf encoding for all datasets."""
