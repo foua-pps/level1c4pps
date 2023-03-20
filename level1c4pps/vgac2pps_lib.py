@@ -131,6 +131,7 @@ def set_header_and_band_attrs(scene, orbit_n=0):
             continue
         # For VIIRS data sun_zenith_angle_correction_applied is applied always!
         scene[band].attrs['sun_zenith_angle_correction_applied'] = 'True'
+        scene[band] = 100 * scene[band]  # VGAC refl channels not in percent (yet?)
     return nimg
 
 
