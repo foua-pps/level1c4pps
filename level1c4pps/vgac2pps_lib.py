@@ -97,21 +97,23 @@ PPS_TAGNAMES = {"M05": 'ch_r06',
 
 def convert_to_noaa19(scene):
     """
-    N19_ch1 = 1.022*M5 (corr-coeff 0.9995)
-    N19_ch2 = 0.729*M6 (corr-coeff 0.9987)
+    N19_ch1 = 0.958*M5
+    N19_ch2 = 0.878*M7
+    # N19_ch1 = 1.022*M5 (corr-coeff 0.9995)
+    # N19_ch2 = 0.729*M6 (corr-coeff 0.9987)
     N19_ch3b = -1.1603*10^2 + 1.8362 * M12 – 1.501*10^3*M12^2 (corr-coeff 0.9942)
     N19_ch4 = 1.0003*M15 (corr-coeff 1.0!)
     N19_ch5 = 0.8 + 0.9956*M16 (corr-coeff 1.0!)
     """
-    scene["M05"].values = 1.022*scene["M05"]
-    scene["M06"].values = 0.729*scene["M06"]
+    scene["M05"].values = 0.958*scene["M05"]
+    scene["M07"].values = 0.878*scene["M07"]
     scene["M15"].values = 1.0003*scene["M15"]
     scene["M16"].values = 0.8 + 0.9956 * scene["M16"] 
     scene["M12"].values = -1.1603 * 100 + 1.8362 * scene["M12"] - 1.501 * 0.001 * scene["M12"] * scene["M12"]
     if "npp" in scene.attrs["platform"].lower():
         scene.attrs["platform"] = "vgacsnpp" 
     scene.attrs["platform"] = scene.attrs["platform"].replace("noaa", "vgac")
-    scene["M06"].attrs['id_tag'] =  'ch_r09'  # Set here as M06 not used as ch_r09 normally in PPS
+    #scene["M06"].attrs['id_tag'] =  'ch_r09'  # Set here as M06 not used as ch_r09 normally in PPS
     
 def get_encoding_viirs(scene):
     """Get netcdf encoding for all datasets."""
