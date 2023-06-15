@@ -137,7 +137,11 @@ def _create_scene(file_format, filenames, calib_coefs):
 
 
 def _check_is_seviri_data(scene):
-    if not scene.attrs['sensor'] == {'seviri'}:
+    if hasattr(scene, 'sensor_names') and 'seviri' in scene.sensor_names:
+        pass
+    elif scene.attrs['sensor'] == {'seviri'}:
+        pass
+    else:
         raise ValueError('Not SEVIRI data')
 
 
@@ -322,6 +326,8 @@ def update_coords(scene):
 
 
 def add_ancillary_datasets(scene, lons, lats, sunz, satz, azidiff,
+                           suna, sata,
+                           save_azimuth_angles=False,
                            chunks=(512, 3712)):
     """Add ancillary datasets to the scene.
 
@@ -374,6 +380,18 @@ def add_ancillary_datasets(scene, lons, lats, sunz, satz, azidiff,
     scene['azimuthdiff'] = xr.DataArray(
         da.from_array(azidiff[:, :], chunks=chunks),
         dims=['y', 'x'], coords=angle_coords)
+
+    #  Sunazimuth
+    if save_azimuth_angles:
+        scene['sunazimuth'] = xr.DataArray(
+            da.from_array(suna[:, :], chunks=chunks),
+            dims=['y', 'x'], coords=angle_coords)
+
+    #  Satazimuth
+    if save_azimuth_angles:
+        scene['sunazimuth'] = xr.DataArray(
+            da.from_array(sata[:, :], chunks=chunks),
+            dims=['y', 'x'], coords=angle_coords)
 
     # Update the attributes
     update_angle_attributes(scene, band=scene['IR_108'])
@@ -470,7 +488,7 @@ def get_encoding_seviri(scene):
     encoding['time'] = {'units': 'days since 2004-01-01 00:00',
                         'calendar': 'standard',
                         '_FillValue': None,
-                        'chunksizes': [1]}
+                        'chunksizes': (1)}
 
     return encoding
 
@@ -564,7 +582,8 @@ class SEVIRIFilenameParser:
 def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf',
                      use_nominal_time_in_filename=False,
                      apply_sun_earth_distance_correction=True,
-                     clip_calib=False):
+                     clip_calib=False,
+                     save_azimuth_angles=False):
     """Make level 1c files in PPS-format."""
     for fname in tslot_files:
         if not os.path.isfile(fname):
@@ -577,7 +596,9 @@ def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf',
         rotate=rotate,
         clip_calib=clip_calib
     )
-
+    if hasattr(scn_, 'start_time'):
+        scn_.attrs['start_time'] = scn_.start_time
+        scn_.attrs['end_time'] = scn_.end_time
     # Find lat/lon data
     lons, lats = get_lonlats(scn_['IR_108'])
 
@@ -591,6 +612,8 @@ def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf',
 
     # Add ancillary datasets to the scene
     add_ancillary_datasets(scn_, lons=lons, lats=lats, sunz=sunz, satz=satz,
+                           suna=suna, sata=sata,
+                           save_azimuth_angles=save_azimuth_angles,
                            azidiff=azidiff)
     add_proj_satpos(scn_)
 
@@ -601,6 +624,7 @@ def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf',
     ir108_for_filename = scn_['IR_108']
     if use_nominal_time_in_filename:
         ir108_for_filename = set_nominal_scan_time(ir108_for_filename)
+
     filename = compose_filename(
         scene=scn_,
         out_path=out_path,
