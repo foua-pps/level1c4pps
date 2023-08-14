@@ -389,7 +389,7 @@ def add_ancillary_datasets(scene, lons, lats, sunz, satz, azidiff,
 
     #  Satazimuth
     if save_azimuth_angles:
-        scene['sunazimuth'] = xr.DataArray(
+        scene['satazimuth'] = xr.DataArray(
             da.from_array(sata[:, :], chunks=chunks),
             dims=['y', 'x'], coords=angle_coords)
 
