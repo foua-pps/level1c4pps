@@ -488,7 +488,7 @@ def get_encoding_seviri(scene):
     encoding['time'] = {'units': 'days since 2004-01-01 00:00',
                         'calendar': 'standard',
                         '_FillValue': None,
-                        'chunksizes': (1)}
+                        'chunksizes': (1,)}
 
     return encoding
 
