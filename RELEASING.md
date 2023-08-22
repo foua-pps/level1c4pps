@@ -3,7 +3,7 @@
 prerequisites: `pip install setuptools twine`
 
 
-1. checkout master
+1. checkout main
 2. pull from repo
 3. run the unittests
 4. run `loghub` and update the `CHANGELOG.md` file:
@@ -15,6 +15,11 @@ loghub foua-pps/level1c4pps --token <personal access token (see https://github.c
 Example:
 ```
 loghub foua-pps/level1c4pps -st v0.2.28 -plg bug "Bugs fixed" -plg enhancement "Features added" -plg documentation "Documentation changes"
+```
+
+Or only:
+```
+loghub foua-pps/level1c4pps  -st v0.2.31 
 ```
 
 The  "--token <personal access token (see https://github.com/settings/tokens)>" somtimes can be excluded.
@@ -32,7 +37,7 @@ git tag -a v0.2.29 -m "Version 0.2.29"
 See [semver.org](http://semver.org/) on how to write a version number.
 
 
-6. push changes to github `git push name-of-foua-pps-repo master --follow-tags`
+6. push changes to github `git push name-of-foua-pps-repo main --follow-tags`
 
 7. Verify the Github actions unit tests passed
 

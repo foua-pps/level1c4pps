@@ -60,7 +60,8 @@ ANGLENAMES = ['sensor_zenith_angle',
               'sensor_azimuth_angle',
               'sun_sensor_azimuth_difference_angle']
 
-REFL_BANDS = ['reflectance_channel_1', 'reflectance_channel_2', 'reflectance_channel_3']
+REFL_BANDS = ['reflectance_channel_1', 'reflectance_channel_2', 'reflectance_channel_3',
+              'reflectance_channel_3a']
 
 PPS_TAGNAMES = {"reflectance_channel_1": "ch_r06",
                 "reflectance_channel_2": "ch_r09",

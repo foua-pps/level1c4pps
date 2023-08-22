@@ -81,9 +81,14 @@ class TestSeviri2PPS(unittest.TestCase):
         )
 
         # Compare results and expectations
-        vis006_exp = xr.DataArray(
+        vis006_exp_pyspectral_1_7_1 = xr.DataArray(
             [[1.07025268, 2.14050537],
              [3.21075805, 4.28101074]],
+            dims=('y', 'x')
+        )
+        vis006_exp = xr.DataArray(
+            [[1.034205, 2.06841],
+             [3.102615, 4.13682]],
             dims=('y', 'x')
         )
         ir_108_exp = xr.DataArray(
@@ -91,7 +96,11 @@ class TestSeviri2PPS(unittest.TestCase):
              [7, 8]],
             dims=('y', 'x')
         )
-        xr.testing.assert_allclose(res['VIS006'], vis006_exp)
+        if res['VIS006'][0, 0] > 1.04:
+            # pyspectral 1.7.1 and older
+            xr.testing.assert_allclose(res['VIS006'], vis006_exp_pyspectral_1_7_1)
+        else:
+            xr.testing.assert_allclose(res['VIS006'], vis006_exp)
         xr.testing.assert_equal(res['IR_108'], ir_108_exp)
         self.assertFalse(
             res['VIS006'].attrs['sun_earth_distance_correction_applied'],

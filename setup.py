@@ -35,7 +35,7 @@ try:
 except ImportError:
     pass
 
-requires = ['satpy >= 0.19', 'pyorbital', 'trollsift', 'pyspectral', 'h5netcdf'],
+requires = ['satpy!=0.38.*,!=0.39.*,!=0.40.*,!=0.41.*', 'pyorbital', 'trollsift', 'pyspectral', 'h5netcdf'],
 
 NAME = "level1c4pps"
 README = open('README.md', 'r').read()
