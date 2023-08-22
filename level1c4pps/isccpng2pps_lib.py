@@ -96,7 +96,7 @@ def set_header_and_band_attrs(scene, orbit_n=00000):
     irch = scene['temp_11_00um']
     irch.attrs['instrument'] = "seviri"
     scene.attrs['source'] = "isccpng2pps.py"
-    scene.attrs['platform_name'] = "meteosat9"
+    scene.attrs['platform_name'] = "meteosat11"
     nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch, orbit_n=orbit_n)
     for band in REFL_BANDS:
         if band not in scene:
