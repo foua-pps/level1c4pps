@@ -108,13 +108,13 @@ def convert_to_noaa19(scene):
     scene["M05"].values = 0.958*scene["M05"]
     scene["M07"].values = 0.878*scene["M07"]
     scene["M15"].values = 1.0003*scene["M15"]
-    scene["M16"].values = 0.8 + 0.9956 * scene["M16"] 
+    scene["M16"].values = 0.8 + 0.9956 * scene["M16"]
     scene["M12"].values = -1.1603 * 100 + 1.8362 * scene["M12"] - 1.501 * 0.001 * scene["M12"] * scene["M12"]
     if "npp" in scene.attrs["platform"].lower():
-        scene.attrs["platform"] = "vgacsnpp" 
+        scene.attrs["platform"] = "vgacsnpp"
     scene.attrs["platform"] = scene.attrs["platform"].replace("noaa", "vgac")
     #scene["M06"].attrs['id_tag'] =  'ch_r09'  # Set here as M06 not used as ch_r09 normally in PPS
-    
+
 def get_encoding_viirs(scene):
     """Get netcdf encoding for all datasets."""
     return get_encoding(scene,
@@ -135,6 +135,19 @@ def set_header_and_band_attrs(scene, orbit_n=0):
         scene[band].attrs['sun_zenith_angle_correction_applied'] = 'True'
     return nimg
 
+def insert_timestamps(scene):
+
+    file_time_unit = time.strptime(scene['proj_time0'].units, 'days since %d/%m/%YT%H:%M:%S')
+    ms_to_unit = time.mktime(file_time_unit) * 1000
+    scene['time'].name = "Scanline time"
+    scene['scanline_timestamps'] = scene['time']
+    scene['scanline_timestamps'].values = scene['time'].values * 60 * 60 * 1000 + scene['proj_time0'].values * 24 * 60 * 60* 1000 +  ms_to_unit  # hours => Milliseconds
+    import datetime
+    print(datetime.datetime.fromtimestamp(scene['scanline_timestamps'].values[0]/1000))
+    print(datetime.datetime.fromtimestamp(scene['scanline_timestamps'].values[-1]/1000))      
+    del scene['time']
+    del scene['proj_time0']
+    scene['scanline_timestamps'].attrs['units'] = 'Milliseconds since 1970-01-01'
 
 def process_one_scene(scene_files, out_path, engine='h5netcdf',
                       all_channels=False, pps_channels=False, orbit_n=0, as_noaa19=False):
@@ -151,19 +164,22 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf',
     if pps_channels:
         MY_MBAND = MBAND_PPS
     if as_noaa19:
-        MY_MBAND = MBAND_AVHRR 
+        MY_MBAND = MBAND_AVHRR
 
     scn_.load(MY_MBAND
               + ANGLE_NAMES
               #+ ['M12_LUT', 'M13_LUT', 'M15_LUT', 'M16_LUT']
-              + ['latitude', 'longitude', 'time'])
+              + ['latitude', 'longitude', 'time', 'proj_time0'])
 
     # one ir channel
     irch = scn_['M15']
 
+    # Create GAC timeline variable
+    insert_timestamps(scn_)
+
     # Set header and band attributes
     set_header_and_band_attrs(scn_, orbit_n=orbit_n)
-    
+
     # Rename longitude, latitude to lon, lat.
     rename_latitude_longitude(scn_)
 
@@ -176,15 +192,17 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf',
     if as_noaa19:
         sensor = "avhrr"
         convert_to_noaa19(scn_)
-    
+
     filename = compose_filename(scn_, out_path, instrument=sensor, band=irch)
+    encoding = get_encoding_viirs(scn_)
+    encoding['scanline_timestamps'].pop('units')
     scn_.save_datasets(writer='cf',
                        filename=filename,
                        header_attrs=get_header_attrs(scn_, band=irch, sensor=sensor),
                        engine=engine,
                        include_lonlats=False,
                        flatten_attrs=True,
-                       encoding=get_encoding_viirs(scn_))
+                       encoding=encoding)
     print("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),
         time.time()-tic))
