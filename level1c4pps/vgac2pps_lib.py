@@ -114,11 +114,11 @@ def convert_to_noaa19(scene):
     tb12(AVHRR,K) = 1.002*M16 - 0.69
     """
     
-    scene["M05"].values = 0.9393 * scene["M05"] + 0.57
+    scene["M05"].values = 0.958 * scene["M05"]
     scene["M07"].values = 0.7781 * scene["M07"] + 1.77 + 0.001275 * scene["M07"] * scene["M07"]
     scene["M15"].values = 1.003 * scene["M15"] - 0.77
     scene["M16"].values = 1.002 * scene["M16"] - 0.69
-    scene["M12"].values = 0.9563 * scene["M12"] + 9.86
+    scene["M12"].values = -1.1603 * 100 + 1.8362 * scene["M12"] - 1.501 * 0.001 * scene["M12"] * scene["M12"]
 
     if "npp" in scene.attrs["platform"].lower():
         scene.attrs["platform"] = "vgacsnpp"
