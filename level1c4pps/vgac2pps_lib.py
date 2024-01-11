@@ -112,13 +112,40 @@ def convert_to_noaa19(scene):
     tb37(AVHRR,K) = 0.9563*M12 + 9.86
     tb11(AVHRR,K) = 1.003*M15 - 0.77
     tb12(AVHRR,K) = 1.002*M16 - 0.69
+
+    # Try II Nina
+    r06(AVHRR,%) = 0.9034*M5 + 1.04
+    r09(AVHRR,%) = 0.8821*M7 + 0.17
+    tb37(AVHRR,K) = 0.997*M12 + 0.89
+    tb11(AVHRR,K) = 1.001*M15 - 0.05
+    tb12(AVHRR,K) = 0.9899*M16 + 2.5
+
+    r06(AVHRR,%) = 0.914 * M5 + 0.83
+    r09(AVHRR,%) = 0.9019 * M7 - 0.18
+    tb37(AVHRR,K) = 0.9962 * M12 + 0.99
+    tb11(AVHRR,K) = 1.002 * M15 - 0.31
+    tb12(AVHRR,K) = 0.993 * M16 + 1.62
+
+    r06(AVHRR,%) = 0.9211*M5 + 0.85
+    r09(AVHRR,%) = 0.9242*M7 -0.78
+    tb37(AVHRR,K) = 0.9951*M12 + 1.18
+    tb11(AVHRR,K) = 1.003*M15 - 0.55
+    tb12(AVHRR,K) = 0.9977*M16 + 0.39
+
+
+    KG 20230111:
+    r06(AVHRR, %) = 0.9129 * M5 + 0.99
+    r09(AVHRR, %) = 0.9025 * M7
+    tb37(AVHRR, K) = 0.9967 * M12 + 0.85
+    tb11(AVHRR, K) = 1.002 * M15 - 0.4
+    tb12(AVHRR, K) = 0.9934 * M16 +1.52
     """
-    
-    scene["M05"].values = 0.958 * scene["M05"]
-    scene["M07"].values = 0.7781 * scene["M07"] + 1.77 + 0.001275 * scene["M07"] * scene["M07"]
-    scene["M15"].values = 1.003 * scene["M15"] - 0.77
-    scene["M16"].values = 1.002 * scene["M16"] - 0.69
-    scene["M12"].values = -1.1603 * 100 + 1.8362 * scene["M12"] - 1.501 * 0.001 * scene["M12"] * scene["M12"]
+
+    scene["M05"].values = 0.9129 * scene["M05"] + 0.99
+    scene["M07"].values = 0.9025 * scene["M07"]
+    scene["M15"].values = 1.002 * scene["M15"] - 0.4
+    scene["M16"].values = 0.9934 * scene["M16"] + 1.52
+    scene["M12"].values = 0.9967 * scene["M12"] + 0.85
 
     if "npp" in scene.attrs["platform"].lower():
         scene.attrs["platform"] = "vgacsnpp"
