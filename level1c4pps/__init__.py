@@ -488,7 +488,11 @@ def update_angle_attributes(scene, band):
 
 
 def apply_sunz_correction(scene, REFL_BANDS):
-    """Apply sun zenith angle correciton to visual channels."""
+    """Apply sun zenith angle correciton to visual channels.
+
+    Reference https://journals.ametsoc.org/view/journals/atsc/63/4/jas3682.1.xml
+
+    """
     sza = scene['sunzenith']
     mu0 = np.cos(np.radians(sza))
     scaler = 24.35 / (2 * mu0 + np.sqrt(498.5225 * mu0 * mu0 + 1))
