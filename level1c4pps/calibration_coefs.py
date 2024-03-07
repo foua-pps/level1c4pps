@@ -45,9 +45,9 @@ class CalibrationData(Enum):
             IR_016=dict(b=23.066, a=-0.0286E-3)
         ),
         MSG4=dict(
-            VIS006=dict(b=21.040, a=0.2877E-3),
-            VIS008=dict(b=24.966, a=0.6074E-3),
-            IR_016=dict(b=21.236, a=0.1420E-3)
+            VIS006=dict(b=20.515, a=0.3600E-3),
+            VIS008=dict(b=25.803, a=0.4844E-3),
+            IR_016=dict(b=22.354, a=-0.0187E-3)
         )
     )
     SPACE_COUNT = -51.0
