@@ -334,10 +334,10 @@ def rename_latitude_longitude(scene):
     """Rename latitude longitude to lat lon."""
     lat_name_satpy = 'latitude'
     lon_name_satpy = 'longitude'
-    for alt_latname in ['lat_pixels', 'm_latitude', 'i_latitude']:
+    for alt_latname in ['lat_pixels', 'm_latitude', 'latitude_m', 'i_latitude']:
         if alt_latname in scene and 'latitude' not in scene:
             lat_name_satpy = alt_latname
-    for alt_lonname in ['lon_pixels', 'm_longitude', 'i_longitude']:
+    for alt_lonname in ['lon_pixels', 'm_longitude','longitude_m', 'i_longitude']:
         if alt_lonname in scene and 'longitude' not in scene:
             lon_name_satpy = alt_lonname
     scene[lat_name_satpy].attrs['name'] = 'lat'
