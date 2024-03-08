@@ -93,6 +93,7 @@ PPS_TAGNAMES = {"M05": 'ch_r06',
                 "M08": 'ch_rxx',
                 "M13": 'ch_tbxx'}
 
+
 def convert_to_noaa19(scene):
     """
     Convert channel data to noaa19, using SBAFs.
@@ -131,7 +132,6 @@ def convert_to_noaa19(scene):
     tb37(AVHRR,K) = 0.9951*M12 + 1.18
     tb11(AVHRR,K) = 1.003*M15 - 0.55
     tb12(AVHRR,K) = 0.9977*M16 + 0.39
-
 
     KG 20230111:
     r06(AVHRR, %) = 0.9129 * M5 + 0.99
@@ -172,6 +172,7 @@ def set_header_and_band_attrs(scene, orbit_n=0):
         scene[band].attrs['sun_zenith_angle_correction_applied'] = 'True'
     return nimg
 
+
 def process_one_scene(scene_files, out_path, engine='h5netcdf',
                       all_channels=False, pps_channels=False, orbit_n=0, as_noaa19=False):
     """Make level 1c files in PPS-format."""
@@ -191,7 +192,7 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf',
 
     scn_.load(MY_MBAND
               + ANGLE_NAMES
-              #+ ['M12_LUT', 'M13_LUT', 'M15_LUT', 'M16_LUT']
+              # + ['M12_LUT', 'M13_LUT', 'M15_LUT', 'M16_LUT']
               + ['latitude', 'longitude', 'scanline_timestamps'])
 
     # one ir channel

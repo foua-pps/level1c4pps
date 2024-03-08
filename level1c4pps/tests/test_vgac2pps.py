@@ -119,6 +119,5 @@ class TestVgac2PPS(unittest.TestCase):
         for var in expected_vars:
             self.assertTrue(var in pps_nc.variables.keys())
 
-
         np.testing.assert_almost_equal(pps_nc.variables['image1'].sun_earth_distance_correction_factor,
                                        1.0, decimal=4)
