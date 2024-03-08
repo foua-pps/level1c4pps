@@ -49,6 +49,8 @@ if __name__ == "__main__":
                         help="Output directory where to store level1c file.")
     parser.add_argument('--no-rotation', action='store_true',
                         help="Don't rotate images")
+    parser.add_argument('--azimuth_angles', action='store_true',
+                        help="Save azimuth angles")
     parser.add_argument('-ne', '--nc_engine', type=str, nargs='?',
                         required=False, default='h5netcdf',
                         help="Engine for saving netcdf files netcdf4 or h5netcdf (default).")
@@ -64,5 +66,6 @@ if __name__ == "__main__":
         rotate=not options.no_rotation,
         engine=options.nc_engine,
         use_nominal_time_in_filename=options.use_nominal_time_in_filename,
-        apply_sun_earth_distance_correction=not options.no_sun_earth_distance_correction
+        apply_sun_earth_distance_correction=not options.no_sun_earth_distance_correction,
+        save_azimuth_angles=options.azimuth_angles,
     )
