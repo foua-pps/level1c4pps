@@ -611,10 +611,12 @@ def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf',
     update_coords(scn_)
 
     # Add ancillary datasets to the scene
-    add_ancillary_datasets(scn_, lons=lons, lats=lats, sunz=sunz, satz=satz,
+    add_ancillary_datasets(scn_,
+                           lons=lons, lats=lats,
+                           sunz=sunz, satz=satz,
+                           azidiff=azidiff,
                            suna=suna, sata=sata,
-                           save_azimuth_angles=save_azimuth_angles,
-                           azidiff=azidiff)
+                           save_azimuth_angles=save_azimuth_angles)
     add_proj_satpos(scn_)
 
     # Set attributes. This changes SEVIRI band names to PPS band names.

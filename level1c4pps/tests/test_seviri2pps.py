@@ -312,10 +312,12 @@ class TestSeviri2PPS(unittest.TestCase):
                                      'orbital_parameters': 'orb_params',
                                      'georef_offset_corrected': True})
         scene = {'IR_108': ir_108}
-        seviri2pps.add_ancillary_datasets(scene, lons=lons, lats=lats,
+        seviri2pps.add_ancillary_datasets(scene,
+                                          lons=lons, lats=lats,
                                           sunz=sunz, satz=satz,
+                                          azidiff=azidiff,
                                           suna=suna, sata=sata,
-                                          azidiff=azidiff)
+                                          save_azimuth_angles=True)
 
         # Test lon/lat
         np.testing.assert_array_equal(scene['lon'].data, lons)
@@ -333,6 +335,12 @@ class TestSeviri2PPS(unittest.TestCase):
 
         np.testing.assert_array_equal(scene['azimuthdiff'].data, azidiff)
         self.assertEqual(scene['azimuthdiff'].attrs['name'], 'azimuthdiff')
+
+        np.testing.assert_array_equal(scene['satazimuth'].data, sata)
+        self.assertEqual(scene['satazimuth'].attrs['name'], 'satazimuth')
+
+        np.testing.assert_array_equal(scene['sunazimuth'].data, suna)
+        self.assertEqual(scene['sunazimuth'].attrs['name'], 'sunazimuth')
 
         for angle in ['azimuthdiff', 'satzenith', 'sunzenith']:
             self.assertTupleEqual(scene[angle].dims, ('y', 'x'))
