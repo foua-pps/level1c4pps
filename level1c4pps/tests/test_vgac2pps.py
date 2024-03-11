@@ -121,3 +121,38 @@ class TestVgac2PPS(unittest.TestCase):
 
         np.testing.assert_almost_equal(pps_nc.variables['image1'].sun_earth_distance_correction_factor,
                                        1.0, decimal=4)
+    def test_process_one_scene_n19(self):
+        """Test process one scene for one example file."""
+
+        vgac2pps.process_one_scene(
+            ['./level1c4pps/tests/VGAC_VJ102MOD_A2018305_1042_n004946_K005.nc'],
+            out_path='./level1c4pps/tests/',
+            as_noaa19=True,
+        )
+        filename = './level1c4pps/tests/S_NWC_avhrr_vgac20_00000_20181101T1042080Z_20181101T1224090Z.nc'
+        filename_viirs = './level1c4pps/tests/S_NWC_viirs_noaa20_00000_20181101T1042080Z_20181101T1224090Z.nc'
+        # written with hfnetcdf read with NETCDF4 ensure compatability
+        pps_nc = netCDF4.Dataset(filename, 'r', format='NETCDF4')  # Check compatability implicitly
+        pps_nc_viirs = netCDF4.Dataset(filename_viirs, 'r', format='NETCDF4')  # Check compatability implicitly
+
+        for key in ['start_time', 'end_time', 'history', 'instrument',
+                    'orbit_number', 'platform',
+                    'sensor', 'source']:
+            if key not in pps_nc.__dict__.keys():
+                print("Missing in attributes:", key)
+            self.assertTrue(key in pps_nc.__dict__.keys())
+
+        expected_vars = ['satzenith', 'azimuthdiff',
+                         'satazimuth', 'sunazimuth', 'sunzenith',
+                         'lon', 'lat',
+                         'image1', 'image2', 'image3', 'image4', 'image5',
+                         'scanline_timestamps', 'time', 'time_bnds']
+
+        for var in expected_vars:
+            self.assertTrue(var in pps_nc.variables.keys())
+
+        np.testing.assert_almost_equal(pps_nc.variables['image1'].sun_earth_distance_correction_factor,
+                                       1.0, decimal=4)
+
+        np.testing.assert_equal(pps_nc.__dict__["platform"], "vgac20")
+        self.assertTrue(np.abs(pps_nc.variables['image1'][0,0,0] - pps_nc_viirs.variables['image1'][0,0,0])>0.01)
