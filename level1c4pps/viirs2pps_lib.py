@@ -22,7 +22,7 @@
 #   Nina Hakansson <nina.hakansson@smhi.se>
 #   Adam.Dybbroe <adam.dybbroe@smhi.se>
 
-"""Functions to convert MERSI-2 level-1 data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
+"""Functions to convert VIIRS level-1 data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
 
 import os
 import time
@@ -124,12 +124,12 @@ def set_header_and_band_attrs(scene, orbit_n=0):
     return nimg
 
 
-def process_one_scene(scene_files, out_path, use_iband_res=False, engine='h5netcdf',
+def process_one_scene(scene_files, out_path, use_iband_res=False, reader='viirs_sdr', engine='h5netcdf',
                       all_channels=False, pps_channels=False, orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scn_ = Scene(
-        reader='viirs_sdr',
+        reader=reader,
         filenames=scene_files)
 
     MY_MBAND = MBAND_DEFAULT
@@ -149,6 +149,8 @@ def process_one_scene(scene_files, out_path, use_iband_res=False, engine='h5netc
         scn_.load(MY_IBAND_I + ANGLE_NAMES + ['i_latitude', 'i_longitude'], resolution=371)
         scn_.load(MY_IBAND_M, resolution=742)
         scn_ = scn_.resample(resampler='native')
+    elif reader == "viirs_compact":
+        scn_.load(MY_MBAND + ANGLE_NAMES + ['latitude_m', 'longitude_m'], resolution=742)
     else:
         scn_.load(MY_MBAND + ANGLE_NAMES + ['m_latitude', 'm_longitude'], resolution=742)
 
