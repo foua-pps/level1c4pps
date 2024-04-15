@@ -174,7 +174,7 @@ def set_header_and_band_attrs(scene, orbit_n=0):
 
 
 def process_one_scene(scene_files, out_path, engine='h5netcdf',
-                      all_channels=False, pps_channels=False, orbit_n=0, as_noaa19=False):
+                      all_channels=False, pps_channels=False, orbit_n=0, as_noaa19=False, avhrr_channels=False):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scn_ = Scene(
@@ -188,6 +188,8 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf',
     if pps_channels:
         MY_MBAND = MBAND_PPS
     if as_noaa19:
+        MY_MBAND = MBAND_AVHRR
+    if avhrr_channels:
         MY_MBAND = MBAND_AVHRR
 
     scn_.load(MY_MBAND
