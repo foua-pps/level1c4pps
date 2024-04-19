@@ -43,9 +43,9 @@ if __name__ == "__main__":
                         required=False, default='h5netcdf',
                         help="Engine for saving netcdf files netcdf4 or h5netcdf (default).")
     parser.add_argument('-all_ch', '--all_channels', action='store_true',
-                        help="Save all 36 channels to level1c4pps file.")
+                        help="Save all 21 channels to level1c4pps file.")
     parser.add_argument('-n19', '--as_noaa19', action='store_true',
-                        help="Save all 36 channels to level1c4pps file.")
+                        help="Save only the AVHRR (1,2, 3B, 4, 5) channels to level1c4pps file. And apply SBAFs to the channels.")
     parser.add_argument('-pps_ch', '--pps_channels', action='store_true',
                         help="Save only the necessary (for PPS) channels to level1c4pps file.")
     parser.add_argument('-avhrr_ch', '--avhrr_channels', action='store_true',
