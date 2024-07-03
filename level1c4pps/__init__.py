@@ -22,8 +22,7 @@
 #   Nina Hakansson <nina.hakansson@smhi.se>
 
 """Package Initializer for level1c4pps."""
-
-from pkg_resources import get_distribution, DistributionNotFound
+from importlib.metadata import version
 import numpy as np
 import xarray as xr
 from datetime import datetime
@@ -38,11 +37,8 @@ logging.basicConfig(
     datefmt='%H:%M:%S')
 logger = logging.getLogger('level1c4pps')
 xr.set_options(keep_attrs=True)
-try:
-    __version__ = get_distribution(__name__).version
-except DistributionNotFound:
-    # package is not installed
-    pass
+
+__version__ = version(__name__)
 
 PPS_TAGNAMES_TO_IMAGE_NR = {'ch_r06': 'image1',
                             'ch_r09': 'image2',
