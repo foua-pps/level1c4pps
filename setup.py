@@ -70,7 +70,7 @@ setup(name=NAME,
       data_files=[],
       zip_safe=False,
       use_scm_version=True,
-      python_requires='>=3.9',
+      python_requires='>=3.7',
       install_requires=requires,
       test_suite='level1c4pps.tests.suite',
       )
