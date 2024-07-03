@@ -243,7 +243,8 @@ def split_scene_at_midnight(scene):
 
 
 def process_one_scene(scene_files, out_path, engine='h5netcdf',
-                      all_channels=False, pps_channels=False, orbit_n=0, as_noaa19=False, avhrr_channels=False):
+                      all_channels=False, pps_channels=False, orbit_n=0, as_noaa19=False, avhrr_channels=False,
+                      split_files_at_midnight=True):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scn_in = Scene(
@@ -265,7 +266,10 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf',
                 + ANGLE_NAMES
                 # + ['M12_LUT', 'M13_LUT', 'M15_LUT', 'M16_LUT']
                 + ['latitude', 'longitude', 'scanline_timestamps'])
-    scenes = split_scene_at_midnight(scn_in)
+    if split_files_at_midnight:
+        scenes = split_scene_at_midnight(scn_in)
+    else:
+        scenes = [scn_in]
     filenames = []
     for scn_ in scenes:
         # one ir channel
