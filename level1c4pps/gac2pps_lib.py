@@ -39,7 +39,16 @@ from level1c4pps import (get_encoding, compose_filename,
                          get_header_attrs, convert_angles)
 import logging
 
+from packaging.version import Version
 logger = logging.getLogger('gac2pps')
+
+if Version(np.__version__) >= Version('2.0.0'):
+    if Version(pygac.__version__) == Version('1.7.3'):
+        raise ImportError("pygac 1.7.3 requires numpy < 2.0.0")
+    else:
+        logger.warning("pygac 1.7.3 requires numpy < 2.0.0 or greater")
+
+
 
 BANDNAMES = ['1', '2', '3', '3a', '3b', '4', '5']
 

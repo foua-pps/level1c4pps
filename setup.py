@@ -36,7 +36,7 @@ except ImportError:
     pass
 
 
-requires = ['satpy!=0.38.*,!=0.39.*,!=0.40.*,!=0.41.*', 'pyorbital', 'trollsift', 'pyspectral', 'h5netcdf', 'numpy < 2.0']
+requires = ['satpy!=0.38.*,!=0.39.*,!=0.40.*,!=0.41.*', 'pyorbital', 'trollsift', 'pyspectral', 'h5netcdf']
 
 
 NAME = "level1c4pps"
