@@ -36,7 +36,7 @@ except ImportError:
     pass
 
 
-requires = ['satpy!=0.38.*,!=0.39.*,!=0.40.*,!=0.41.*', 'pyorbital', 'trollsift', 'pyspectral', 'h5netcdf']
+requires = ['satpy!=0.38.*,!=0.39.*,!=0.40.*,!=0.41.*', 'pyorbital', 'trollsift', 'pyspectral', 'h5netcdf', 'numpy < 2.0']
 
 
 NAME = "level1c4pps"
@@ -70,7 +70,7 @@ setup(name=NAME,
       data_files=[],
       zip_safe=False,
       use_scm_version=True,
-      python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*',
+      python_requires='>=3.9',
       install_requires=requires,
       test_suite='level1c4pps.tests.suite',
       )
