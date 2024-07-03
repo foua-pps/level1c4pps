@@ -36,9 +36,9 @@ from level1c4pps import (get_encoding, compose_filename,
 import pyspectral  # testing that pyspectral is available # noqa: F401
 import logging
 from satpy.utils import debug_on
+from packaging.version import Version
 
-from distutils.version import LooseVersion
-if LooseVersion(satpy.__version__) < LooseVersion('0.22.1'):
+if Version(satpy.__version__) < Version('0.22.1'):
     raise ImportError("'slstr2pps' requires satpy 0.22.1 or greater")
 
 debug_on()
