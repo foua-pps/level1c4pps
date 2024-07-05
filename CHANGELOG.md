@@ -1,3 +1,22 @@
+## Version <v.0.2.33> (2024/03/11)
+
+* [Issue 74](https://github.com/foua-pps/level1c4pps/issues/74) - Problem saving gac data with satpy > 0.37 ([PR 78](https://github.com/foua-pps/level1c4pps/pull/78) by [@pnuu](https://github.com/pnuu))
+* [Issue 30](https://github.com/foua-pps/level1c4pps/issues/30) -  Bug for AVHRR eps l1b using satpy 0.20.0 and numpy=1.16
+
+In this release 2 issues were closed.
+
+### Pull Requests Merged
+
+* [PR 85](https://github.com/foua-pps/level1c4pps/pull/85) - Adapt viirs2pps also to viirs_compact, by [@ninahakansson](https://github.com/ninahakansson)
+* [PR 84](https://github.com/foua-pps/level1c4pps/pull/84) - Return the filename for metimage, by [@ninahakansson](https://github.com/ninahakansson)
+* [PR 81](https://github.com/foua-pps/level1c4pps/pull/81) - Update MSG-4 visible calibration coefficients, by [@sfinkens](https://github.com/sfinkens)
+* [PR 80](https://github.com/foua-pps/level1c4pps/pull/80) - Add azimuth angles for SEVIRI, by [@ninahakansson](https://github.com/ninahakansson)
+* [PR 78](https://github.com/foua-pps/level1c4pps/pull/78) - Adjust Satpy version limit, by [@pnuu](https://github.com/pnuu) ([74](https://github.com/foua-pps/level1c4pps/issues/74))
+* [PR 76](https://github.com/foua-pps/level1c4pps/pull/76) - Remove etuptools_scm_git_archive, by [@ninahakansson](https://github.com/ninahakansson)
+
+In this release 6 pull requests were closed.
+
+
 ## Version <v.0.2.32> (2023/02/15)
 
 

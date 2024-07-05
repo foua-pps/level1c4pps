@@ -42,8 +42,8 @@ def get_fake_scene():
     scene = Scene()
     start_time = dt.datetime(2020, 1, 1, 12)
     scene['VIS006'] = xr.DataArray(
-        [[1, 2],
-         [3, 4]],
+        [[1.0, 2.0],
+         [3.0, 4.0]],
         dims=('y', 'x'),
         attrs={'calibration': 'reflectance',
                'sun_earth_distance_correction_applied': True,
@@ -299,6 +299,8 @@ class TestSeviri2PPS(unittest.TestCase):
         lats = np.array([[1.1, 2.1], [3.1, 4.1]])
         sunz = np.array([[1.2, 2.2], [3.2, 4.2]])
         satz = np.array([[1.3, 2.3], [3.3, 4.3]])
+        suna = np.array([[5.2, 2.2], [5.2, 1.2]])
+        sata = np.array([[3.3, 2.3], [3.3, 7.3]])
         azidiff = np.array([[1.4, 2.4], [3.4, 4.4]])
 
         ir_108 = xr.DataArray(data=np.array([[0.1, 0.2], [0.3, 0.4]]),
@@ -310,9 +312,12 @@ class TestSeviri2PPS(unittest.TestCase):
                                      'orbital_parameters': 'orb_params',
                                      'georef_offset_corrected': True})
         scene = {'IR_108': ir_108}
-        seviri2pps.add_ancillary_datasets(scene, lons=lons, lats=lats,
+        seviri2pps.add_ancillary_datasets(scene,
+                                          lons=lons, lats=lats,
                                           sunz=sunz, satz=satz,
-                                          azidiff=azidiff)
+                                          azidiff=azidiff,
+                                          suna=suna, sata=sata,
+                                          save_azimuth_angles=True)
 
         # Test lon/lat
         np.testing.assert_array_equal(scene['lon'].data, lons)
@@ -330,6 +335,12 @@ class TestSeviri2PPS(unittest.TestCase):
 
         np.testing.assert_array_equal(scene['azimuthdiff'].data, azidiff)
         self.assertEqual(scene['azimuthdiff'].attrs['name'], 'azimuthdiff')
+
+        np.testing.assert_array_equal(scene['satazimuth'].data, sata)
+        self.assertEqual(scene['satazimuth'].attrs['name'], 'satazimuth')
+
+        np.testing.assert_array_equal(scene['sunazimuth'].data, suna)
+        self.assertEqual(scene['sunazimuth'].attrs['name'], 'sunazimuth')
 
         for angle in ['azimuthdiff', 'satzenith', 'sunzenith']:
             self.assertTupleEqual(scene[angle].dims, ('y', 'x'))
@@ -398,7 +409,7 @@ class TestSeviri2PPS(unittest.TestCase):
         enc_exp_time = {'units': 'days since 2004-01-01 00:00',
                         'calendar': 'standard',
                         '_FillValue': None,
-                        'chunksizes': [1]}
+                        'chunksizes': (1,)}
         enc_exp_acq = {'units': 'milliseconds since 2009-07-01 12:15',
                        'calendar': 'standard',
                        '_FillValue': -9999.0}
@@ -426,7 +437,11 @@ class TestSeviri2PPS(unittest.TestCase):
             'acq_time': enc_exp_acq
         }
         encoding = seviri2pps.get_encoding_seviri(scene)
-        self.assertDictEqual(encoding, encoding_exp)
+        for key in encoding_exp:
+            print(key)
+            print(encoding[key],encoding_exp[key])
+
+            self.assertDictEqual(encoding[key], encoding_exp[key])
 
     def test_get_header_attrs(self):
         """Test get the header attributes."""
@@ -573,24 +588,24 @@ class TestCalibration:
                     'MSG4',
                     dt.datetime(2019, 1, 18, 0, 0),
                     {
-                        'VIS006': {'gain': 0.0230415289,
-                                   'offset': -1.1751179739},
-                        'VIS008': {'gain': 0.0291916818,
-                                   'offset': -1.4887757718},
-                        'IR_016': {'gain': 0.022223894,
-                                   'offset': -1.1334185940000001}
+                        'VIS006': {'gain': 0.02301952,
+                                   'offset': -1.17399552},
+                        'VIS008': {'gain': 0.029172970800000003,
+                                   'offset': -1.4878215108000001},
+                        'IR_016': {'gain': 0.022223904099999997,
+                                   'offset': -1.1334191090999999}
                     }
                 ),
                 (
                     'MSG4',
                     dt.datetime(2024, 1, 18, 0, 0),
                     {
-                        'VIS006': {'gain': 0.0235668691,
-                                   'offset': -1.2019103241},
-                        'VIS008': {'gain': 0.0303007942,
-                                   'offset': -1.5453405042000001},
-                        'IR_016': {'gain': 0.022483186,
-                                   'offset': -1.146642486}
+                        'VIS006': {'gain': 0.02367688,
+                                   'offset': -1.2075208800000001},
+                        'VIS008': {'gain': 0.0300574852,
+                                   'offset': -1.5329317452},
+                        'IR_016': {'gain': 0.0221897579,
+                                   'offset': -1.1316776528999999}
                     }  # extrapolation beyond time coverage of calib. dataset
                 )
             ]

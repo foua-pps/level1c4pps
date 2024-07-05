@@ -35,7 +35,9 @@ try:
 except ImportError:
     pass
 
-requires = ['satpy!=0.38.*,!=0.39.*,!=0.40.*,!=0.41.*', 'pyorbital', 'trollsift', 'pyspectral', 'h5netcdf'],
+
+requires = ['satpy!=0.38.*,!=0.39.*,!=0.40.*,!=0.41.*', 'pyorbital', 'trollsift', 'pyspectral', 'h5netcdf']
+
 
 NAME = "level1c4pps"
 README = open('README.md', 'r').read()
@@ -60,6 +62,7 @@ setup(name=NAME,
                'bin/gac2pps.py',
                'bin/mersi22pps.py',
                'bin/viirs2pps.py',
+               'bin/vgac2pps.py',
                'bin/slstr2pps.py',
                'bin/metimage2pps.py',
                'bin/eumgacfdr2pps.py',
@@ -68,7 +71,7 @@ setup(name=NAME,
       data_files=[],
       zip_safe=False,
       use_scm_version=True,
-      python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*',
+      python_requires='>=3.7',
       install_requires=requires,
       test_suite='level1c4pps.tests.suite',
       )

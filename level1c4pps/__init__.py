@@ -22,8 +22,7 @@
 #   Nina Hakansson <nina.hakansson@smhi.se>
 
 """Package Initializer for level1c4pps."""
-
-from pkg_resources import get_distribution, DistributionNotFound
+from importlib.metadata import version
 import numpy as np
 import xarray as xr
 from datetime import datetime
@@ -38,11 +37,8 @@ logging.basicConfig(
     datefmt='%H:%M:%S')
 logger = logging.getLogger('level1c4pps')
 xr.set_options(keep_attrs=True)
-try:
-    __version__ = get_distribution(__name__).version
-except DistributionNotFound:
-    # package is not installed
-    pass
+
+__version__ = version(__name__)
 
 PPS_TAGNAMES_TO_IMAGE_NR = {'ch_r06': 'image1',
                             'ch_r09': 'image2',
@@ -130,14 +126,18 @@ ADDITIONAL_CHANNEL_VARS = [
 SATPY_ANGLE_NAMES = {
     'solar_zenith': 'sunzenith',  # no _angle
     'solar_zenith_angle': 'sunzenith',
+    'sza': 'sunzenith',
     'solar_azimuth': 'sunazimuth',  # no _angle
     'solar_azimuth_angle': 'sunazimuth',
+    'azn': 'sunazimuth',
     'satellite_zenith_angle': 'satzenith',
     'sensor_zenith_angle': 'satzenith',
     'observation_zenith': 'satzenith',
+    'vza': 'satzenith',
     'satellite_azimuth_angle': 'satazimuth',
     'sensor_azimuth_angle': 'satazimuth',
     'observation_azimuth': 'satazimuth',
+    'azi': 'satazimuth',
     'sun_sensor_azimuth_difference_angle': 'azimuthdiff',
 }
 
@@ -250,6 +250,10 @@ def dt64_to_datetime(dt64):
         seconds_since_epoch = (dt64 - unix_epoch) / one_second
         dt = datetime.utcfromtimestamp(seconds_since_epoch)
         return dt
+    elif type(dt64) == np.float64:
+        seconds_since_epoch = dt64
+        dt = datetime.utcfromtimestamp(seconds_since_epoch)
+        return dt  
     return dt64
 
 
@@ -334,10 +338,10 @@ def rename_latitude_longitude(scene):
     """Rename latitude longitude to lat lon."""
     lat_name_satpy = 'latitude'
     lon_name_satpy = 'longitude'
-    for alt_latname in ['lat_pixels', 'm_latitude', 'i_latitude']:
+    for alt_latname in ['lat_pixels', 'm_latitude', 'latitude_m', 'i_latitude']:
         if alt_latname in scene and 'latitude' not in scene:
             lat_name_satpy = alt_latname
-    for alt_lonname in ['lon_pixels', 'm_longitude', 'i_longitude']:
+    for alt_lonname in ['lon_pixels', 'm_longitude','longitude_m', 'i_longitude']:
         if alt_lonname in scene and 'longitude' not in scene:
             lon_name_satpy = alt_lonname
     scene[lat_name_satpy].attrs['name'] = 'lat'
@@ -489,7 +493,11 @@ def update_angle_attributes(scene, band):
 
 
 def apply_sunz_correction(scene, REFL_BANDS):
-    """Apply sun zenith angle correciton to visual channels."""
+    """Apply sun zenith angle correciton to visual channels.
+
+    Reference https://journals.ametsoc.org/view/journals/atsc/63/4/jas3682.1.xml
+
+    """
     sza = scene['sunzenith']
     mu0 = np.cos(np.radians(sza))
     scaler = 24.35 / (2 * mu0 + np.sqrt(498.5225 * mu0 * mu0 + 1))
@@ -517,6 +525,7 @@ def platform_name_to_use_in_filename(platform_name):
         new_name = 'metopsga1'
     replace_dict = {'aqua': '2',
                     '-': '',
+                    'jpss1': 'noaa20',
                     'terra': '1',
                     'suomi': ''}
     for orig, new in replace_dict.items():
@@ -545,8 +554,9 @@ def compose_filename(scene, out_path, instrument, band=None):
         end_time = band.attrs['end_time']
     platform_name = scene.attrs['platform']
     orbit_number = int(scene.attrs['orbit_number'])
+    out_path_with_dates = start_time.strftime(out_path)
     filename = os.path.join(
-        out_path,
+        out_path_with_dates,
         "S_NWC_{:s}_{:s}_{:05d}_{:s}Z_{:s}Z.nc".format(
             instrument,
             platform_name_to_use_in_filename(platform_name),
