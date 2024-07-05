@@ -186,22 +186,24 @@ def get_midnight_line_nr(scene):
     """Find midnight_line, start_time and new end_time."""
     start_date = scene["M05"].attrs["start_time"].strftime("%Y-%m-%d")
     end_date = scene["M05"].attrs["end_time"].strftime("%Y-%m-%d")
-    start_fine = len(scene['scanline_timestamps'])
+    start_fine_search = len(scene['scanline_timestamps']) - 1  # As default start the fine search from end of time array
     for ind in range(0, len(scene['scanline_timestamps']), 100):
-        # print("Check for midnightline at ind {:d}".format(ind))
+        # Search from the beginning in large chunks (100) and break when we
+        # pass midnight.
         dt_obj = dt64_to_datetime(scene['scanline_timestamps'].values[:][ind])
         date_linei = dt_obj.strftime("%Y-%m-%d")
         if date_linei == end_date:
-            start_fine = ind
+            # We just passed midnight stop and search backwards for exact line.
+            start_fine_search = ind
             break
-    for indj in range(start_fine, start_fine - 100, -1):
-        # print("Check for midnightline at ind {:d}".format(indj))
+    for indj in range(start_fine_search, start_fine_search - 100, -1):
+        # Midnight is in one of the previous 100 lines.
         dt_obj = dt64_to_datetime(scene['scanline_timestamps'].values[:][indj])
         date_linei = dt_obj.strftime("%Y-%m-%d") 
         if date_linei == start_date:
+            # We just passed midnight this is the last line for previous day.
             midnight_linenr = indj
             break
-            print(scene['scanline_timestamps'][:][indj + 1].astype(datetime))
     return  midnight_linenr
 
 
