@@ -553,8 +553,9 @@ def compose_filename(scene, out_path, instrument, band=None):
         end_time = band.attrs['end_time']
     platform_name = scene.attrs['platform']
     orbit_number = int(scene.attrs['orbit_number'])
+    out_path_with_dates = start_time.strftime(out_path)
     filename = os.path.join(
-        out_path,
+        out_path_with_dates,
         "S_NWC_{:s}_{:s}_{:05d}_{:s}Z_{:s}Z.nc".format(
             instrument,
             platform_name_to_use_in_filename(platform_name),

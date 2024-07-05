@@ -53,8 +53,10 @@ if __name__ == "__main__":
     parser.add_argument('-on', '--orbit_number', type=int, nargs='?',
                         required=False, default=0,
                         help="Orbit number (default is 00000).")
-
+    parser.add_argument('--don_split_files_at_midnight', action='store_true',
+                        help="Don't split files at midnight, keep as one level1c file.")
     options = parser.parse_args()
     process_one_scene(options.files, options.out_dir, engine=options.nc_engine,
                       all_channels=options.all_channels, pps_channels=options.pps_channels,
-                      orbit_n=options.orbit_number, as_noaa19=options.as_noaa19, avhrr_channels=options.avhrr_channels)
+                      orbit_n=options.orbit_number, as_noaa19=options.as_noaa19, avhrr_channels=options.avhrr_channels,
+                      split_files_at_midnight = not options.don_split_files_at_midnight)

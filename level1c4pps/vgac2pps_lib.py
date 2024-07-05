@@ -30,6 +30,7 @@ from satpy.scene import Scene
 from level1c4pps import (get_encoding, compose_filename,
                          set_header_and_band_attrs_defaults,
                          rename_latitude_longitude,
+                         dt64_to_datetime,
                          update_angle_attributes, get_header_attrs,
                          convert_angles)
 import pyspectral  # testing that pyspectral is available # noqa: F401
@@ -59,7 +60,7 @@ MBANDS = ["M01", "M02", "M03", "M04", "M05", "M06", "M07", "M08",
 
 
 REFL_BANDS = ["M01", "M02", "M03", "M04", "M05", "M06", "M07", "M08",
-              "M09"]
+              "M09", "M10", "M11", "I01", "I02", "I03"]
 
 MBAND_PPS = ["M05", "M07", "M09", "M10", "M11", "M12", "M14", "M15", "M16"]
 
@@ -172,12 +173,83 @@ def set_header_and_band_attrs(scene, orbit_n=0):
         scene[band].attrs['sun_zenith_angle_correction_applied'] = 'True'
     return nimg
 
+def midnight_scene(scene):
+    """Check if scene passes midnight."""
+    start_date = scene["M05"].attrs["start_time"].strftime("%Y%m%d")
+    end_date = scene["M05"].attrs["end_time"].strftime("%Y%m%d")
+    if start_date == end_date:
+        return False
+    return True
+
+
+def get_midnight_line_nr(scene):
+    """Find midnight_line, start_time and new end_time."""
+    start_date = scene["M05"].attrs["start_time"].strftime("%Y-%m-%d")
+    end_date = scene["M05"].attrs["end_time"].strftime("%Y-%m-%d")
+    start_fine_search = len(scene['scanline_timestamps']) - 1  # As default start the fine search from end of time array
+    for ind in range(0, len(scene['scanline_timestamps']), 100):
+        # Search from the beginning in large chunks (100) and break when we
+        # pass midnight.
+        dt_obj = dt64_to_datetime(scene['scanline_timestamps'].values[:][ind])
+        date_linei = dt_obj.strftime("%Y-%m-%d")
+        if date_linei == end_date:
+            # We just passed midnight stop and search backwards for exact line.
+            start_fine_search = ind
+            break
+    for indj in range(start_fine_search, start_fine_search - 100, -1):
+        # Midnight is in one of the previous 100 lines.
+        dt_obj = dt64_to_datetime(scene['scanline_timestamps'].values[:][indj])
+        date_linei = dt_obj.strftime("%Y-%m-%d") 
+        if date_linei == start_date:
+            # We just passed midnight this is the last line for previous day.
+            midnight_linenr = indj
+            break
+    return  midnight_linenr
+
+
+
+def set_exact_time_and_crop(scene, start_line, end_line, time_key='scanline_timestamps'):
+    """Crop datasets and update start_time end_time objects."""
+    if start_line is None:
+        start_line = 0
+    if end_line is None:
+        end_line = len(scene[time_key]) - 1
+    start_time_dt64 = scene[time_key].values[start_line]
+    end_time_dt64 = scene[time_key].values[end_line]
+    start_time = dt64_to_datetime(start_time_dt64)
+    end_time = dt64_to_datetime(end_time_dt64)
+    for ds in BANDNAMES + ANGLE_NAMES + ['latitude', 'longitude', 'scanline_timestamps']:
+        if ds in scene and 'nscn' in scene[ds].dims:
+            scene[ds] = scene[ds].isel(nscn=slice(start_line, end_line + 1))
+            try:
+                # Update scene attributes to get the filenames right
+                scene[ds].attrs['start_time'] = start_time
+                scene[ds].attrs['end_time'] = end_time
+            except TypeError:
+                pass
+    if start_time_dt64 != scene[time_key].values[0]:
+        raise ValueError
+    if end_time_dt64 != scene[time_key].values[-1]:
+        raise ValueError
+        
+def split_scene_at_midnight(scene):
+    """Split scenes at midnight."""
+    if midnight_scene(scene):
+        midnight_linenr = get_midnight_line_nr(scene)
+        scene1 = scene.copy()
+        scene2 = scene.copy()
+        set_exact_time_and_crop(scene1, None, midnight_linenr)
+        set_exact_time_and_crop(scene2, midnight_linenr + 1, None)
+        return [scene1, scene2]
+    return [scene]
+
 
 def process_one_scene(scene_files, out_path, engine='h5netcdf',
-                      all_channels=False, pps_channels=False, orbit_n=0, as_noaa19=False, avhrr_channels=False):
+                      all_channels=False, pps_channels=False, orbit_n=0, as_noaa19=False, avhrr_channels=False,
+                      split_files_at_midnight=True):
     """Make level 1c files in PPS-format."""
     tic = time.time()
-    scn_ = Scene(
+    scn_in = Scene(
         reader='viirs_vgac_l1c_nc',
         filenames=scene_files)
 
@@ -192,41 +264,46 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf',
     if avhrr_channels:
         MY_MBAND = MBAND_AVHRR
 
-    scn_.load(MY_MBAND
-              + ANGLE_NAMES
-              # + ['M12_LUT', 'M13_LUT', 'M15_LUT', 'M16_LUT']
-              + ['latitude', 'longitude', 'scanline_timestamps'])
+    scn_in.load(MY_MBAND
+                + ANGLE_NAMES
+                # + ['M12_LUT', 'M13_LUT', 'M15_LUT', 'M16_LUT']
+                + ['latitude', 'longitude', 'scanline_timestamps'])
+    if split_files_at_midnight:
+        scenes = split_scene_at_midnight(scn_in)
+    else:
+        scenes = [scn_in]
+    filenames = []
+    for scn_ in scenes:
+        # one ir channel
+        irch = scn_['M15']
 
-    # one ir channel
-    irch = scn_['M15']
+        # Set header and band attributes
+        set_header_and_band_attrs(scn_, orbit_n=orbit_n)
 
-    # Set header and band attributes
-    set_header_and_band_attrs(scn_, orbit_n=orbit_n)
+        # Rename longitude, latitude to lon, lat.
+        rename_latitude_longitude(scn_)
+    
+        # Convert angles to PPS
+        convert_angles(scn_, delete_azimuth=False)
+        update_angle_attributes(scn_, irch)
+        # Adjust to noaa19 with sbafs from KG
+        sensor = "viirs"
+        if as_noaa19:
+            sensor = "avhrr"
+            convert_to_noaa19(scn_)
 
-    # Rename longitude, latitude to lon, lat.
-    rename_latitude_longitude(scn_)
+        filename = compose_filename(scn_, out_path, instrument=sensor, band=irch)
+        encoding = get_encoding_viirs(scn_)
 
-    # Convert angles to PPS
-    convert_angles(scn_, delete_azimuth=False)
-    update_angle_attributes(scn_, irch)
-
-    # Adjust to noaa19 with sbafs from KG
-    sensor = "viirs"
-    if as_noaa19:
-        sensor = "avhrr"
-        convert_to_noaa19(scn_)
-
-    filename = compose_filename(scn_, out_path, instrument=sensor, band=irch)
-    encoding = get_encoding_viirs(scn_)
-
-    scn_.save_datasets(writer='cf',
-                       filename=filename,
-                       header_attrs=get_header_attrs(scn_, band=irch, sensor=sensor),
-                       engine=engine,
-                       include_lonlats=False,
-                       flatten_attrs=True,
-                       encoding=encoding)
-    print("Saved file {:s} after {:3.1f} seconds".format(
-        os.path.basename(filename),
-        time.time()-tic))
-    return filename
+        scn_.save_datasets(writer='cf',
+                           filename=filename,
+                           header_attrs=get_header_attrs(scn_, band=irch, sensor=sensor),
+                           engine=engine,
+                           include_lonlats=False,
+                           flatten_attrs=True,
+                           encoding=encoding)
+        print("Saved file {:s} after {:3.1f} seconds".format(
+            os.path.basename(filename),
+            time.time()-tic))
+        filenames.append(filename)
+    return filenames
