@@ -21,6 +21,7 @@
 #   Martin Raspaud <martin.raspaud@smhi.se>
 #   Nina Hakansson <nina.hakansson@smhi.se>
 #   Adam.Dybbroe <adam.dybbroe@smhi.se>
+#   Salomom Eliasson <salomon.eliasson@smhi.se>
 
 """Functions to convert VGAC level-1c data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
 
@@ -199,7 +200,7 @@ def get_midnight_line_nr(scene):
     for indj in range(start_fine_search, start_fine_search - 100, -1):
         # Midnight is in one of the previous 100 lines.
         dt_obj = dt64_to_datetime(scene['scanline_timestamps'].values[:][indj])
-        date_linei = dt_obj.strftime("%Y-%m-%d") 
+        date_linei = dt_obj.strftime("%Y-%m-%d")
         if date_linei == start_date:
             # We just passed midnight this is the last line for previous day.
             midnight_linenr = indj
@@ -231,7 +232,7 @@ def set_exact_time_and_crop(scene, start_line, end_line, time_key='scanline_time
         raise ValueError
     if end_time_dt64 != scene[time_key].values[-1]:
         raise ValueError
-        
+
 def split_scene_at_midnight(scene):
     """Split scenes at midnight."""
     if midnight_scene(scene):
@@ -282,7 +283,7 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf',
 
         # Rename longitude, latitude to lon, lat.
         rename_latitude_longitude(scn_)
-    
+
         # Convert angles to PPS
         convert_angles(scn_, delete_azimuth=False)
         update_angle_attributes(scn_, irch)
