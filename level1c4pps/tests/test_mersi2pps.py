@@ -78,14 +78,16 @@ class TestMersi2PPS(unittest.TestCase):
 
     def test_set_header_and_band_attrs(self):
         """Test to set header_and_band_attrs."""
-        mersi2pps.set_header_and_band_attrs(self.scene, orbit_n='12345')
+        mersi2pps.set_header_and_band_attrs(self.scene, band=self.scene['24'], orbit_n='12345')
         self.assertTrue(isinstance(self.scene.attrs['orbit_number'], int))
         self.assertEqual(self.scene.attrs['orbit_number'], 12345)
 
     def test_get_sensor(self):
         """Test get sensor."""
         sensor = mersi2pps.get_sensor('tf2019234102243.FY3D-X_MERSI_GEOQK_L1B.HDF')
-        self.assertEqual(sensor, "merci-2")
+        self.assertEqual(sensor, "mersi-2")
+        sensor = mersi2pps.get_sensor('tf2019234102243.FY3F-X_MERSI_GEOQK_L1B.HDF')
+        self.assertEqual(sensor, "mersi-3")
 
     def test_get_sensor_returns_none(self):
         """Test get sensor returns none for not recognized file."""

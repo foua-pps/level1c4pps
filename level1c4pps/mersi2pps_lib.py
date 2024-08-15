@@ -39,7 +39,7 @@ from level1c4pps import (ANGLE_ATTRIBUTES,
                          set_header_and_band_attrs_defaults,
                          update_angle_attributes)
 
-# Example:
+# Example filenames:
 # tf2019234102243.FY3D-X_MERSI_GEOQK_L1B.HDF
 # tf2019234102243.FY3D-X_MERSI_GEO1K_L1B.HDF
 # tf2019234102243.FY3D-X_MERSI_1000M_L1B.HDF
@@ -48,47 +48,51 @@ from level1c4pps import (ANGLE_ATTRIBUTES,
 
 logger = logging.getLogger('mersi2pps')
 
-SENSOR = {'FY3D': 'merci-2',
-          'FY3F': 'merci-3',
-          'FY3H': 'merci-3'}
+SENSOR = {'FY3D': 'mersi-2',
+          'FY3F': 'mersi-3',
+          'FY3H': 'mersi-3'}
 
-SATPY_READER = {'merci-2': 'mersi2_l1b',
-                'merci-3': 'mersi3_l1b'}
-
-BANDNAMES = ['3', '4', '5', '6', '20', '22', '23', '24', '25']
+SATPY_READER = {'mersi-2': 'mersi2_l1b',
+                'mersi-3': 'mersi3_l1b'}
 
 REFL_BANDS = ['3', '4', '5', '6']
 
-ANGLE_NAMES = ['satellite_zenith_angle', 'solar_zenith_angle',
-               'satellite_azimuth_angle', 'solar_azimuth_angle']
+ONE_IR_CHANNEL = '24'
 
-PPS_TAGNAMES = {'3': 'ch_r06',
-                '4': 'ch_r09',
-                '5': 'ch_r13',
-                '6': 'ch_r16',
-                '20': 'ch_tb37',
-                '22': 'ch_tb73',
-                '23': 'ch_tb85',
-                '24': 'ch_tb11',
-                '25': 'ch_tb12'}
+GEOLOCATION_NAMES = ['latitude',
+                     'longitude',
+                     'satellite_azimuth_angle',
+                     'satellite_zenith_angle',
+                     'solar_azimuth_angle',
+                     'solar_zenith_angle']
+
+PPS_BAND_NAME = {'3': 'ch_r06',
+                 '4': 'ch_r09',
+                 '5': 'ch_r13',
+                 '6': 'ch_r16',
+                 '20': 'ch_tb37',
+                 '22': 'ch_tb73',
+                 '23': 'ch_tb85',
+                 '24': 'ch_tb11',
+                 '25': 'ch_tb12'}
+
+RESOLUTION = 1000
 
 
-def set_header_and_band_attrs(scene, orbit_n=0):
+def set_header_and_band_attrs(scene, band, orbit_n):
     """Set and delete some attributes."""
-    irch = scene['24']
-    nimg = set_header_and_band_attrs_defaults(scene,
-                                              BANDNAMES,
-                                              PPS_TAGNAMES,
-                                              REFL_BANDS,
-                                              irch,
-                                              orbit_n=orbit_n)
+    set_header_and_band_attrs_defaults(scene,
+                                       list(PPS_BAND_NAME),
+                                       PPS_BAND_NAME,
+                                       REFL_BANDS,
+                                       band,
+                                       orbit_n=orbit_n)
     scene.attrs['source'] = "mersi2pps.py"
-    return nimg
 
 
 def remove_broken_data(scene):
     """Set bad data to nodata."""
-    for band in BANDNAMES:
+    for band in PPS_BAND_NAME:
         if band in REFL_BANDS:
             continue
         if band in scene:
@@ -111,25 +115,26 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf', orbit_n=0):
     sensor = get_sensor(os.path.basename(scene_files[0]))
     reader = SATPY_READER[sensor]
     scene = Scene(reader=reader, filenames=scene_files)
-    scene.load(BANDNAMES + ['latitude', 'longitude'] + ANGLE_NAMES, resolution=1000)
+    band_names = list(PPS_BAND_NAME)
+    scene.load(band_names + GEOLOCATION_NAMES, resolution=RESOLUTION)
     remove_broken_data(scene)
-    irch = scene['24']  # one ir channel 
-    set_header_and_band_attrs(scene, orbit_n=orbit_n)
+    band = scene[ONE_IR_CHANNEL]
+    set_header_and_band_attrs(scene, band, orbit_n)
     rename_latitude_longitude(scene)
     convert_angles(scene, delete_azimuth=True)
-    update_angle_attributes(scene, irch)
+    update_angle_attributes(scene, band)
     for angle in ['sunzenith', 'satzenith', 'azimuthdiff']:
         scene[angle].attrs['file_key'] = ANGLE_ATTRIBUTES['mersi_file_key'][angle]
 
-    filename = compose_filename(scene, out_path, instrument=sensor.replace('-', ''), band=irch)
-    encoding = get_encoding(scene, BANDNAMES, PPS_TAGNAMES, chunks=None)
-    attrs = get_header_attrs(scene, band=irch, sensor=sensor)
+    filename = compose_filename(scene, out_path, instrument=sensor.replace('-', ''), band=band)
+    encoding = get_encoding(scene, band_names, PPS_BAND_NAME, chunks=None)
+    attrs = get_header_attrs(scene, band=band, sensor=sensor)
     scene.save_datasets(writer='cf',
-                       filename=filename,
-                       header_attrs=attrs,
-                       engine=engine,
-                       include_lonlats=False,
-                       flatten_attrs=True,
-                       encoding=encoding)
+                        filename=filename,
+                        header_attrs=attrs,
+                        engine=engine,
+                        include_lonlats=False,
+                        flatten_attrs=True,
+                        encoding=encoding)
     print(f"Saved file {os.path.basename(filename)} after {time.time() - tic:3.1f} seconds")
     return filename
