@@ -21,7 +21,7 @@
 #   Stephan Finkensieper <stephan.finkensieper@dwd.de>
 #   Nina Hakansson <nina.hakansson@smhi.se>
 
-"""Unit tests for the gac2pps_lib module."""
+"""Unit tests for the merci2pps_lib module."""
 
 import datetime as dt
 import unittest
@@ -31,15 +31,15 @@ except ImportError:
     import mock
 from satpy import Scene
 
-import level1c4pps.mersi22pps_lib as mersi22pps
+import level1c4pps.mersi2pps_lib as mersi2pps
 
 
-class TestMersi22PPS(unittest.TestCase):
-    """Test mersi22pps_lib."""
+class TestMersi2PPS(unittest.TestCase):
+    """Test mersi2pps_lib."""
 
     def setUp(self):
         """Create a test scene."""
-        mersi22pps.BANDNAMES = ['3', '24']
+        mersi2pps.BANDNAMES = ['3', '24']
         vis006 = mock.MagicMock(attrs={'name': 'image0',
                                        'wavelength': [1, 2, 3, 'um'],
                                        'id_tag': 'ch_r06'})
@@ -60,32 +60,6 @@ class TestMersi22PPS(unittest.TestCase):
             self.scene[key].attrs['name'] = pps_name
         self.scene.attrs['sensor'] = ['mersi2']
 
-    def test_get_encoding(self):
-        """Test encoding for MERSI-2."""
-        enc_exp_angles = {'dtype': 'int16',
-                          'scale_factor': 0.01,
-                          'zlib': True,
-                          'complevel': 4,
-                          '_FillValue': -32767,
-                          'add_offset': 0.0}
-        encoding_exp = {
-            'image0': {'dtype': 'int16',
-                       'scale_factor': 0.01,
-                       'zlib': True,
-                       'complevel': 4,
-                       '_FillValue': -32767,
-                       'add_offset': 0.0},
-            'image1': {'dtype': 'int16',
-                       'scale_factor': 0.01,
-                       '_FillValue': -32767,
-                       'zlib': True,
-                       'complevel': 4,
-                       'add_offset': 273.15},
-            'satzenith': enc_exp_angles
-        }
-        encoding = mersi22pps.get_encoding_mersi2(self.scene)
-        self.assertDictEqual(encoding, encoding_exp)
-
     def test_compose_filename(self):
         """Test compose filename for MERSI-2."""
         start_time = dt.datetime(2009, 7, 1, 12, 15)
@@ -99,14 +73,24 @@ class TestMersi22PPS(unittest.TestCase):
         band = mock.MagicMock(attrs={'start_time': start_time,
                                      'end_time': end_time})
         fname_exp = '/out/path/S_NWC_mersi2_noaa19_99999_20090701T1216000Z_20090701T1227000Z.nc'
-        fname = mersi22pps.compose_filename(scene, '/out/path', 'mersi2', band=band)
+        fname = mersi2pps.compose_filename(scene, '/out/path', 'mersi2', band=band)
         self.assertEqual(fname, fname_exp)
 
     def test_set_header_and_band_attrs(self):
         """Test to set header_and_band_attrs."""
-        mersi22pps.set_header_and_band_attrs(self.scene, orbit_n='12345')
+        mersi2pps.set_header_and_band_attrs(self.scene, orbit_n='12345')
         self.assertTrue(isinstance(self.scene.attrs['orbit_number'], int))
         self.assertEqual(self.scene.attrs['orbit_number'], 12345)
+
+    def test_get_sensor(self):
+        """Test get sensor."""
+        sensor = mersi2pps.get_sensor('tf2019234102243.FY3D-X_MERSI_GEOQK_L1B.HDF')
+        self.assertEqual(sensor, "merci-2")
+
+    def test_get_sensor_returns_none(self):
+        """Test get sensor returns none for not recognized file."""
+        sensor = mersi2pps.get_sensor('not_recognized_file')
+        self.assertEqual(sensor, None)
 
 
 def suite():

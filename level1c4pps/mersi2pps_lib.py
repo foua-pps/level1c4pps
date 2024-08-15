@@ -22,18 +22,22 @@
 #   Nina Hakansson <nina.hakansson@smhi.se>
 #   Adam.Dybbroe <adam.dybbroe@smhi.se>
 
-"""Functions to convert MERSI-2 level-1 data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
+"""Functions to convert MERSI-2/3 level-1 data to a NWCSAF/PPS level-1c formated netCDF/CF file."""
 
+import logging
 import os
 import time
+
+import numpy as np
 from satpy.scene import Scene
-from level1c4pps import (get_encoding, compose_filename,
+from level1c4pps import (ANGLE_ATTRIBUTES,
+                         compose_filename,
+                         convert_angles,
+                         get_encoding,
+                         get_header_attrs,
+                         rename_latitude_longitude,
                          set_header_and_band_attrs_defaults,
-                         ANGLE_ATTRIBUTES, rename_latitude_longitude,
-                         update_angle_attributes, get_header_attrs,
-                         convert_angles)
-import pyspectral  # testing that pyspectral is available # noqa: F401
-import logging
+                         update_angle_attributes)
 
 # Example:
 # tf2019234102243.FY3D-X_MERSI_GEOQK_L1B.HDF
@@ -42,10 +46,15 @@ import logging
 # tf2019234102243.FY3D-X_MERSI_0250M_L1B.HDF
 #
 
-logger = logging.getLogger('mersi22pps')
+logger = logging.getLogger('mersi2pps')
 
-PLATFORM_SHORTNAMES = {'FY3D': 'FY-3D'}
-# BANDNAMES = ['%d' % (chn+1) for chn in range(25)]
+SENSOR = {'FY3D': 'merci-2',
+          'FY3F': 'merci-3',
+          'FY3H': 'merci-3'}
+
+SATPY_READER = {'merci-2': 'mersi2_l1b',
+                'merci-3': 'mersi3_l1b'}
+
 BANDNAMES = ['3', '4', '5', '6', '20', '22', '23', '24', '25']
 
 REFL_BANDS = ['3', '4', '5', '6']
@@ -63,28 +72,22 @@ PPS_TAGNAMES = {'3': 'ch_r06',
                 '24': 'ch_tb11',
                 '25': 'ch_tb12'}
 
-MERSI2_LEVEL1_FILE_PATTERN = 'tf{start_time:%Y%j%H%M%S}.{platform_shortname:4s}-X_MERSI_{dataset}_L1B.HDF'
-
-
-def get_encoding_mersi2(scene):
-    """Get netcdf encoding for all datasets."""
-    return get_encoding(scene,
-                        BANDNAMES,
-                        PPS_TAGNAMES,
-                        chunks=None)
-
 
 def set_header_and_band_attrs(scene, orbit_n=0):
     """Set and delete some attributes."""
     irch = scene['24']
-    nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch, orbit_n=orbit_n)
-    scene.attrs['source'] = "mersi22pps.py"
+    nimg = set_header_and_band_attrs_defaults(scene,
+                                              BANDNAMES,
+                                              PPS_TAGNAMES,
+                                              REFL_BANDS,
+                                              irch,
+                                              orbit_n=orbit_n)
+    scene.attrs['source'] = "mersi2pps.py"
     return nimg
 
 
 def remove_broken_data(scene):
     """Set bad data to nodata."""
-    import numpy as np
     for band in BANDNAMES:
         if band in REFL_BANDS:
             continue
@@ -93,42 +96,40 @@ def remove_broken_data(scene):
             scene[band].values = scene[band].values + remove
 
 
+def get_sensor(scene_file):
+    """Get sensor associated to the scene file."""
+    for platform, sensor in SENSOR.items():
+        if platform in scene_file:
+            return sensor
+    logger.info("Failed to determine sensor associated to scene file: '%s'", scene_file)
+    return None
+
+
 def process_one_scene(scene_files, out_path, engine='h5netcdf', orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
-    scn_ = Scene(
-        reader='mersi2_l1b',
-        filenames=scene_files)
-
-    scn_.load(BANDNAMES + ['latitude', 'longitude'] + ANGLE_NAMES, resolution=1000)
-
-    # Remove bad data at first and last column
-    remove_broken_data(scn_)
-
-    # one ir channel
-    irch = scn_['24']
-
-    # Set header and band attributes
-    set_header_and_band_attrs(scn_, orbit_n=orbit_n)
-
-    # Rename longitude, latitude to lon, lat.
-    rename_latitude_longitude(scn_)
-
-    # Convert angles to PPS
-    convert_angles(scn_, delete_azimuth=True)
-    update_angle_attributes(scn_, irch)
+    sensor = get_sensor(os.path.basename(scene_files[0]))
+    reader = SATPY_READER[sensor]
+    scene = Scene(reader=reader, filenames=scene_files)
+    scene.load(BANDNAMES + ['latitude', 'longitude'] + ANGLE_NAMES, resolution=1000)
+    remove_broken_data(scene)
+    irch = scene['24']  # one ir channel 
+    set_header_and_band_attrs(scene, orbit_n=orbit_n)
+    rename_latitude_longitude(scene)
+    convert_angles(scene, delete_azimuth=True)
+    update_angle_attributes(scene, irch)
     for angle in ['sunzenith', 'satzenith', 'azimuthdiff']:
-        scn_[angle].attrs['file_key'] = ANGLE_ATTRIBUTES['mersi2_file_key'][angle]
+        scene[angle].attrs['file_key'] = ANGLE_ATTRIBUTES['mersi_file_key'][angle]
 
-    filename = compose_filename(scn_, out_path, instrument='mersi2', band=irch)
-    scn_.save_datasets(writer='cf',
+    filename = compose_filename(scene, out_path, instrument=sensor.replace('-', ''), band=irch)
+    encoding = get_encoding(scene, BANDNAMES, PPS_TAGNAMES, chunks=None)
+    attrs = get_header_attrs(scene, band=irch, sensor=sensor)
+    scene.save_datasets(writer='cf',
                        filename=filename,
-                       header_attrs=get_header_attrs(scn_, band=irch, sensor='mersi-2'),
+                       header_attrs=attrs,
                        engine=engine,
                        include_lonlats=False,
                        flatten_attrs=True,
-                       encoding=get_encoding_mersi2(scn_))
-    print("Saved file {:s} after {:3.1f} seconds".format(
-        os.path.basename(filename),
-        time.time()-tic))
+                       encoding=encoding)
+    print(f"Saved file {os.path.basename(filename)} after {time.time() - tic:3.1f} seconds")
     return filename

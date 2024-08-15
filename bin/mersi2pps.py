@@ -25,17 +25,17 @@
 """Script to convert MERSI-2 level-1 to PPS level-1c format using Pytroll/Satpy."""
 
 import argparse
-from level1c4pps.mersi22pps_lib import process_one_scene
+from level1c4pps.mersi2pps_lib import process_one_scene
 
 
 if __name__ == "__main__":
     """ Create PPS-format level1c data
-    From a list of MERSI-2 level-1 files create a NWCSAF/PPS formatet level1c file for pps.
+    From a list of MERSI-2/3 level-1 files create a NWCSAF/PPS formatet level1c file for pps.
     """
     parser = argparse.ArgumentParser(
-        description=('Script to produce a PPS-level1c file for a MERSI-2 level-1 scene'))
+        description=('Script to produce a PPS-level1c file for a MERSI-2/3 level-1 scene'))
     parser.add_argument('files', metavar='fileN', type=str, nargs='+',
-                        help='List of MERSI-2 files to process')
+                        help='List of MERSI-2/3 files to process')
     parser.add_argument('-o', '--out_dir', type=str, nargs='?',
                         required=False, default='.',
                         help="Output directory where to store the level1c file")
