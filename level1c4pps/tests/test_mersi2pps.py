@@ -29,6 +29,8 @@ try:
     from unittest import mock
 except ImportError:
     import mock
+import numpy as np
+import xarray as xr
 from satpy import Scene
 
 import level1c4pps.mersi2pps_lib as mersi2pps
@@ -82,23 +84,41 @@ class TestMersi2PPS(unittest.TestCase):
         self.assertTrue(isinstance(self.scene.attrs['orbit_number'], int))
         self.assertEqual(self.scene.attrs['orbit_number'], 12345)
 
+    def test_remove_broken_data(self):
+        """Test remove broken data."""
+        data = xr.Dataset(
+            {
+                '3': (('y', 'x'), [[100, 0, 100, 100]]),
+                '20': (('y', 'x'), [[200, 0, 200, 200]]),
+                '22': (('y', 'x'), [[300, 0, 300, 300]]),
+            }
+        )
+        mersi2pps.remove_broken_data(data)
+        expect = xr.Dataset(
+            {
+                '3': (('y', 'x'), [[100, 0, 100, 100]]),
+                '20': (('y', 'x'), [[200, np.nan, 200, 200]]),
+                '22': (('y', 'x'), [[300, np.nan, 300, 300]]),
+            }
+        )
+        for band in expect:
+            np.testing.assert_array_equal(data[band], expect[band])
+
     def test_get_sensor(self):
         """Test get sensor."""
-        sensor = mersi2pps.get_sensor('tf2019234102243.FY3D-X_MERSI_GEOQK_L1B.HDF')
-        self.assertEqual(sensor, "mersi-2")
-        sensor = mersi2pps.get_sensor('tf2019234102243.FY3F-X_MERSI_GEOQK_L1B.HDF')
-        self.assertEqual(sensor, "mersi-3")
-
-    def test_get_sensor_returns_none(self):
-        """Test get sensor returns none for not recognized file."""
-        sensor = mersi2pps.get_sensor('not_recognized_file')
-        self.assertEqual(sensor, None)
+        for filename, expect in [
+            ('tf2019234102243.FY3D-X_MERSI_GEOQK_L1B.HDF', 'mersi-2'),
+            ('tf2019234102243.FY3F-X_MERSI_GEOQK_L1B.HDF', 'mersi-3'),
+            ('not_recognized_file', None),
+        ]:
+            sensor = mersi2pps.get_sensor(filename)
+            self.assertEqual(sensor, expect)
 
 
 def suite():
     """Create the test suite for test_mersi22pps."""
     loader = unittest.TestLoader()
     mysuite = unittest.TestSuite()
-    mysuite.addTest(loader.loadTestsFromTestCase(TestMersi22PPS))
+    mysuite.addTest(loader.loadTestsFromTestCase(TestMersi2PPS))
 
     return mysuite
