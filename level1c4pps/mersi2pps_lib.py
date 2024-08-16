@@ -96,7 +96,7 @@ def set_header_and_band_attrs(scene, band, orbit_n):
 def remove_broken_data(scene):
     """Set bad data to nodata."""
     for band in PPS_BAND_NAME:
-        if band in band not in REFL_BANDS and band in scene:
+        if band not in REFL_BANDS and band in scene:
             scene[band].data = np.where(scene[band].data < LOW_TB, np.nan, scene[band].data)
 
 
