@@ -25,6 +25,7 @@
 
 """Functions to convert VGAC level-1c data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
 
+import numpy as np
 import os
 import time
 from satpy.scene import Scene
@@ -274,9 +275,14 @@ def get_midnight_line_nr(scene):
     start_date = scene["M05"].attrs["start_time"].strftime("%Y-%m-%d")
     end_date = scene["M05"].attrs["end_time"].strftime("%Y-%m-%d")
     start_fine_search = len(scene['scanline_timestamps']) - 1  # As default start the fine search from end of time array
+    file_contain_bad_time_info = False
     for ind in range(0, len(scene['scanline_timestamps']), 100):
         # Search from the beginning in large chunks (100) and break when we
         # pass midnight.
+        if np.isnan(scene['scanline_timestamps'].values[:][ind]):
+            # Sometimes time info is wrong 10^36 hours since ...
+            file_contain_bad_time_info = True
+            continue
         dt_obj = dt64_to_datetime(scene['scanline_timestamps'].values[:][ind])
         date_linei = dt_obj.strftime("%Y-%m-%d")
         if date_linei == end_date:
@@ -285,13 +291,17 @@ def get_midnight_line_nr(scene):
             break
     for indj in range(start_fine_search, start_fine_search - 100, -1):
         # Midnight is in one of the previous 100 lines.
+        if np.isnan(scene['scanline_timestamps'].values[:][indj]):
+            raise ValueError("Error in time information in VGAC file.")
         dt_obj = dt64_to_datetime(scene['scanline_timestamps'].values[:][indj])
         date_linei = dt_obj.strftime("%Y-%m-%d")
         if date_linei == start_date:
             # We just passed midnight this is the last line for previous day.
             midnight_linenr = indj
             break
-    return midnight_linenr
+        if file_contain_bad_time_info and indj == start_fine_search - 99:
+            raise ValueError("Error in time information in VGAC file.")
+    return  midnight_linenr
 
 
 def set_exact_time_and_crop(scene, start_line, end_line, time_key='scanline_timestamps'):
