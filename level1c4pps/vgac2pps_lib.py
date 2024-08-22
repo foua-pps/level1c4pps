@@ -36,6 +36,7 @@ from level1c4pps import (get_encoding, compose_filename,
                          convert_angles)
 import pyspectral  # testing that pyspectral is available # noqa: F401
 import logging
+import numpy as np
 
 # Example:
 
@@ -96,58 +97,142 @@ PPS_TAGNAMES = {"M05": 'ch_r06',
                 "M13": 'ch_tbxx'}
 
 
-def convert_to_noaa19(scene):
+def convert_to_noaa19(scene, V="v3"):
+
+    """_v2_
+
+    r06(AVHRR,%) = 0.9129*M5 + 0.99   (based on data for solzenith angle < 75 degrees)
+    r09(AVHRR,%) = 0.9025*M7          (based on data for solzenith angle < 75 degrees)
+    tb37(AVHRR,K) = 0.9967*M12 + 0.85 (based on data for solzenith angles 95-180 degrees)
+    tb11(AVHRR,K) = 1.002*M15 - 0.4   (based on data for solzenith  angles 0 -180 degrees)
+    tb12(AVHRR,K) = 0.9934*M16 + 1.52 (based on data for solzenith  angles 0-180 degrees)
     """
+    """_v3_
     Convert channel data to noaa19, using SBAFs.
 
-    # Try I 20230404
-    N19_ch1 = 0.958*M5
-    N19_ch2 = 0.878*M7
-    # N19_ch1 = 1.022*M5 (corr-coeff 0.9995)
-    # N19_ch2 = 0.729*M6 (corr-coeff 0.9987)
-    N19_ch3b = -1.1603*10^2 + 1.8362 * M12 – 1.501*10^3*M12^2 (corr-coeff 0.9942)
-    N19_ch4 = 1.0003*M15 (corr-coeff 1.0!)
-    N19_ch5 = 0.8 + 0.9956*M16 (corr-coeff 1.0!)
+    Salomon (KG and Erwin) 20240814:
+    r06(AVHRR,%) = 0.8949*M5 + 2.07        (based on nadir collocation data for SZA < 75)
+    r09(AVHRR,%) = 0.9204*M7 - 0.87        (based on nadir collocation data for SZA < 75)
+    tb37(AVHRR,K)_night = 0.9923*M12 + 1.8 (based on nadir collocation data for SZA 100-180)
+    tb37(AVHRR,K)_day = 0.9491*M12 + 16.0  (based on NASA SBAFS for SZA < 75 o and VZA < 5)
+    tb11(AVHRR,K) = 1.003*M15 - 0.78       (based on nadir collocation data for SZA 0 -180)
+    tb12(AVHRR,K) = 1.003*M16 - 0.84       (based on nadir collocation data for SZA 0-180)
 
-    # Try II 20231120
-    r06(AVHRR,%) = 0.9393*M5 + 0.57
-    r09(AVHRR,%) = 0.001275*M7*M7 + 0.7781*M7 +1.77
-    tb37(AVHRR,K) = 0.9563*M12 + 9.86
-    tb11(AVHRR,K) = 1.003*M15 - 0.77
-    tb12(AVHRR,K) = 1.002*M16 - 0.69
-
-    # Try II Nina
-    r06(AVHRR,%) = 0.9034*M5 + 1.04
-    r09(AVHRR,%) = 0.8821*M7 + 0.17
-    tb37(AVHRR,K) = 0.997*M12 + 0.89
-    tb11(AVHRR,K) = 1.001*M15 - 0.05
-    tb12(AVHRR,K) = 0.9899*M16 + 2.5
-
-    r06(AVHRR,%) = 0.914 * M5 + 0.83
-    r09(AVHRR,%) = 0.9019 * M7 - 0.18
-    tb37(AVHRR,K) = 0.9962 * M12 + 0.99
-    tb11(AVHRR,K) = 1.002 * M15 - 0.31
-    tb12(AVHRR,K) = 0.993 * M16 + 1.62
-
-    r06(AVHRR,%) = 0.9211*M5 + 0.85
-    r09(AVHRR,%) = 0.9242*M7 -0.78
-    tb37(AVHRR,K) = 0.9951*M12 + 1.18
-    tb11(AVHRR,K) = 1.003*M15 - 0.55
-    tb12(AVHRR,K) = 0.9977*M16 + 0.39
-
-    KG 20230111:
-    r06(AVHRR, %) = 0.9129 * M5 + 0.99
-    r09(AVHRR, %) = 0.9025 * M7
-    tb37(AVHRR, K) = 0.9967 * M12 + 0.85
-    tb11(AVHRR, K) = 1.002 * M15 - 0.4
-    tb12(AVHRR, K) = 0.9934 * M16 +1.52
     """
 
-    scene["M05"].values = 0.9129 * scene["M05"] + 0.99
-    scene["M07"].values = 0.9025 * scene["M07"]
-    scene["M15"].values = 1.002 * scene["M15"] - 0.4
-    scene["M16"].values = 0.9934 * scene["M16"] + 1.52
-    scene["M12"].values = 0.9967 * scene["M12"] + 0.85
+    """_SBAF dictionary_
+
+    I've put the SBAFs in this dictionary for super clarity when running the script
+    and set up for if we want to run more than on version of SBAF
+
+    """
+    SBAF = {
+        "v2": {
+            "r06": {
+                "VIIRS channel": "M05",
+                "lutning": 0.9129,
+                "offset": 0.99,
+                "comment": "based on nadir collocation data for SZA < 75",
+            },
+            "r09": {
+                "VIIRS channel": "M07",
+                "lutning": 0.9025,
+                "offset": 0,
+                "comment": "based on nadir collocation data for SZA < 75",
+            },
+            "tb37": {
+                "VIIRS channel": "M12",
+                "lutning": 0.9967,
+                "offset": 0.85,
+                "comment": "based on nadir collocation data for SZA 95-180",
+            },
+            "tb11": {
+                "VIIRS channel": "M15",
+                "lutning": 1.002,
+                "offset": -0.4,
+                "comment": "based on nadir collocation data for SZA 0 -180",
+            },
+            "tb12": {
+                "VIIRS channel": "M16",
+                "lutning": 0.9934,
+                "offset":  1.52,
+                "comment": "based on nadir collocation data for SZA 0-180",
+            },
+        },
+        "v3": {
+            "r06": {
+                "VIIRS channel": "M05",
+                "lutning": 0.8949,
+                "offset": 2.07,
+                "comment": "based on nadir collocation data for SZA < 75",
+            },
+            "r09": {
+                "VIIRS channel": "M07",
+                "lutning": 0.9204,
+                "offset": -0.87,
+                "comment": "based on nadir collocation data for SZA < 75",
+            },
+            "tb37_night": {
+                "VIIRS channel": "M12",
+                "lutning": 0.9923,
+                "offset": 1.8,
+                "rule": np.array(scene["sunzenith"].values) >= 89.,
+                "comment": "based on nadir collocation data for SZA 100-180. SZA >= 89",
+            },
+            "tb37_day": {
+                "VIIRS channel": "M12",
+                "lutning": 0.9491,
+                "offset": 16.0,
+                "rule": np.array(scene["sunzenith"].values) < 80.,
+                "comment": "based on NASA SBAFS for SZA < 75 o and VZA < 5. SZA < 80",
+            },
+            "tb37_twilight": {
+                "VIIRS channel": "M12",
+                "lutning": 0.9707,
+                "offset": 8.9,
+                "rule": np.array((scene["sunzenith"].values >= 80) & (scene["sunzenith"].values < 89.)),
+                "comment": "The linear average of the SBAFs for t37_day and t37_night. 80<= SZA <89",
+            },
+            "tb11": {
+                "VIIRS channel": "M15",
+                "lutning": 1.003,
+                "offset": -0.78,
+                "comment": "based on nadir collocation data for SZA 0 -180",
+            },
+            "tb12": {
+                "VIIRS channel": "M16",
+                "lutning": 1.003,
+                "offset": -0.84,
+                "comment": "based on nadir collocation data for SZA 0-180",
+            },
+        }
+    }
+
+    strlen = max(len(k) for k in SBAF[V].keys())
+    tb37_separated = ['tb37_day', 'tb37_night', 'tb37_twilight']
+    print(f"Using SBAF_{V}")
+    for y in SBAF[V].keys():
+        k = SBAF[V][y]['lutning']
+        x = SBAF[V][y]['VIIRS channel']
+        m = SBAF[V][y]['offset']
+        com = SBAF[V][y]['comment']
+        if y not in tb37_separated:
+            print(f"{y:<{strlen}} = {k:<6}*{x:<3}+{m:<5} ({com})")
+            scene[x].values = k * scene[x].values + m
+
+    # # #####  Ch3.7 special handling
+    if any(y in SBAF[V] for y in tb37_separated):
+        M12 = np.array(scene["M12"].values)
+        for y in tb37_separated:
+            k = SBAF[V][y]['lutning']
+            m = SBAF[V][y]['offset']
+            rule = SBAF[V][y]['rule']
+            com = SBAF[V][y]['comment']
+
+            print(f"{y:<{strlen}} = {k:<6}*M12+{m:<5} ({com})")
+            M12 = np.where(rule, k * M12 + m, M12)
+        scene["M12"].values = M12.tolist()
+    # # #### end special handling
 
     if "npp" in scene.attrs["platform"].lower():
         scene.attrs["platform"] = "vgacsnpp"
@@ -173,6 +258,7 @@ def set_header_and_band_attrs(scene, orbit_n=0):
         # For VIIRS data sun_zenith_angle_correction_applied is applied always!
         scene[band].attrs['sun_zenith_angle_correction_applied'] = 'True'
     return nimg
+
 
 def midnight_scene(scene):
     """Check if scene passes midnight."""
@@ -205,8 +291,7 @@ def get_midnight_line_nr(scene):
             # We just passed midnight this is the last line for previous day.
             midnight_linenr = indj
             break
-    return  midnight_linenr
-
+    return midnight_linenr
 
 
 def set_exact_time_and_crop(scene, start_line, end_line, time_key='scanline_timestamps'):
@@ -233,6 +318,7 @@ def set_exact_time_and_crop(scene, start_line, end_line, time_key='scanline_time
     if end_time_dt64 != scene[time_key].values[-1]:
         raise ValueError
 
+
 def split_scene_at_midnight(scene):
     """Split scenes at midnight."""
     if midnight_scene(scene):
@@ -246,8 +332,9 @@ def split_scene_at_midnight(scene):
 
 
 def process_one_scene(scene_files, out_path, engine='h5netcdf',
-                      all_channels=False, pps_channels=False, orbit_n=0, as_noaa19=False, avhrr_channels=False,
-                      split_files_at_midnight=True):
+                      all_channels=False, pps_channels=False, orbit_n=0,
+                      as_noaa19=False, avhrr_channels=False,
+                      split_files_at_midnight=True, SBAF_version='v3'):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scn_in = Scene(
@@ -291,7 +378,7 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf',
         sensor = "viirs"
         if as_noaa19:
             sensor = "avhrr"
-            convert_to_noaa19(scn_)
+            convert_to_noaa19(scn_, SBAF_version)
 
         filename = compose_filename(scn_, out_path, instrument=sensor, band=irch)
         encoding = get_encoding_viirs(scn_)
@@ -304,7 +391,7 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf',
                            flatten_attrs=True,
                            encoding=encoding)
         print("Saved file {:s} after {:3.1f} seconds".format(
-            os.path.basename(filename),
-            time.time()-tic))
+             os.path.basename(filename),
+             time.time()-tic))
         filenames.append(filename)
     return filenames
