@@ -100,15 +100,16 @@ PPS_TAGNAMES = {"M05": 'ch_r06',
 
 def convert_to_noaa19(scene, V="v3"):
 
-    """_v2_
+    """
+    _v2_
 
     r06(AVHRR,%) = 0.9129*M5 + 0.99   (based on data for solzenith angle < 75 degrees)
     r09(AVHRR,%) = 0.9025*M7          (based on data for solzenith angle < 75 degrees)
     tb37(AVHRR,K) = 0.9967*M12 + 0.85 (based on data for solzenith angles 95-180 degrees)
     tb11(AVHRR,K) = 1.002*M15 - 0.4   (based on data for solzenith  angles 0 -180 degrees)
     tb12(AVHRR,K) = 0.9934*M16 + 1.52 (based on data for solzenith  angles 0-180 degrees)
-    """
-    """_v3_
+
+    _v3_
     Convert channel data to noaa19, using SBAFs.
 
     Salomon (KG and Erwin) 20240814:
@@ -118,6 +119,15 @@ def convert_to_noaa19(scene, V="v3"):
     tb37(AVHRR,K)_day = 0.9491*M12 + 16.0  (based on NASA SBAFS for SZA < 75 o and VZA < 5)
     tb11(AVHRR,K) = 1.003*M15 - 0.78       (based on nadir collocation data for SZA 0 -180)
     tb12(AVHRR,K) = 1.003*M16 - 0.84       (based on nadir collocation data for SZA 0-180)
+
+    _v4_
+    r06(AVHRR,%) = 0.8949*M5 + 2.07        (based on nadir collocation data for SZA < 75)
+    r09(AVHRR,%) = 0.9204*M7 - 0.87        (based on nadir collocation data for SZA < 75)
+    tb37(AVHRR,K)_night = 0.9923*M12 + 1.8 (based on nadir collocation data for SZA 100-180. For SZA > 89)
+    tb37(AVHRR,K)_day   = 0.9491*M12 + 16.0(based on NASA SBAFS for SZA < 75 and VZA < 5. For SZA < 80)
+    Tb37(AVHRR,k)_twilight = Average of values from day and night relations  (80 o < SZA < 89 o )
+    tb11(AVHRR,K) = 1.002*M15 - 0.4         (based on nadir collocation data for SZA 0 -180 o )
+    tb12(AVHRR,K) = 0.9934*M16 + 1.52       (based on nadir collocation data for SZA 0-180 o )
 
     """
 
@@ -204,6 +214,53 @@ def convert_to_noaa19(scene, V="v3"):
                 "VIIRS channel": "M16",
                 "lutning": 1.003,
                 "offset": -0.84,
+                "comment": "based on nadir collocation data for SZA 0-180",
+                },
+        },
+        "v4": {
+            "r06": {
+                "VIIRS channel": "M05",
+                "lutning": 0.8949,
+                "offset": 2.07,
+                "comment": "based on nadir collocation data for SZA < 75",
+            },
+            "r09": {
+                "VIIRS channel": "M07",
+                "lutning": 0.9204,
+                "offset": -0.87,
+                "comment": "based on nadir collocation data for SZA < 75",
+            },
+            "tb37_night": {
+                "VIIRS channel": "M12",
+                "lutning": 0.9923,
+                "offset": 1.8,
+                "rule": np.array(scene["sunzenith"].values) >= 89.,
+                "comment": "based on nadir collocation data for SZA 100-180. SZA >= 89",
+            },
+            "tb37_day": {
+                "VIIRS channel": "M12",
+                "lutning": 0.9491,
+                "offset": 16.0,
+                "rule": np.array(scene["sunzenith"].values) < 80.,
+                "comment": "based on NASA SBAFS for SZA < 75 o and VZA < 5. SZA < 80",
+            },
+            "tb37_twilight": {
+                "VIIRS channel": "M12",
+                "lutning": 0.9707,
+                "offset": 8.9,
+                "rule": np.array((scene["sunzenith"].values >= 80) & (scene["sunzenith"].values < 89.)),
+                "comment": "The linear average of the SBAFs for t37_day and t37_night. 80<= SZA <89",
+            },
+            "tb11": {
+                "VIIRS channel": "M15",
+                "lutning": 1.002,
+                "offset": -0.4,
+                "comment": "based on nadir collocation data for SZA 0 -180",
+            },
+            "tb12": {
+                "VIIRS channel": "M16",
+                "lutning": 0.9934,
+                "offset": 1.52,
                 "comment": "based on nadir collocation data for SZA 0-180",
             },
         }
