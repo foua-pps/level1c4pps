@@ -1,3 +1,20 @@
+## Version <0.2.34> (2024/08/29)
+
+### Issues Closed
+
+* [Issue 89](https://github.com/foua-pps/level1c4pps/issues/89) - sqlite import issue while running metimage2pps.py
+
+In this release 1 issue was closed.
+
+### Pull Requests Merged
+
+* [PR 88](https://github.com/foua-pps/level1c4pps/pull/88) - Handle some broken time information in VGAC files, by [@ninahakansson](https://github.com/ninahakansson)
+* [PR 87](https://github.com/foua-pps/level1c4pps/pull/87) - Split VGAC files at midnight, by [@ninahakansson](https://github.com/ninahakansson)
+* [PR 86](https://github.com/foua-pps/level1c4pps/pull/86) - Use importlib to get version, by [@ninahakansson](https://github.com/ninahakansson)
+* [PR 77](https://github.com/foua-pps/level1c4pps/pull/77) - VGAC converter, by [@ninahakansson](https://github.com/ninahakansson)
+
+In this release 4 pull requests were closed.
+
 ## Version <v.0.2.33> (2024/03/11)
 
 * [Issue 74](https://github.com/foua-pps/level1c4pps/issues/74) - Problem saving gac data with satpy > 0.37 ([PR 78](https://github.com/foua-pps/level1c4pps/pull/78) by [@pnuu](https://github.com/pnuu))
