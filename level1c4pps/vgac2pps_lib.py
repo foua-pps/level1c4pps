@@ -98,7 +98,7 @@ PPS_TAGNAMES = {"M05": 'ch_r06',
                 "M13": 'ch_tbxx'}
 
 
-def convert_to_noaa19(scene, V="v3"):
+def convert_to_noaa19(scene, V="v6"):
 
     """
     _v2_
@@ -263,6 +263,100 @@ def convert_to_noaa19(scene, V="v3"):
                 "offset": 1.52,
                 "comment": "based on nadir collocation data for SZA 0-180",
             },
+        },
+        "v5": {
+            "r06": {
+                "VIIRS channel": "M05",
+                "lutning": 0.8949,
+                "offset": 2.07,
+                "comment": "based on nadir collocation data for SZA < 75",
+            },
+            "r09": {
+                "VIIRS channel": "M07",
+                "lutning": 0.9204,
+                "offset": -0.87,
+                "comment": "based on nadir collocation data for SZA < 75",
+            },
+            "tb37_night": {
+                "VIIRS channel": "M12",
+                "lutning": 0.9967,
+                "offset": 0.85,
+                "rule": np.array(scene["sunzenith"].values) >= 89.,
+                "comment": "based on nadir collocation data for SZA >= 89",
+            },
+            "tb37_day": {
+                "VIIRS channel": "M12",
+                "lutning": 0.9455,
+                "offset": 12.69,
+                "rule": np.array(scene["sunzenith"].values) < 80.,
+                "comment": "based on NASA SBAFS for VZA < 5 and SZA < 80",
+            },
+            "tb37_twilight": {
+                "VIIRS channel": "M12",
+                "lutning": 0.9711,
+                "offset": 6.77,
+                "rule": np.array((scene["sunzenith"].values >= 80) & (scene["sunzenith"].values < 89.)),
+                "comment": "The linear average of the SBAFs for t37_day and t37_night. 80<= SZA <89",
+            },
+            "tb11": {
+                "VIIRS channel": "M15",
+                "lutning": 1.002,
+                "offset": -0.4,
+                "comment": "based on nadir collocation data for SZA 0 -180",
+            },
+            "tb12": {
+                "VIIRS channel": "M16",
+                "lutning": 0.9934,
+                "offset": 1.52,
+                "comment": "based on nadir collocation data for SZA 0-180",
+            },
+        },
+        "v6": {
+            "r06": {
+                "VIIRS channel": "M05",
+                "lutning": 0.9393,
+                "offset": 0.57,
+                "comment": "Based on collocation data, VZA < 3 for SZA < 60",
+            },
+            "r09": {
+                "VIIRS channel": "M07",
+                "lutning": 0.9104,
+                "offset": -0.90,
+                "comment": "Based on collocation data, VZA < 3 for SZA < 60",
+            },
+            "tb37_night": {
+                "VIIRS channel": "M12",
+                "lutning": 0.9967,
+                "offset": 0.85,
+                "rule": np.array(scene["sunzenith"].values) >= 89.,
+                "comment": "Based on collocations data for SZA >= 89",
+            },
+            "tb37_day": {
+                "VIIRS channel": "M12",
+                "lutning": 0.9455,
+                "offset": 12.69,
+                "rule": np.array(scene["sunzenith"].values) < 80.,
+                "comment": "Based on collocations for SZA < 80 o and VZA < 5",
+            },
+            "tb37_twilight": {
+                "VIIRS channel": "M12",
+                "lutning": 0.9711,
+                "offset": 6.77,
+                "rule": np.array((scene["sunzenith"].values >= 80) & (scene["sunzenith"].values < 89.)),
+                "comment": "The linear average of the SBAFs for t37_day and t37_night. 80<= SZA <89",
+            },
+            "tb11": {
+                "VIIRS channel": "M15",
+                "lutning": 1.003,
+                "offset": -0.77,
+                "comment": "Based on collocation data for VZA < 3 and SZA 0 -180",
+            },
+            "tb12": {
+                "VIIRS channel": "M16",
+                "lutning": 1.002,
+                "offset": -0.69,
+                "comment": "Based on collocation data for VZA < 3 and SZA 0-180",
+            },
         }
     }
 
@@ -358,7 +452,7 @@ def get_midnight_line_nr(scene):
             break
         if file_contain_bad_time_info and indj == start_fine_search - 99:
             raise ValueError("Error in time information in VGAC file.")
-    return  midnight_linenr
+    return midnight_linenr
 
 
 def set_exact_time_and_crop(scene, start_line, end_line, time_key='scanline_timestamps'):
