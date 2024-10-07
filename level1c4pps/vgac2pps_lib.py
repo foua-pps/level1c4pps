@@ -464,7 +464,7 @@ def split_scene_at_midnight(scene):
 def process_one_scene(scene_files, out_path, engine='h5netcdf',
                       all_channels=False, pps_channels=False, orbit_n=0,
                       as_noaa19=False, avhrr_channels=False,
-                      split_files_at_midnight=True, SBAF_version='v3'):
+                      split_files_at_midnight=True, SBAF_version='v6'):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scn_in = Scene(
@@ -515,7 +515,7 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf',
 
         scn_.save_datasets(writer='cf',
                            filename=filename,
-                           header_attrs=get_header_attrs(scn_, band=irch, sensor=sensor),
+                           header_attrs=get_header_attrs(scn_, band=irch, sensor=sensor, sbaf_version=SBAF_version),
                            engine=engine,
                            include_lonlats=False,
                            flatten_attrs=True,

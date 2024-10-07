@@ -253,7 +253,7 @@ def dt64_to_datetime(dt64):
     elif type(dt64) == np.float64:
         seconds_since_epoch = dt64
         dt = datetime.utcfromtimestamp(seconds_since_epoch)
-        return dt  
+        return dt
     return dt64
 
 
@@ -565,7 +565,7 @@ def compose_filename(scene, out_path, instrument, band=None):
     return filename
 
 
-def get_header_attrs(scene, band, sensor='avhrr'):
+def get_header_attrs(scene, band, sensor='avhrr', sbaf_version='NO_SBAF'):
     """Get global netcdf attributes."""
     header_attrs = scene.attrs.copy()
     header_attrs['start_time'] = datetime.strftime(dt64_to_datetime(band.attrs['start_time']),
@@ -573,4 +573,7 @@ def get_header_attrs(scene, band, sensor='avhrr'):
     header_attrs['end_time'] = datetime.strftime(dt64_to_datetime(band.attrs['end_time']),
                                                  "%Y-%m-%d %H:%M:%S")
     header_attrs['sensor'] = sensor
+
+    header_attrs['sbaf_version'] = sbaf_version
+
     return header_attrs
