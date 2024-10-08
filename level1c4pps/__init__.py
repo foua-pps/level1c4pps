@@ -184,7 +184,7 @@ ANGLE_ATTRIBUTES = {
         'sunazimuth': np.array([-18000, 18000], dtype='int16'),
         'satazimuth': np.array([-18000, 18000], dtype='int16'),
     },
-    'mersi2_file_key':  {
+    'mersi_file_key':  {
         'sunzenith': 'Geolocation/SolarZenithAngle',
         'satzenith': 'Geolocation/SensorZenithAngle',
         'azimuthdiff': 'Geolocation/SensorSolarAzimuthDifference',
