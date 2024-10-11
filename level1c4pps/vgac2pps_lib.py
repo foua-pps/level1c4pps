@@ -41,7 +41,7 @@ import numpy as np
 
 # Example:
 
-logger = logging.getLogger('vgac2pps')
+logger = logging.getLogger("vgac2pps")
 
 # Order of BANDNAMES decides order of channels in file. Not important
 # but nice to have the same order for I- and M-bands
@@ -72,288 +72,288 @@ MBAND_AVHRR = ["M05", "M07", "M12", "M15", "M16"]
 MBAND_DEFAULT = ["M05", "M07", "M09", "M10",  "M11", "M12", "M14", "M15", "M16"]
 
 
-ANGLE_NAMES = ['vza', 'sza', 'azn', 'azi']
+ANGLE_NAMES = ["vza", "sza", "azn", "azi"]
 
-PPS_TAGNAMES = {"M05": 'ch_r06',
-                "M07": 'ch_r09',
-                "M09": 'ch_r13',
-                "M10": 'ch_r16',
-                "M12": 'ch_tb37',
-                "M11": 'ch_r22',
-                "M14": 'ch_tb85',
-                "M15": 'ch_tb11',
-                "M16": 'ch_tb12',
-                "I01": 'ch_r06',
-                "I02": 'ch_r09',
-                "I03": 'ch_r16',
-                "I04": 'ch_tb37',
+PPS_TAGNAMES = {"M05": "ch_r06",
+                "M07": "ch_r09",
+                "M09": "ch_r13",
+                "M10": "ch_r16",
+                "M12": "ch_tb37",
+                "M11": "ch_r22",
+                "M14": "ch_tb85",
+                "M15": "ch_tb11",
+                "M16": "ch_tb12",
+                "I01": "ch_r06",
+                "I02": "ch_r09",
+                "I03": "ch_r16",
+                "I04": "ch_tb37",
                 # Not used by pps:
-                "I05": 'ch_tbxx',
-                "M01": 'ch_rxx',
-                "M02": 'ch_rxx',
-                "M03": 'ch_rxx',
-                "M04": 'ch_rxx',
-                "M06": 'ch_rxx',
-                "M08": 'ch_rxx',
-                "M13": 'ch_tbxx'}
+                "I05": "ch_tbxx",
+                "M01": "ch_rxx",
+                "M02": "ch_rxx",
+                "M03": "ch_rxx",
+                "M04": "ch_rxx",
+                "M06": "ch_rxx",
+                "M08": "ch_rxx",
+                "M13": "ch_tbxx"}
 
+# SBAF dictionary
+#
+# Spectral band adjustment factors for converting VGAC to AVHRR
 
-def convert_to_noaa19(scene, V="v6"):
-
-    """_SBAF dictionary_
-
-    I've put the SBAFs in this dictionary for super clarity when running the script
-    and set up for if we want to run more than on version of SBAF
-
-    """
-    SBAF = {
-        "v2": {
-            "r06": {
-                "VIIRS channel": "M05",
-                "lutning": 0.9129,
-                "offset": 0.99,
-                "comment": "based on nadir collocation data for SZA < 75",
-            },
-            "r09": {
-                "VIIRS channel": "M07",
-                "lutning": 0.9025,
-                "offset": 0,
-                "comment": "based on nadir collocation data for SZA < 75",
-            },
-            "tb37": {
-                "VIIRS channel": "M12",
-                "lutning": 0.9967,
-                "offset": 0.85,
-                "comment": "based on nadir collocation data for SZA 95-180",
-            },
-            "tb11": {
-                "VIIRS channel": "M15",
-                "lutning": 1.002,
-                "offset": -0.4,
-                "comment": "based on nadir collocation data for SZA 0 -180",
-            },
-            "tb12": {
-                "VIIRS channel": "M16",
-                "lutning": 0.9934,
-                "offset":  1.52,
-                "comment": "based on nadir collocation data for SZA 0-180",
-            },
+SBAF = {
+    "v2": {
+        "r06": {
+            "viirs_channel": "M05",
+            "slope": 0.9129,
+            "offset": 0.99,
+            "comment": "based on nadir collocation data for SZA < 75",
         },
-        "v3": {
-            "r06": {
-                "VIIRS channel": "M05",
-                "lutning": 0.8949,
-                "offset": 2.07,
-                "comment": "based on nadir collocation data for SZA < 75",
-            },
-            "r09": {
-                "VIIRS channel": "M07",
-                "lutning": 0.9204,
-                "offset": -0.87,
-                "comment": "based on nadir collocation data for SZA < 75",
-            },
-            "tb37_night": {
-                "VIIRS channel": "M12",
-                "lutning": 0.9923,
-                "offset": 1.8,
-                "rule": np.array(scene["sunzenith"].values) >= 89.,
-                "comment": "based on nadir collocation data for SZA 100-180. SZA >= 89",
-            },
-            "tb37_day": {
-                "VIIRS channel": "M12",
-                "lutning": 0.9491,
-                "offset": 16.0,
-                "rule": np.array(scene["sunzenith"].values) < 80.,
-                "comment": "based on NASA SBAFS for SZA < 75 o and VZA < 5. SZA < 80",
-            },
-            "tb37_twilight": {
-                "VIIRS channel": "M12",
-                "lutning": 0.9707,
-                "offset": 8.9,
-                "rule": np.array((scene["sunzenith"].values >= 80) & (scene["sunzenith"].values < 89.)),
-                "comment": "The linear average of the SBAFs for t37_day and t37_night. 80<= SZA <89",
-            },
-            "tb11": {
-                "VIIRS channel": "M15",
-                "lutning": 1.003,
-                "offset": -0.78,
-                "comment": "based on nadir collocation data for SZA 0 -180",
-            },
-            "tb12": {
-                "VIIRS channel": "M16",
-                "lutning": 1.003,
-                "offset": -0.84,
-                "comment": "based on nadir collocation data for SZA 0-180",
-                },
+        "r09": {
+            "viirs_channel": "M07",
+            "slope": 0.9025,
+            "offset": 0,
+            "comment": "based on nadir collocation data for SZA < 75",
         },
-        "v4": {
-            "r06": {
-                "VIIRS channel": "M05",
-                "lutning": 0.8949,
-                "offset": 2.07,
-                "comment": "based on nadir collocation data for SZA < 75",
-            },
-            "r09": {
-                "VIIRS channel": "M07",
-                "lutning": 0.9204,
-                "offset": -0.87,
-                "comment": "based on nadir collocation data for SZA < 75",
-            },
-            "tb37_night": {
-                "VIIRS channel": "M12",
-                "lutning": 0.9923,
-                "offset": 1.8,
-                "rule": np.array(scene["sunzenith"].values) >= 89.,
-                "comment": "based on nadir collocation data for SZA 100-180. SZA >= 89",
-            },
-            "tb37_day": {
-                "VIIRS channel": "M12",
-                "lutning": 0.9491,
-                "offset": 16.0,
-                "rule": np.array(scene["sunzenith"].values) < 80.,
-                "comment": "based on NASA SBAFS for SZA < 75 o and VZA < 5. SZA < 80",
-            },
-            "tb37_twilight": {
-                "VIIRS channel": "M12",
-                "lutning": 0.9707,
-                "offset": 8.9,
-                "rule": np.array((scene["sunzenith"].values >= 80) & (scene["sunzenith"].values < 89.)),
-                "comment": "The linear average of the SBAFs for t37_day and t37_night. 80<= SZA <89",
-            },
-            "tb11": {
-                "VIIRS channel": "M15",
-                "lutning": 1.002,
-                "offset": -0.4,
-                "comment": "based on nadir collocation data for SZA 0 -180",
-            },
-            "tb12": {
-                "VIIRS channel": "M16",
-                "lutning": 0.9934,
-                "offset": 1.52,
-                "comment": "based on nadir collocation data for SZA 0-180",
-            },
+        "tb37": {
+            "viirs_channel": "M12",
+            "slope": 0.9967,
+            "offset": 0.85,
+            "comment": "based on nadir collocation data for SZA 95-180",
         },
-        "v5": {
-            "r06": {
-                "VIIRS channel": "M05",
-                "lutning": 0.8949,
-                "offset": 2.07,
-                "comment": "based on nadir collocation data for SZA < 75",
-            },
-            "r09": {
-                "VIIRS channel": "M07",
-                "lutning": 0.9204,
-                "offset": -0.87,
-                "comment": "based on nadir collocation data for SZA < 75",
-            },
-            "tb37_night": {
-                "VIIRS channel": "M12",
-                "lutning": 0.9967,
-                "offset": 0.85,
-                "rule": np.array(scene["sunzenith"].values) >= 89.,
-                "comment": "based on nadir collocation data for SZA >= 89",
-            },
-            "tb37_day": {
-                "VIIRS channel": "M12",
-                "lutning": 0.9455,
-                "offset": 12.69,
-                "rule": np.array(scene["sunzenith"].values) < 80.,
-                "comment": "based on NASA SBAFS for VZA < 5 and SZA < 80",
-            },
-            "tb37_twilight": {
-                "VIIRS channel": "M12",
-                "lutning": 0.9711,
-                "offset": 6.77,
-                "rule": np.array((scene["sunzenith"].values >= 80) & (scene["sunzenith"].values < 89.)),
-                "comment": "The linear average of the SBAFs for t37_day and t37_night. 80<= SZA <89",
-            },
-            "tb11": {
-                "VIIRS channel": "M15",
-                "lutning": 1.002,
-                "offset": -0.4,
-                "comment": "based on nadir collocation data for SZA 0 -180",
-            },
-            "tb12": {
-                "VIIRS channel": "M16",
-                "lutning": 0.9934,
-                "offset": 1.52,
-                "comment": "based on nadir collocation data for SZA 0-180",
-            },
+        "tb11": {
+            "viirs_channel": "M15",
+            "slope": 1.002,
+            "offset": -0.4,
+            "comment": "based on nadir collocation data for SZA 0 -180",
         },
-        "v6": {
-            "r06": {
-                "VIIRS channel": "M05",
-                "lutning": 0.9393,
-                "offset": 0.57,
-                "comment": "Based on collocation data, VZA < 3 for SZA < 60",
+        "tb12": {
+            "viirs_channel": "M16",
+            "slope": 0.9934,
+            "offset":  1.52,
+            "comment": "based on nadir collocation data for SZA 0-180",
+        },
+    },
+    "v3": {
+        "r06": {
+            "viirs_channel": "M05",
+            "slope": 0.8949,
+            "offset": 2.07,
+            "comment": "based on nadir collocation data for SZA < 75",
+        },
+        "r09": {
+            "viirs_channel": "M07",
+            "slope": 0.9204,
+            "offset": -0.87,
+            "comment": "based on nadir collocation data for SZA < 75",
+        },
+        "tb37_night": {
+            "viirs_channel": "M12",
+            "slope": 0.9923,
+            "offset": 1.8,
+            "min_sunzenith": 89,
+            "comment": "based on nadir collocation data for SZA 100-180. SZA >= 89",
+        },
+        "tb37_day": {
+            "viirs_channel": "M12",
+            "slope": 0.9491,
+            "offset": 16.0,
+            "max_sunzenith": 80,
+            "comment": "based on NASA SBAFS for SZA < 75 o and VZA < 5. SZA < 80",
+        },
+        "tb37_twilight": {
+            "viirs_channel": "M12",
+            "slope": 0.9707,
+            "offset": 8.9,
+            "min_sunzenith": 80,
+            "max_sunzenith": 89,
+            "comment": "The linear average of the SBAFs for t37_day and t37_night. 80<= SZA <89",
+        },
+        "tb11": {
+            "viirs_channel": "M15",
+            "slope": 1.003,
+            "offset": -0.78,
+            "comment": "based on nadir collocation data for SZA 0 -180",
+        },
+        "tb12": {
+            "viirs_channel": "M16",
+            "slope": 1.003,
+            "offset": -0.84,
+            "comment": "based on nadir collocation data for SZA 0-180",
             },
-            "r09": {
-                "VIIRS channel": "M07",
-                "lutning": 0.9104,
-                "offset": -0.90,
-                "comment": "Based on collocation data, VZA < 3 for SZA < 60",
-            },
-            "tb37_night": {
-                "VIIRS channel": "M12",
-                "lutning": 0.9967,
-                "offset": 0.85,
-                "rule": np.array(scene["sunzenith"].values) >= 89.,
-                "comment": "Based on collocations data for SZA >= 89",
-            },
-            "tb37_day": {
-                "VIIRS channel": "M12",
-                "lutning": 0.9455,
-                "offset": 12.69,
-                "rule": np.array(scene["sunzenith"].values) < 80.,
-                "comment": "Based on collocations for SZA < 80 o and VZA < 5",
-            },
-            "tb37_twilight": {
-                "VIIRS channel": "M12",
-                "lutning": 0.9711,
-                "offset": 6.77,
-                "rule": np.array((scene["sunzenith"].values >= 80) & (scene["sunzenith"].values < 89.)),
-                "comment": "The linear average of the SBAFs for t37_day and t37_night. 80<= SZA <89",
-            },
-            "tb11": {
-                "VIIRS channel": "M15",
-                "lutning": 1.003,
-                "offset": -0.77,
-                "comment": "Based on collocation data for VZA < 3 and SZA 0 -180",
-            },
-            "tb12": {
-                "VIIRS channel": "M16",
-                "lutning": 1.002,
-                "offset": -0.69,
-                "comment": "Based on collocation data for VZA < 3 and SZA 0-180",
-            },
+    },
+    "v4": {
+        "r06": {
+            "viirs_channel": "M05",
+            "slope": 0.8949,
+            "offset": 2.07,
+            "comment": "based on nadir collocation data for SZA < 75",
+        },
+        "r09": {
+            "viirs_channel": "M07",
+            "slope": 0.9204,
+            "offset": -0.87,
+            "comment": "based on nadir collocation data for SZA < 75",
+        },
+        "tb37_night": {
+            "viirs_channel": "M12",
+            "slope": 0.9923,
+            "offset": 1.8,
+            "min_sunzenith": 89,
+            "comment": "based on nadir collocation data for SZA 100-180. SZA >= 89",
+        },
+        "tb37_day": {
+            "viirs_channel": "M12",
+            "slope": 0.9491,
+            "offset": 16.0,
+            "max_sunzenith": 80,
+            "comment": "based on NASA SBAFS for SZA < 75 o and VZA < 5. SZA < 80",
+        },
+        "tb37_twilight": {
+            "viirs_channel": "M12",
+            "slope": 0.9707,
+            "offset": 8.9,
+            "min_sunzenith": 80,
+            "max_sunzenith": 89,
+            "comment": "The linear average of the SBAFs for t37_day and t37_night. 80<= SZA <89",
+        },
+        "tb11": {
+            "viirs_channel": "M15",
+            "slope": 1.002,
+            "offset": -0.4,
+            "comment": "based on nadir collocation data for SZA 0 -180",
+        },
+        "tb12": {
+            "viirs_channel": "M16",
+            "slope": 0.9934,
+            "offset": 1.52,
+            "comment": "based on nadir collocation data for SZA 0-180",
+        },
+    },
+    "v5": {
+        "r06": {
+            "viirs_channel": "M05",
+            "slope": 0.8949,
+            "offset": 2.07,
+            "comment": "based on nadir collocation data for SZA < 75",
+        },
+        "r09": {
+            "viirs_channel": "M07",
+            "slope": 0.9204,
+            "offset": -0.87,
+            "comment": "based on nadir collocation data for SZA < 75",
+        },
+        "tb37_night": {
+            "viirs_channel": "M12",
+            "slope": 0.9967,
+            "offset": 0.85,
+            "min_sunzenith": 89,
+            "comment": "based on nadir collocation data for SZA >= 89",
+        },
+        "tb37_day": {
+            "viirs_channel": "M12",
+            "slope": 0.9455,
+            "offset": 12.69,
+            "max_sunzenith": 80,
+            "comment": "based on NASA SBAFS for VZA < 5 and SZA < 80",
+        },
+        "tb37_twilight": {
+            "viirs_channel": "M12",
+            "slope": 0.9711,
+            "offset": 6.77,
+            "min_sunzenith": 80,
+            "max_sunzenith": 89,
+            "comment": "The linear average of the SBAFs for t37_day and t37_night. 80<= SZA <89",
+        },
+        "tb11": {
+            "viirs_channel": "M15",
+            "slope": 1.002,
+            "offset": -0.4,
+            "comment": "based on nadir collocation data for SZA 0 -180",
+        },
+        "tb12": {
+            "viirs_channel": "M16",
+            "slope": 0.9934,
+            "offset": 1.52,
+            "comment": "based on nadir collocation data for SZA 0-180",
+        },
+    },
+    "v6": {
+        "r06": {
+            "viirs_channel": "M05",
+            "slope": 0.9393,
+            "offset": 0.57,
+            "comment": "Based on collocation data, VZA < 3 for SZA < 60",
+        },
+        "r09": {
+            "viirs_channel": "M07",
+            "slope": 0.9104,
+            "offset": -0.90,
+            "comment": "Based on collocation data, VZA < 3 for SZA < 60",
+        },
+        "tb37_night": {
+            "viirs_channel": "M12",
+            "slope": 0.9967,
+            "offset": 0.85,
+            "min_sunzenith": 89,
+            "comment": "Based on collocations data for SZA >= 89",
+        },
+        "tb37_day": {
+            "viirs_channel": "M12",
+            "slope": 0.9455,
+            "offset": 12.69,
+            "max_sunzenith": 80,
+            "comment": "Based on collocations for SZA < 80 o and VZA < 5",
+        },
+        "tb37_twilight": {
+            "viirs_channel": "M12",
+            "slope": 0.9711,
+            "offset": 6.77,
+            "min_sunzenith": 80,
+            "max_sunzenith": 89,
+            "comment": "The linear average of the SBAFs for t37_day and t37_night. 80<= SZA <89",
+        },
+        "tb11": {
+            "viirs_channel": "M15",
+            "slope": 1.003,
+            "offset": -0.77,
+            "comment": "Based on collocation data for VZA < 3 and SZA 0 -180",
+        },
+        "tb12": {
+            "viirs_channel": "M16",
+            "slope": 1.002,
+            "offset": -0.69,
+            "comment": "Based on collocation data for VZA < 3 and SZA 0-180",
         }
     }
+}
 
-    strlen = max(len(k) for k in SBAF[V].keys())
-    tb37_separated = ['tb37_day', 'tb37_night', 'tb37_twilight']
-    print(f"Using SBAF_{V}")
-    for y in SBAF[V].keys():
-        k = SBAF[V][y]['lutning']
-        x = SBAF[V][y]['VIIRS channel']
-        m = SBAF[V][y]['offset']
-        com = SBAF[V][y]['comment']
-        if y not in tb37_separated:
-            print(f"{y:<{strlen}} = {k:<6}*{x:<3}+{m:<5} ({com})")
-            scene[x].values = k * scene[x].values + m
 
-    # # #####  Ch3.7 special handling
-    if any(y in SBAF[V] for y in tb37_separated):
-        M12 = np.array(scene["M12"].values)
-        for y in tb37_separated:
-            k = SBAF[V][y]['lutning']
-            m = SBAF[V][y]['offset']
-            rule = SBAF[V][y]['rule']
-            com = SBAF[V][y]['comment']
+def convert_to_noaa19(scene, sbaf_version):
+    """_applies AVHRR SBAF to VGAC channels_
 
-            print(f"{y:<{strlen}} = {k:<6}*M12+{m:<5} ({com})")
-            M12 = np.where(rule, k * M12 + m, M12)
-        scene["M12"].values = M12.tolist()
-    # # #### end special handling
+    Args:
+        scene (_type_): _description_
+        sbaf_version (_type_): _description_
+    """
+    logger.info(f"Using SBAF_{sbaf_version}")
+
+    for avhhr_chan, scaling in SBAF[sbaf_version].items():
+        viirs_channel = scaling["viirs_channel"]
+        offset = scaling["offset"]
+        comment = scaling["comment"]
+        slope = scaling["slope"]
+        filt = np.ones_like(scene[viirs_channel].values, dtype=bool)
+        if "min_sunzenith" in scaling:
+            filt = filt & (scene["sunzenith"].values >= scaling["min_sunzenith"])
+        if "max_sunzenith" in scaling:
+            filt = filt & (scene["sunzenith"].values < scaling["max_sunzenith"])
+        scene[viirs_channel].values = np.where(
+            filt,
+            slope * scene[viirs_channel].values + offset,
+            scene[viirs_channel].values
+        )
+        logger.info(f"{avhhr_chan:<13} = {slope:<6}*{viirs_channel:<3}+{offset:<5} ({comment})")
 
     if "npp" in scene.attrs["platform"].lower():
         scene.attrs["platform"] = "vgacsnpp"
@@ -370,14 +370,14 @@ def get_encoding_viirs(scene):
 
 def set_header_and_band_attrs(scene, orbit_n=0):
     """Set and delete some attributes."""
-    irch = scene['M15']
+    irch = scene["M15"]
     nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch, orbit_n=orbit_n)
-    scene.attrs['source'] = "vgac2pps.py"
+    scene.attrs["source"] = "vgac2pps.py"
     for band in REFL_BANDS:
         if band not in scene:
             continue
         # For VIIRS data sun_zenith_angle_correction_applied is applied always!
-        scene[band].attrs['sun_zenith_angle_correction_applied'] = 'True'
+        scene[band].attrs["sun_zenith_angle_correction_applied"] = "True"
     return nimg
 
 
@@ -394,16 +394,16 @@ def get_midnight_line_nr(scene):
     """Find midnight_line, start_time and new end_time."""
     start_date = scene["M05"].attrs["start_time"].strftime("%Y-%m-%d")
     end_date = scene["M05"].attrs["end_time"].strftime("%Y-%m-%d")
-    start_fine_search = len(scene['scanline_timestamps']) - 1  # As default start the fine search from end of time array
+    start_fine_search = len(scene["scanline_timestamps"]) - 1  # As default start the fine search from end of time array
     file_contain_bad_time_info = False
-    for ind in range(0, len(scene['scanline_timestamps']), 100):
+    for ind in range(0, len(scene["scanline_timestamps"]), 100):
         # Search from the beginning in large chunks (100) and break when we
         # pass midnight.
-        if np.isnan(scene['scanline_timestamps'].values[:][ind]):
+        if np.isnan(scene["scanline_timestamps"].values[:][ind]):
             # Sometimes time info is wrong 10^36 hours since ...
             file_contain_bad_time_info = True
             continue
-        dt_obj = dt64_to_datetime(scene['scanline_timestamps'].values[:][ind])
+        dt_obj = dt64_to_datetime(scene["scanline_timestamps"].values[:][ind])
         date_linei = dt_obj.strftime("%Y-%m-%d")
         if date_linei == end_date:
             # We just passed midnight stop and search backwards for exact line.
@@ -411,9 +411,9 @@ def get_midnight_line_nr(scene):
             break
     for indj in range(start_fine_search, start_fine_search - 100, -1):
         # Midnight is in one of the previous 100 lines.
-        if np.isnan(scene['scanline_timestamps'].values[:][indj]):
+        if np.isnan(scene["scanline_timestamps"].values[:][indj]):
             raise ValueError("Error in time information in VGAC file.")
-        dt_obj = dt64_to_datetime(scene['scanline_timestamps'].values[:][indj])
+        dt_obj = dt64_to_datetime(scene["scanline_timestamps"].values[:][indj])
         date_linei = dt_obj.strftime("%Y-%m-%d")
         if date_linei == start_date:
             # We just passed midnight this is the last line for previous day.
@@ -424,7 +424,7 @@ def get_midnight_line_nr(scene):
     return midnight_linenr
 
 
-def set_exact_time_and_crop(scene, start_line, end_line, time_key='scanline_timestamps'):
+def set_exact_time_and_crop(scene, start_line, end_line, time_key="scanline_timestamps"):
     """Crop datasets and update start_time end_time objects."""
     if start_line is None:
         start_line = 0
@@ -434,13 +434,13 @@ def set_exact_time_and_crop(scene, start_line, end_line, time_key='scanline_time
     end_time_dt64 = scene[time_key].values[end_line]
     start_time = dt64_to_datetime(start_time_dt64)
     end_time = dt64_to_datetime(end_time_dt64)
-    for ds in BANDNAMES + ANGLE_NAMES + ['latitude', 'longitude', 'scanline_timestamps']:
-        if ds in scene and 'nscn' in scene[ds].dims:
+    for ds in BANDNAMES + ANGLE_NAMES + ["latitude", "longitude", "scanline_timestamps"]:
+        if ds in scene and "nscn" in scene[ds].dims:
             scene[ds] = scene[ds].isel(nscn=slice(start_line, end_line + 1))
             try:
                 # Update scene attributes to get the filenames right
-                scene[ds].attrs['start_time'] = start_time
-                scene[ds].attrs['end_time'] = end_time
+                scene[ds].attrs["start_time"] = start_time
+                scene[ds].attrs["end_time"] = end_time
             except TypeError:
                 pass
     if start_time_dt64 != scene[time_key].values[0]:
@@ -461,14 +461,14 @@ def split_scene_at_midnight(scene):
     return [scene]
 
 
-def process_one_scene(scene_files, out_path, engine='h5netcdf',
+def process_one_scene(scene_files, out_path, engine="h5netcdf",
                       all_channels=False, pps_channels=False, orbit_n=0,
-                      as_noaa19=False, avhrr_channels=False,
-                      split_files_at_midnight=True, SBAF_version='v6'):
+                      noaa19_sbaf_version=None, avhrr_channels=False,
+                      split_files_at_midnight=True):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scn_in = Scene(
-        reader='viirs_vgac_l1c_nc',
+        reader="viirs_vgac_l1c_nc",
         filenames=scene_files)
 
     MY_MBAND = MBAND_DEFAULT
@@ -477,15 +477,15 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf',
         MY_MBAND = MBANDS
     if pps_channels:
         MY_MBAND = MBAND_PPS
-    if as_noaa19:
+    if noaa19_sbaf_version is not None:
         MY_MBAND = MBAND_AVHRR
     if avhrr_channels:
         MY_MBAND = MBAND_AVHRR
 
     scn_in.load(MY_MBAND
                 + ANGLE_NAMES
-                # + ['M12_LUT', 'M13_LUT', 'M15_LUT', 'M16_LUT']
-                + ['latitude', 'longitude', 'scanline_timestamps'])
+                # + ["M12_LUT", "M13_LUT", "M15_LUT", "M16_LUT"]
+                + ["latitude", "longitude", "scanline_timestamps"])
     if split_files_at_midnight:
         scenes = split_scene_at_midnight(scn_in)
     else:
@@ -493,7 +493,7 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf',
     filenames = []
     for scn_ in scenes:
         # one ir channel
-        irch = scn_['M15']
+        irch = scn_["M15"]
 
         # Set header and band attributes
         set_header_and_band_attrs(scn_, orbit_n=orbit_n)
@@ -506,21 +506,21 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf',
         update_angle_attributes(scn_, irch)
         # Adjust to noaa19 with sbafs from KG
         sensor = "viirs"
-        if as_noaa19:
+        if noaa19_sbaf_version is not None:
             sensor = "avhrr"
-            convert_to_noaa19(scn_, SBAF_version)
+            convert_to_noaa19(scn_, noaa19_sbaf_version)
 
         filename = compose_filename(scn_, out_path, instrument=sensor, band=irch)
         encoding = get_encoding_viirs(scn_)
 
-        scn_.save_datasets(writer='cf',
+        scn_.save_datasets(writer="cf",
                            filename=filename,
-                           header_attrs=get_header_attrs(scn_, band=irch, sensor=sensor, sbaf_version=SBAF_version),
+                           header_attrs=get_header_attrs(scn_, band=irch, sensor=sensor, sbaf_version=sbaf_version),
                            engine=engine,
                            include_lonlats=False,
                            flatten_attrs=True,
                            encoding=encoding)
-        print("Saved file {:s} after {:3.1f} seconds".format(
+        logger.info("Saved file {:s} after {:3.1f} seconds".format(
              os.path.basename(filename),
              time.time()-tic))
         filenames.append(filename)
