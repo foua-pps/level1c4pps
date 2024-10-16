@@ -330,12 +330,16 @@ SBAF = {
 
 
 def convert_to_noaa19(scene, sbaf_version):
-    """_applies AVHRR SBAF to VGAC channels_
+    """ Applies AVHRR SBAF to VGAC channels.
 
     Args:
         scene (_type_): _description_
         sbaf_version (_type_): _description_
     """
+
+    print(f"in convert_to_noaa19, scene is of type: {type(scene)}")
+    print(f"in convert_to_noaa19,sbaf_version is of type: {type(sbaf_version)}")
+
     logger.info(f"Using SBAF_{sbaf_version}")
 
     for avhhr_chan, scaling in SBAF[sbaf_version].items():
@@ -515,7 +519,7 @@ def process_one_scene(scene_files, out_path, engine="h5netcdf",
 
         scn_.save_datasets(writer="cf",
                            filename=filename,
-                           header_attrs=get_header_attrs(scn_, band=irch, sensor=sensor, sbaf_version=sbaf_version),
+                           header_attrs=get_header_attrs(scn_, band=irch, sensor=sensor, sbaf_version=noaa19_sbaf_version),
                            engine=engine,
                            include_lonlats=False,
                            flatten_attrs=True,
