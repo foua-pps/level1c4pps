@@ -331,9 +331,6 @@ SBAF = {
 def convert_to_noaa19(scene, sbaf_version):
     """ Applies AVHRR SBAF to VGAC channels"""
 
-    print(f"in convert_to_noaa19, scene is of type: {type(scene)}")
-    print(f"in convert_to_noaa19,sbaf_version is of type: {type(sbaf_version)}")
-
     logger.info(f"Using SBAF_{sbaf_version}")
 
     for avhhr_chan, scaling in SBAF[sbaf_version].items():
