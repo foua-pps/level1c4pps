@@ -10,7 +10,7 @@ agency specific level-1 formats. So far, supports
 
  - EUMETSAT Meteosat Second Generation SEVIRI HRIT level-1.5
  - NOAA AVHRR GAC
- - MERSI-2 level-1
+ - MERSI-2/3 level-1
  - MODIS level-1
  - AVHRR eps level-1b
  - AVHRR AAPP level-1b
