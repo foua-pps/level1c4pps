@@ -329,12 +329,7 @@ SBAF = {
 
 
 def convert_to_noaa19(scene, sbaf_version):
-    """ Applies AVHRR SBAF to VGAC channels.
-
-    Args:
-        scene (_type_): _description_
-        sbaf_version (_type_): _description_
-    """
+    """ Applies AVHRR SBAF to VGAC channels"""
 
     print(f"in convert_to_noaa19, scene is of type: {type(scene)}")
     print(f"in convert_to_noaa19,sbaf_version is of type: {type(sbaf_version)}")
@@ -487,7 +482,6 @@ def process_one_scene(scene_files, out_path, engine="h5netcdf",
 
     scn_in.load(MY_MBAND
                 + ANGLE_NAMES
-                # + ["M12_LUT", "M13_LUT", "M15_LUT", "M16_LUT"]
                 + ["latitude", "longitude", "scanline_timestamps"])
     if split_files_at_midnight:
         scenes = split_scene_at_midnight(scn_in)
