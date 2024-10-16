@@ -24,7 +24,7 @@
 
 import netCDF4
 import unittest
-from datetime import datetime
+from datetime import datetime, timezone
 try:
     from unittest import mock
 except ImportError:
@@ -46,8 +46,8 @@ class TestVgac2PPS(unittest.TestCase):
         ir_108 = mock.MagicMock(attrs={'name': 'image1',
                                        'id_tag': 'ch_tb11',
                                        'wavelength': [1, 2, 3, 'um'],
-                                       'start_time': datetime.utcnow(),
-                                       'end_time': datetime.utcnow(),
+                                       'start_time': datetime.now(timezone.utc),
+                                       'end_time': datetime.now(timezone.utc),
                                        'history': 'dummy',
                                        'platform_name': 'tirosn',
                                        'orbit_number': 99999})
@@ -97,7 +97,7 @@ class TestVgac2PPS(unittest.TestCase):
 
         vgac2pps.process_one_scene(
             ['./level1c4pps/tests/VGAC_VJ102MOD_A2018305_1042_n004946_K005.nc'],
-            out_path='./level1c4pps/tests/',
+            out_path='./level1c4pps/tests/'
         )
         filename = './level1c4pps/tests/S_NWC_viirs_noaa20_00000_20181101T1042080Z_20181101T1224090Z.nc'
         # written with hfnetcdf read with NETCDF4 ensure compatability
@@ -121,13 +121,14 @@ class TestVgac2PPS(unittest.TestCase):
 
         np.testing.assert_almost_equal(pps_nc.variables['image1'].sun_earth_distance_correction_factor,
                                        1.0, decimal=4)
+
     def test_process_one_scene_n19(self):
         """Test process one scene for one example file."""
 
         vgac2pps.process_one_scene(
             ['./level1c4pps/tests/VGAC_VJ102MOD_A2018305_1042_n004946_K005.nc'],
             out_path='./level1c4pps/tests/',
-            as_noaa19=True,
+            noaa19_sbaf_version='v6'
         )
         filename = './level1c4pps/tests/S_NWC_avhrr_vgac20_00000_20181101T1042080Z_20181101T1224090Z.nc'
         filename_viirs = './level1c4pps/tests/S_NWC_viirs_noaa20_00000_20181101T1042080Z_20181101T1224090Z.nc'
@@ -155,14 +156,14 @@ class TestVgac2PPS(unittest.TestCase):
                                        1.0, decimal=4)
 
         np.testing.assert_equal(pps_nc.__dict__["platform"], "vgac20")
-        self.assertTrue(np.abs(pps_nc.variables['image1'][0,0,0] - pps_nc_viirs.variables['image1'][0,0,0])>0.01)
-        
+        self.assertTrue(np.abs(pps_nc.variables['image1'][0, 0, 0] - pps_nc_viirs.variables['image1'][0, 0, 0]) > 0.01)
+
     def test_process_one_scene_midnight(self):
         """Test process one scene for one example file."""
 
         vgac2pps.process_one_scene(
             ['./level1c4pps/tests/VGAC_VNPP02MOD_A2012365_2304_n06095_K005.nc'],
-            out_path='./level1c4pps/tests/',
+            out_path='./level1c4pps/tests/'
         )
         filename = './level1c4pps/tests/S_NWC_viirs_npp_00000_20121230T2359563Z_20121230T2359599Z.nc'
         # written with hfnetcdf read with NETCDF4 ensure compatability
