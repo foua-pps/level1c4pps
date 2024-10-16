@@ -25,7 +25,6 @@
 
 """Functions to convert VGAC level-1c data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
 
-import numpy as np
 import os
 import time
 from satpy.scene import Scene
@@ -519,7 +518,8 @@ def process_one_scene(scene_files, out_path, engine="h5netcdf",
 
         scn_.save_datasets(writer="cf",
                            filename=filename,
-                           header_attrs=get_header_attrs(scn_, band=irch, sensor=sensor, sbaf_version=noaa19_sbaf_version),
+                           header_attrs=get_header_attrs(scn_, band=irch, sensor=sensor,
+                                                         sbaf_version=noaa19_sbaf_version),
                            engine=engine,
                            include_lonlats=False,
                            flatten_attrs=True,

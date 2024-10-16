@@ -24,7 +24,7 @@
 
 import netCDF4
 import unittest
-from datetime import datetime
+from datetime import datetime, timezone
 try:
     from unittest import mock
 except ImportError:
@@ -46,8 +46,8 @@ class TestVgac2PPS(unittest.TestCase):
         ir_108 = mock.MagicMock(attrs={'name': 'image1',
                                        'id_tag': 'ch_tb11',
                                        'wavelength': [1, 2, 3, 'um'],
-                                       'start_time': datetime.utcnow(),
-                                       'end_time': datetime.utcnow(),
+                                       'start_time': datetime.now(timezone.utc),
+                                       'end_time': datetime.now(timezone.utc),
                                        'history': 'dummy',
                                        'platform_name': 'tirosn',
                                        'orbit_number': 99999})

@@ -25,7 +25,7 @@
 from importlib.metadata import version
 import numpy as np
 import xarray as xr
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 import logging
 import satpy
@@ -244,15 +244,15 @@ def centered_modulus(daz, divisor=360):
 def dt64_to_datetime(dt64):
     """Conversion of numpy.datetime64 to datetime objects."""
     # https://stackoverflow.com/questions/13703720/converting-between-datetime-timestamp-and-datetime64/46921593#46921593
-    if type(dt64) == np.datetime64:
+    if type(dt64) is np.datetime64:
         unix_epoch = np.datetime64(0, 's')
         one_second = np.timedelta64(1, 's')
         seconds_since_epoch = (dt64 - unix_epoch) / one_second
-        dt = datetime.utcfromtimestamp(seconds_since_epoch)
+        dt = datetime.fromtimestamp(seconds_since_epoch, timezone.utc).replace(tzinfo=None)
         return dt
-    elif type(dt64) == np.float64:
+    elif type(dt64) is np.float64:
         seconds_since_epoch = dt64
-        dt = datetime.utcfromtimestamp(seconds_since_epoch)
+        dt = datetime.fromtimestamp(seconds_since_epoch, timezone.utc).replace(tzinfo=None)
         return dt
     return dt64
 
@@ -341,7 +341,7 @@ def rename_latitude_longitude(scene):
     for alt_latname in ['lat_pixels', 'm_latitude', 'latitude_m', 'i_latitude']:
         if alt_latname in scene and 'latitude' not in scene:
             lat_name_satpy = alt_latname
-    for alt_lonname in ['lon_pixels', 'm_longitude','longitude_m', 'i_longitude']:
+    for alt_lonname in ['lon_pixels', 'm_longitude', 'longitude_m', 'i_longitude']:
         if alt_lonname in scene and 'longitude' not in scene:
             lon_name_satpy = alt_lonname
     scene[lat_name_satpy].attrs['name'] = 'lat'
