@@ -80,9 +80,16 @@ class TestVgac2PPS(unittest.TestCase):
                        'add_offset': 273.15},
             'qual_flags':  {'dtype': 'int16', 'zlib': True,
                             'complevel': 4, '_FillValue': -32001.0},
-            'scanline_timestamps': {'dtype': 'int64', 'zlib': True,
-                                    'units': 'Milliseconds since 1970-01-01',
-                                    'complevel': 4, '_FillValue': -1.0},
+            'scanline_timestamps': {'dtype': 'float',
+                                    'zlib': True,
+                                    'units': 'milliseconds since 1970-01-01',
+                                    'complevel': 4,
+                                    '_FillValue': -1.0},
+            'time': {'dtype': 'float',
+                     'zlib': True,
+                     'units': 'milliseconds since 1970-01-01',
+                     'complevel': 4,
+                     '_FillValue': -1.0},
         }
         encoding = vgac2pps.get_encoding_viirs(self.scene)
         self.assertDictEqual(encoding, encoding_exp)
@@ -121,6 +128,7 @@ class TestVgac2PPS(unittest.TestCase):
 
         np.testing.assert_almost_equal(pps_nc.variables['image1'].sun_earth_distance_correction_factor,
                                        1.0, decimal=4)
+        assert pps_nc.variables["scanline_timestamps"].units == 'milliseconds since 1970-01-01' 
 
     def test_process_one_scene_n19(self):
         """Test process one scene for one example file."""

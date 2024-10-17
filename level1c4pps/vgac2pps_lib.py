@@ -357,10 +357,11 @@ def convert_to_noaa19(scene, sbaf_version):
 
 def get_encoding_viirs(scene):
     """Get netcdf encoding for all datasets."""
-    return get_encoding(scene,
-                        BANDNAMES,
-                        PPS_TAGNAMES,
-                        chunks=None)
+    encoding = get_encoding(scene, BANDNAMES, PPS_TAGNAMES, chunks=None)
+    encoding["scanline_timestamps"]["dtype"] = "float"
+    encoding["scanline_timestamps"]["units"] = "milliseconds since 1970-01-01"
+    encoding["time"] = encoding["scanline_timestamps"]
+    return encoding
 
 
 def set_header_and_band_attrs(scene, orbit_n=0):
