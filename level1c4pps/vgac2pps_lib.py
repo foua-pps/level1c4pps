@@ -28,6 +28,7 @@
 import os
 import time
 from satpy.scene import Scene
+from sbafs_ann.convert_vgac import convert_to_vgac_with_nn
 from level1c4pps import (get_encoding, compose_filename,
                          set_header_and_band_attrs_defaults,
                          rename_latitude_longitude,
@@ -66,7 +67,8 @@ REFL_BANDS = ["M01", "M02", "M03", "M04", "M05", "M06", "M07", "M08",
 
 MBAND_PPS = ["M05", "M07", "M09", "M10", "M11", "M12", "M14", "M15", "M16"]
 
-MBAND_AVHRR = ["M05", "M07", "M12", "M15", "M16"]
+# "M10", "M14" are needed for NN SABAF, but are deleted before saving
+MBAND_AVHRR = ["M05", "M07", "M12", "M15", "M16", "M10", "M14"]
 
 MBAND_DEFAULT = ["M05", "M07", "M09", "M10",  "M11", "M12", "M14", "M15", "M16"]
 
@@ -323,9 +325,77 @@ SBAF = {
             "slope": 1.002,
             "offset": -0.69,
             "comment": "Based on collocation data for VZA < 3 and SZA 0-180",
+        },
+    },
+    "KNMI": {
+        "r06": {
+            "viirs_channel": "M05",
+            "slope": 0.9401,
+            "offset": 0.629,
+            "comment": "VZA<60, SZA<60, Delta(VZA) < 5, Delta(Scat-angle) < 5",
+        },
+        "r09": {
+            "viirs_channel": "M07",
+            "slope": 0.9345,
+            "offset": -1.304,
+            "comment": "VZA<60, SZA<60, Delta(VZA) < 5, Delta(Scat-angle) < 5",
+        },
+        "tb37_night": {
+            "viirs_channel": "M12",
+            "slope": 0.9934,
+            "offset": 1.659,
+            "min_sunzenith": 89,
+            "comment": " VZA<60, SZA>95, Delta(VZA) < 5",
+        },
+        "tb37_day": {
+            "viirs_channel": "M12",
+            "slope": 0.9572,
+            "offset": 9.572,
+            "max_sunzenith": 80,
+            "comment": "VZA<60, SZA<60, Delta(VZA) < 5, Delta(Scat-angle) < 5",
+        },
+        "tb37_twilight": {
+            "viirs_channel": "M12",
+            "slope": 0.9753,
+            "offset": 5.6155,
+            "min_sunzenith": 80,
+            "max_sunzenith": 89,
+            "comment": "The linear average of the SBAFs for t37_day and t37_night. 80<= SZA <89",
+        },
+        "tb11": {
+            "viirs_channel": "M15",
+            "slope": 0.9986,
+            "offset": 0.600,
+            "comment": "",
+        },
+        "tb12": {
+            "viirs_channel": "M16",
+            "slope": 0.9943,
+            "offset": 1.328,
+            "comment": "",
+        },
+    },
+    "NN_v1": {
+
+        "datadir": "/nobackup/smhid20/proj/safcm/data/SBAFS_NN/",
+        "comment": "NN based on AVHRR and VGAC matchups using all AVHRR heritage channels"
         }
     }
-}
+
+
+def convert_to_noaa19_NN(scene, sbaf_version):
+    """Applies AVHRR SBAF to VGAC channels using NN approach"""
+
+    if sbaf_version == "NN_v1":
+        sbaf_nn_dir = SBAF[sbaf_version]['datadir']
+    else:
+        logger.error(f"Unrecognized NN version, {sbaf_version}")
+    scene = convert_to_vgac_with_nn(scene, SBAF_NN_DIR=sbaf_nn_dir)
+
+    logger.info(f'Created NN version {sbaf_version}')
+    if "npp" in scene.attrs["platform"].lower():
+        scene.attrs["platform"] = "vgacsnpp"
+    scene.attrs["platform"] = scene.attrs["platform"].replace("noaa", "vgac")
 
 
 def convert_to_noaa19(scene, sbaf_version):
@@ -502,7 +572,14 @@ def process_one_scene(scene_files, out_path, engine="h5netcdf",
         sensor = "viirs"
         if noaa19_sbaf_version is not None:
             sensor = "avhrr"
-            convert_to_noaa19(scn_, noaa19_sbaf_version)
+            if "NN" not in noaa19_sbaf_version:
+                convert_to_noaa19(scn_, noaa19_sbaf_version)
+                # These are read in case SBAF is NN based, but need to be removed
+                # before saving bbecause they are not AVHRR heritage channels
+                del scn_["M10"]
+                del scn_["M14"]
+            else:
+                convert_to_noaa19_NN(scn_, noaa19_sbaf_version)
 
         filename = compose_filename(scn_, out_path, instrument=sensor, band=irch)
         encoding = get_encoding_viirs(scn_)
