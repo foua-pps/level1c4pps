@@ -320,9 +320,11 @@ def get_band_encoding(dataset, bandnames, pps_tagnames, chunks=None):
                'complevel': 4, '_FillValue': -32001.0}
     elif name in ['scanline_timestamps']:
         # pygac scanline_timestamps
-        enc = {'dtype': 'int64', 'zlib': True,
-               'units': 'Milliseconds since 1970-01-01',
-               'complevel': 4, '_FillValue': -1.0}
+        enc = {'dtype': 'float64',
+               'zlib': True,
+               'units': 'milliseconds since 1970-01-01',
+               'complevel': 4,
+               '_FillValue': -1.0}
     if not enc:
         raise ValueError('Unsupported band: {}'.format(name))
     return name, enc

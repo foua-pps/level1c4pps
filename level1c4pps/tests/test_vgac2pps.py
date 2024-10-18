@@ -80,16 +80,11 @@ class TestVgac2PPS(unittest.TestCase):
                        'add_offset': 273.15},
             'qual_flags':  {'dtype': 'int16', 'zlib': True,
                             'complevel': 4, '_FillValue': -32001.0},
-            'scanline_timestamps': {'dtype': 'float',
+            'scanline_timestamps': {'dtype': 'float64',
                                     'zlib': True,
                                     'units': 'milliseconds since 1970-01-01',
                                     'complevel': 4,
                                     '_FillValue': -1.0},
-            'time': {'dtype': 'float',
-                     'zlib': True,
-                     'units': 'milliseconds since 1970-01-01',
-                     'complevel': 4,
-                     '_FillValue': -1.0},
         }
         encoding = vgac2pps.get_encoding_viirs(self.scene)
         self.assertDictEqual(encoding, encoding_exp)
