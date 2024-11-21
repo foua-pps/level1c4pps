@@ -18,3 +18,4 @@ dependencies:
   - pip:
     - trollsift
     - pygac
+    - git+https://github.com/foua-pps/sbafs_ann@main
