@@ -320,7 +320,7 @@ def get_band_encoding(dataset, bandnames, pps_tagnames, chunks=None):
                'complevel': 4, '_FillValue': -32001.0}
     elif name in ['scanline_timestamps']:
         # pygac scanline_timestamps
-        enc = {'dtype': 'float64',
+        enc = {'dtype': 'int64',
                'zlib': True,
                'units': 'milliseconds since 1970-01-01',
                'complevel': 4,

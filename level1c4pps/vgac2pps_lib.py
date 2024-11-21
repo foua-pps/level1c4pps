@@ -456,6 +456,13 @@ def split_scene_at_midnight(scene):
     return [scene]
 
 
+def fix_timestamp_datatype(scene, encoding):
+    """Fix time datatype."""
+    param = "scanline_timestamps"
+    if "milliseconds" in encoding[param]["units"]:
+        scene[param].data = scene[param].data.astype('datetime64[ms]')
+
+
 def process_one_scene(scene_files, out_path, engine="h5netcdf",
                       all_channels=False, pps_channels=False, orbit_n=0,
                       noaa19_sbaf_version=None, avhrr_channels=False,
@@ -506,6 +513,7 @@ def process_one_scene(scene_files, out_path, engine="h5netcdf",
 
         filename = compose_filename(scn_, out_path, instrument=sensor, band=irch)
         encoding = get_encoding_viirs(scn_)
+        fix_timestamp_datatype(scn_, encoding)
 
         scn_.save_datasets(writer="cf",
                            filename=filename,
