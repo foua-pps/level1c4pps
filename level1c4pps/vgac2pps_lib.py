@@ -424,22 +424,23 @@ SBAF = {
         },
     },
     "NN_v1": {
-        "cfg_file_day": ("/nobackup/smhid20/proj/safcm/data/SBAFS_NN/"
-                         "ch7_SATZ_less_15_SUNZ_0_89_TD_1_min.yaml"),
-        "cfg_file_night": ("/nobackup/smhid20/proj/safcm/data/SBAFS_NN/"
-                           "ch4_SATZ_less_25_SUNZ_90_180_TD_5_min.yaml"),
+        "cfg_file_day": ("ch7_SATZ_less_15_SUNZ_0_89_TD_1_min.yaml"),
+        "cfg_file_night": ("ch4_SATZ_less_25_SUNZ_90_180_TD_5_min.yaml"),
         "cfg_file_twilight": None,
         "comment": "NN based on AVHRR and VGAC matchups using all AVHRR heritage channels"
         },
     "NN_v2": {
-        "cfg_file_day": ("/nobackup/smhid20/proj/safcm/data/SBAFS_NN/"
-                         "ch7_satz_max_25_SUNZ_0_80_tdiff_300_sec_20241031.yaml"),
-        "cfg_file_night": ("/nobackup/smhid20/proj/safcm/data/SBAFS_NN/"
-                           "ch4_satz_max_25_SUNZ_90_180_tdiff_300_sec_20241031.yaml"),
-        "cfg_file_twilight": ("/nobackup/smhid20/proj/safcm/data/SBAFS_NN/"
-                              "ch7_satz_max_25_SUNZ_80_89_tdiff_300_sec_20241031.yaml"),
+        "cfg_file_day": ("ch7_satz_max_25_SUNZ_0_80_tdiff_300_sec_20241031.yaml"),
+        "cfg_file_night": ("ch4_satz_max_25_SUNZ_90_180_tdiff_300_sec_20241031.yaml"),
+        "cfg_file_twilight": ("ch7_satz_max_25_SUNZ_80_89_tdiff_300_sec_20241031.yaml"),
         "comment": "NN based on AVHRR and VGAC matchups using all AVHRR heritage channels"
     }
+    "NN_v3": {
+        "cfg_file_day": "ch7_satz_max_15_SUNZ_0_80_tdiff_120_sec_20241120.yaml",
+        "cfg_file_night": "ch4_satz_max_15_SUNZ_90_180_tdiff_120_sec_20241120.yaml",
+        "cfg_file_twilight": "ch7_satz_max_15_SUNZ_80_89_tdiff_120_sec_20241120.yaml",
+        "comment": "NN based on AVHRR and VGAC matchups using all AVHRR heritage channels"    
+        }
     }
 
 
