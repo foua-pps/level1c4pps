@@ -8,6 +8,7 @@ dependencies:
   - scipy
   - h5py
   - python-geotiepoints
+  - matplotlib
   - mock
   - numpy<2.0.0
   - satpy>0.41.1
