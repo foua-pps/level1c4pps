@@ -123,7 +123,10 @@ class TestVgac2PPS(unittest.TestCase):
 
         np.testing.assert_almost_equal(pps_nc.variables['image1'].sun_earth_distance_correction_factor,
                                        1.0, decimal=4)
-        assert pps_nc.variables["scanline_timestamps"].units == 'milliseconds since 1970-01-01' 
+        assert (
+            pps_nc.variables["scanline_timestamps"].units == "milliseconds since 1970-01-01"
+            and pps_nc.variables["scanline_timestamps"].dtype == "int"
+        )
 
     def test_process_one_scene_n19(self):
         """Test process one scene for one example file."""
