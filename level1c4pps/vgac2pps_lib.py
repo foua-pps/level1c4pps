@@ -38,8 +38,6 @@ from level1c4pps import (get_encoding, compose_filename,
 import pyspectral  # testing that pyspectral is available # noqa: F401
 import logging
 import numpy as np
-import pdb
-# Example:
 
 logger = logging.getLogger("vgac2pps")
 
@@ -434,7 +432,7 @@ SBAF = {
         "cfg_file_night": "ch4_satz_max_25_SUNZ_90_180_tdiff_300_sec_20241031.yaml",
         "cfg_file_twilight": "ch7_satz_max_25_SUNZ_80_89_tdiff_300_sec_20241031.yaml",
         "comment": "NN based on AVHRR and VGAC matchups using all AVHRR heritage channels"
-    },
+        },
     "NN_v3": {
         "cfg_file_day": "ch7_satz_max_15_SUNZ_0_80_tdiff_120_sec_20241120.yaml",
         "cfg_file_night": "ch4_satz_max_15_SUNZ_90_180_tdiff_120_sec_20241120.yaml",
