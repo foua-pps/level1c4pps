@@ -424,22 +424,22 @@ SBAF = {
         },
     },
     "NN_v1": {
-        "cfg_file_day": ("ch7_SATZ_less_15_SUNZ_0_89_TD_1_min.yaml"),
-        "cfg_file_night": ("ch4_SATZ_less_25_SUNZ_90_180_TD_5_min.yaml"),
+        "cfg_file_day": "ch7_SATZ_less_15_SUNZ_0_89_TD_1_min.yaml",
+        "cfg_file_night": "ch4_SATZ_less_25_SUNZ_90_180_TD_5_min.yaml",
         "cfg_file_twilight": None,
         "comment": "NN based on AVHRR and VGAC matchups using all AVHRR heritage channels"
         },
     "NN_v2": {
-        "cfg_file_day": ("ch7_satz_max_25_SUNZ_0_80_tdiff_300_sec_20241031.yaml"),
-        "cfg_file_night": ("ch4_satz_max_25_SUNZ_90_180_tdiff_300_sec_20241031.yaml"),
-        "cfg_file_twilight": ("ch7_satz_max_25_SUNZ_80_89_tdiff_300_sec_20241031.yaml"),
+        "cfg_file_day": "ch7_satz_max_25_SUNZ_0_80_tdiff_300_sec_20241031.yaml",
+        "cfg_file_night": "ch4_satz_max_25_SUNZ_90_180_tdiff_300_sec_20241031.yaml",
+        "cfg_file_twilight": "ch7_satz_max_25_SUNZ_80_89_tdiff_300_sec_20241031.yaml",
         "comment": "NN based on AVHRR and VGAC matchups using all AVHRR heritage channels"
-    }
+    },
     "NN_v3": {
         "cfg_file_day": "ch7_satz_max_15_SUNZ_0_80_tdiff_120_sec_20241120.yaml",
         "cfg_file_night": "ch4_satz_max_15_SUNZ_90_180_tdiff_120_sec_20241120.yaml",
         "cfg_file_twilight": "ch7_satz_max_15_SUNZ_80_89_tdiff_120_sec_20241120.yaml",
-        "comment": "NN based on AVHRR and VGAC matchups using all AVHRR heritage channels"    
+        "comment": "NN based on AVHRR and VGAC matchups using all AVHRR heritage channels"
         }
     }
 
@@ -447,7 +447,7 @@ SBAF = {
 def convert_to_noaa19_neural_network(scene, sbaf_version):
     """Applies AVHRR SBAF to VGAC channels using NN approach"""
 
-    if sbaf_version == "NN_v1" or sbaf_version == "NN_v2" or sbaf_version == 'NN_v3':
+    if sbaf_version in ["NN_v1", "NN_v2", "NN_v3"]:
         day_cfg_file = SBAF[sbaf_version]['cfg_file_day']
         night_cfg_file = SBAF[sbaf_version]['cfg_file_night']
         twilight_cfg_file = SBAF[sbaf_version]['cfg_file_twilight']
@@ -456,6 +456,26 @@ def convert_to_noaa19_neural_network(scene, sbaf_version):
     scene = convert_to_vgac_with_nn(scene, day_cfg_file, night_cfg_file, twilight_cfg_file)
 
     logger.info(f'Created NN version {sbaf_version}')
+
+
+def convert_to_noaa19_linear(scene, SBAF):
+    """ Apply linear regression"""
+
+    for avhhr_chan, scaling in SBAF.items():
+        viirs_channel = scaling["viirs_channel"]
+        offset = scaling["offset"]
+        comment = scaling["comment"]
+        slope = scaling["slope"]
+        filt = np.ones_like(scene[viirs_channel].values, dtype=bool)
+        if "min_sunzenith" in scaling:
+            filt = filt & (scene["sunzenith"].values >= scaling["min_sunzenith"])
+        if "max_sunzenith" in scaling:
+            filt = filt & (scene["sunzenith"].values < scaling["max_sunzenith"])
+        scene[viirs_channel].values = np.where(filt,
+                                               slope * scene[viirs_channel].values + offset,
+                                               scene[viirs_channel].values
+                                               )
+        logger.info(f"{avhhr_chan:<13} = {slope:<6}*{viirs_channel:<3}+{offset:<5} ({comment})")
 
 
 def convert_to_noaa19_KNMI_v2(scene, sbaf_version):
@@ -487,10 +507,10 @@ def convert_to_noaa19_KNMI_v2(scene, sbaf_version):
                 # 70 < SZA < 85: BT = (1-f)*BT(day) + f*BT(night), f=(SZA-70)/15
 
                 f = (scene["sunzenith"].values - scaling["min_sunzenith"])/15
-                tb37_day_slope = SBAF[sbaf_version]["tb37_day"]["slope"]
-                tb37_day_offset = SBAF[sbaf_version]["tb37_day"]["offset"]
-                tb37_night_slope = SBAF[sbaf_version]["tb37_night"]["slope"]
-                tb37_night_offset = SBAF[sbaf_version]["tb37_night"]["offset"]
+                tb37_day_slope = scaling["tb37_day"]["slope"]
+                tb37_day_offset = scaling["tb37_day"]["offset"]
+                tb37_night_slope = scaling["tb37_night"]["slope"]
+                tb37_night_offset = scaling["tb37_night"]["offset"]
                 tb37_day = tb37_day_slope * scene[viirs_channel].values + tb37_day_offset
                 tb37_night = tb37_night_slope * scene[viirs_channel].values + tb37_night_offset
 
@@ -513,29 +533,12 @@ def convert_to_noaa19(scene, sbaf_version):
 
     logger.info(f"Using SBAF_{sbaf_version}")
 
-    if "NN" not in sbaf_version:
-        if sbaf_version == "KNMI_v2":
-            convert_to_noaa19_KNMI_v2(scene, sbaf_version)
-        else:
-            # 1 channel linear regression
-            for avhhr_chan, scaling in SBAF[sbaf_version].items():
-                viirs_channel = scaling["viirs_channel"]
-                offset = scaling["offset"]
-                comment = scaling["comment"]
-                slope = scaling["slope"]
-                filt = np.ones_like(scene[viirs_channel].values, dtype=bool)
-                if "min_sunzenith" in scaling:
-                    filt = filt & (scene["sunzenith"].values >= scaling["min_sunzenith"])
-                if "max_sunzenith" in scaling:
-                    filt = filt & (scene["sunzenith"].values < scaling["max_sunzenith"])
-                scene[viirs_channel].values = np.where(
-                    filt,
-                    slope * scene[viirs_channel].values + offset,
-                    scene[viirs_channel].values
-                    )
-                logger.info(f"{avhhr_chan:<13} = {slope:<6}*{viirs_channel:<3}+{offset:<5} ({comment})")
-    else:
+    if "NN" in sbaf_version:
         convert_to_noaa19_neural_network(scene, sbaf_version)
+    elif sbaf_version == "KNMI_v2":
+        convert_to_noaa19_KNMI_v2(scene, sbaf_version)
+    else:
+        convert_to_noaa19_linear(scene, SBAF[sbaf_version])
 
     if "npp" in scene.attrs["platform"].lower():
         scene.attrs["platform"] = "vgacsnpp"
