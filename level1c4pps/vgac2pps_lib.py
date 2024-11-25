@@ -28,6 +28,7 @@
 import os
 import time
 from satpy.scene import Scene
+from sbafs_ann.convert_vgac import convert_to_vgac_with_nn
 from level1c4pps import (get_encoding, compose_filename,
                          set_header_and_band_attrs_defaults,
                          rename_latitude_longitude,
@@ -37,8 +38,6 @@ from level1c4pps import (get_encoding, compose_filename,
 import pyspectral  # testing that pyspectral is available # noqa: F401
 import logging
 import numpy as np
-
-# Example:
 
 logger = logging.getLogger("vgac2pps")
 
@@ -66,7 +65,8 @@ REFL_BANDS = ["M01", "M02", "M03", "M04", "M05", "M06", "M07", "M08",
 
 MBAND_PPS = ["M05", "M07", "M09", "M10", "M11", "M12", "M14", "M15", "M16"]
 
-MBAND_AVHRR = ["M05", "M07", "M12", "M15", "M16"]
+# "M10", "M14" are not AVHRR channels, but needed for NN SABAF
+MBAND_AVHRR = ["M05", "M07", "M12", "M15", "M16", "M10", "M14"]
 
 MBAND_DEFAULT = ["M05", "M07", "M09", "M10",  "M11", "M12", "M14", "M15", "M16"]
 
@@ -323,17 +323,143 @@ SBAF = {
             "slope": 1.002,
             "offset": -0.69,
             "comment": "Based on collocation data for VZA < 3 and SZA 0-180",
+        },
+    },
+    "KNMI": {
+        "r06": {
+            "viirs_channel": "M05",
+            "slope": 0.9401,
+            "offset": 0.629,
+            "comment": "VZA<60, SZA<60, Delta(VZA) < 5, Delta(Scat-angle) < 5",
+        },
+        "r09": {
+            "viirs_channel": "M07",
+            "slope": 0.9345,
+            "offset": -1.304,
+            "comment": "VZA<60, SZA<60, Delta(VZA) < 5, Delta(Scat-angle) < 5",
+        },
+        "tb37_night": {
+            "viirs_channel": "M12",
+            "slope": 0.9934,
+            "offset": 1.659,
+            "min_sunzenith": 89,
+            "comment": " VZA<60, SZA>95, Delta(VZA) < 5",
+        },
+        "tb37_day": {
+            "viirs_channel": "M12",
+            "slope": 0.9572,
+            "offset": 9.572,
+            "max_sunzenith": 80,
+            "comment": "VZA<60, SZA<60, Delta(VZA) < 5, Delta(Scat-angle) < 5",
+        },
+        "tb37_twilight": {
+            "viirs_channel": "M12",
+            "slope": 0.9753,
+            "offset": 5.6155,
+            "min_sunzenith": 80,
+            "max_sunzenith": 89,
+            "comment": "The linear average of the SBAFs for t37_day and t37_night. 80<= SZA <89",
+        },
+        "tb11": {
+            "viirs_channel": "M15",
+            "slope": 0.9986,
+            "offset": 0.600,
+            "comment": "",
+        },
+        "tb12": {
+            "viirs_channel": "M16",
+            "slope": 0.9943,
+            "offset": 1.328,
+            "comment": "",
+        },
+    },
+    "KNMI_v2": {
+        "r06": {
+            "viirs_channel": "M05",
+            "slope": 0.9401,
+            "offset": 0.629,
+            "comment": "VZA<60, SZA<60, Delta(VZA) < 5, Delta(Scat-angle) < 5",
+        },
+        "r09": {
+            "viirs_channel": "M07",
+            "slope": 0.9345,
+            "offset": -1.304,
+            "comment": "VZA<60, SZA<60, Delta(VZA) < 5, Delta(Scat-angle) < 5",
+        },
+        "tb37_day": {
+            "viirs_channel": "M12",
+            "slope": 0.9572,
+            "offset": 9.572,
+            "max_sunzenith": 70,
+            "comment": "VZA<60, SZA<60, Delta(VZA) < 5, Delta(Scat-angle) < 5",
+        },
+        "tb37_night": {
+            "viirs_channel": "M12",
+            "slope": 0.9934,
+            "offset": 1.659,
+            "min_sunzenith": 85,
+            "comment": "VZA<60, SZA>95, Delta(VZA) < 5",
+        },
+        "tb37_twilight": {
+            "viirs_channel": "M12",
+            "slope": None,
+            "offset": None,
+            "min_sunzenith": 70,
+            "max_sunzenith": 85,
+            "comment": "70 < SZA < 85: BT = (1-f)*BT(day) + f*BT(night), f=(SZA-70)/15",
+        },
+        "tb11": {
+            "viirs_channel": "M15",
+            "slope": 0.9986,
+            "offset": 0.600,
+            "comment": "VZA<60, SZA>95, Delta(VZA) < 5",
+        },
+        "tb12": {
+            "viirs_channel": "M16",
+            "slope": None,
+            "offset": None,
+            "comment": "VZA<60, SZA>95, Delta(VZA) < 5. Applies SBAF(tb11)-1.1646*(tb11-tb12)-0.235",
+        },
+    },
+    "NN_v1": {
+        "cfg_file_day": "ch7_SATZ_less_15_SUNZ_0_89_TD_1_min.yaml",
+        "cfg_file_night": "ch4_SATZ_less_25_SUNZ_90_180_TD_5_min.yaml",
+        "cfg_file_twilight": None,
+        "comment": "NN based on AVHRR and VGAC matchups using all AVHRR heritage channels"
+        },
+    "NN_v2": {
+        "cfg_file_day": "ch7_satz_max_25_SUNZ_0_80_tdiff_300_sec_20241031.yaml",
+        "cfg_file_night": "ch4_satz_max_25_SUNZ_90_180_tdiff_300_sec_20241031.yaml",
+        "cfg_file_twilight": "ch7_satz_max_25_SUNZ_80_89_tdiff_300_sec_20241031.yaml",
+        "comment": "NN based on AVHRR and VGAC matchups using all AVHRR heritage channels"
+        },
+    "NN_v3": {
+        "cfg_file_day": "ch7_satz_max_15_SUNZ_0_80_tdiff_120_sec_20241120.yaml",
+        "cfg_file_night": "ch4_satz_max_15_SUNZ_90_180_tdiff_120_sec_20241120.yaml",
+        "cfg_file_twilight": "ch7_satz_max_15_SUNZ_80_89_tdiff_120_sec_20241120.yaml",
+        "comment": "NN based on AVHRR and VGAC matchups using all AVHRR heritage channels"
         }
     }
-}
 
 
-def convert_to_noaa19(scene, sbaf_version):
-    """ Applies AVHRR SBAF to VGAC channels"""
+def convert_to_noaa19_neural_network(scene, sbaf_version):
+    """Applies AVHRR SBAF to VGAC channels using NN approach"""
 
-    logger.info(f"Using SBAF_{sbaf_version}")
+    if sbaf_version in ["NN_v1", "NN_v2", "NN_v3"]:
+        day_cfg_file = SBAF[sbaf_version]['cfg_file_day']
+        night_cfg_file = SBAF[sbaf_version]['cfg_file_night']
+        twilight_cfg_file = SBAF[sbaf_version]['cfg_file_twilight']
+    else:
+        logger.exception(f"Unrecognized NN version, {sbaf_version}")
+    scene = convert_to_vgac_with_nn(scene, day_cfg_file, night_cfg_file, twilight_cfg_file)
 
-    for avhhr_chan, scaling in SBAF[sbaf_version].items():
+    logger.info(f'Created NN version {sbaf_version}')
+
+
+def convert_to_noaa19_linear(scene, SBAF):
+    """ Apply linear regression"""
+
+    for avhhr_chan, scaling in SBAF.items():
         viirs_channel = scaling["viirs_channel"]
         offset = scaling["offset"]
         comment = scaling["comment"]
@@ -343,16 +469,82 @@ def convert_to_noaa19(scene, sbaf_version):
             filt = filt & (scene["sunzenith"].values >= scaling["min_sunzenith"])
         if "max_sunzenith" in scaling:
             filt = filt & (scene["sunzenith"].values < scaling["max_sunzenith"])
-        scene[viirs_channel].values = np.where(
-            filt,
-            slope * scene[viirs_channel].values + offset,
-            scene[viirs_channel].values
-        )
+        scene[viirs_channel].values = np.where(filt,
+                                               slope * scene[viirs_channel].values + offset,
+                                               scene[viirs_channel].values
+                                               )
         logger.info(f"{avhhr_chan:<13} = {slope:<6}*{viirs_channel:<3}+{offset:<5} ({comment})")
+
+
+def convert_to_noaa19_KNMI_v2(scene, sbaf_version):
+    """ Apply 1 channel linear regression SBAF for KNMI version 2"""
+
+    # I need to save the t11 values before the SBAF adjustment as they are needed for the tb12 SBAF
+    tb11_original = scene["M15"].values.copy()
+    for avhrr_chan, scaling in SBAF[sbaf_version].items():
+        viirs_channel = scaling["viirs_channel"]
+        offset = scaling["offset"]
+        comment = scaling["comment"]
+        slope = scaling["slope"]
+        filt = np.ones_like(scene[viirs_channel].values, dtype=bool)
+        if "min_sunzenith" in scaling:
+            filt = filt & (scene["sunzenith"].values >= scaling["min_sunzenith"])
+        if "max_sunzenith" in scaling:
+            filt = filt & (scene["sunzenith"].values < scaling["max_sunzenith"])
+
+        if slope is not None:
+            # Then simple linear regression
+            scene[viirs_channel].values = np.where(
+                filt,
+                slope * scene[viirs_channel].values + offset,
+                scene[viirs_channel].values
+                )
+            logger.info(f"{avhrr_chan:<13} = {slope:<6}*{viirs_channel:<3}+{offset:<5} ({comment})")
+        else:
+            if avhrr_chan == "tb37_twilight":
+                # 70 < SZA < 85: BT = (1-f)*BT(day) + f*BT(night), f=(SZA-70)/15
+
+                f = (scene["sunzenith"].values - scaling["min_sunzenith"])/15
+                tb37_day_slope = scaling["tb37_day"]["slope"]
+                tb37_day_offset = scaling["tb37_day"]["offset"]
+                tb37_night_slope = scaling["tb37_night"]["slope"]
+                tb37_night_offset = scaling["tb37_night"]["offset"]
+                tb37_day = tb37_day_slope * scene[viirs_channel].values + tb37_day_offset
+                tb37_night = tb37_night_slope * scene[viirs_channel].values + tb37_night_offset
+
+                scene[viirs_channel].values = np.where(
+                    filt,
+                    (1-f)*tb37_day + f*tb37_night,
+                    scene[viirs_channel].values
+                )
+
+            elif avhrr_chan == "tb12":
+                # BT(5) = BT(ch4)-1.1646*(BT(M15)-BT(M16))-0.235
+                scene[viirs_channel].values = scene["M15"].values-1.1646*(tb11_original-scene["M16"].values)-0.235
+            else:
+                logger.exception(f'Unknown channel, {avhrr_chan}, or missing slope parameter')
+            logger.info(f"{avhrr_chan:<13}: ({comment})")
+
+
+def convert_to_noaa19(scene, sbaf_version):
+    """ Applies AVHRR SBAF to VGAC channels"""
+
+    logger.info(f"Using SBAF_{sbaf_version}")
+
+    if "NN" in sbaf_version:
+        convert_to_noaa19_neural_network(scene, sbaf_version)
+    elif sbaf_version == "KNMI_v2":
+        convert_to_noaa19_KNMI_v2(scene, sbaf_version)
+    else:
+        convert_to_noaa19_linear(scene, SBAF[sbaf_version])
 
     if "npp" in scene.attrs["platform"].lower():
         scene.attrs["platform"] = "vgacsnpp"
     scene.attrs["platform"] = scene.attrs["platform"].replace("noaa", "vgac")
+
+    # These are only needed for the NN, but they must be removed before saving
+    del scene["M10"]
+    del scene["M14"]
 
 
 def get_encoding_viirs(scene):

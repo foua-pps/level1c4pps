@@ -2,10 +2,13 @@ name: test-environment
 channels:
   - conda-forge
 dependencies:
+  - tensorflow
+  - scikit-learn
   - sphinx
   - scipy
   - h5py
   - python-geotiepoints
+  - matplotlib
   - mock
   - numpy<2.0.0
   - satpy>0.41.1
@@ -18,3 +21,4 @@ dependencies:
   - pip:
     - trollsift
     - pygac
+    - git+https://github.com/foua-pps/sbafs_ann@main
