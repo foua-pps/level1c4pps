@@ -27,7 +27,8 @@ import time
 import xarray as xr
 import numpy as np
 from satpy.scene import Scene
-from level1c4pps import (get_encoding, compose_filename,
+from level1c4pps import (get_encoding,
+                         compose_filename,
                          apply_sunz_correction,
                          rename_latitude_longitude,
                          update_angle_attributes, get_header_attrs,
@@ -101,62 +102,54 @@ def set_header_and_band_attrs(scene, orbit_n=00000):
     for band in REFL_BANDS:
         if band not in scene:
             continue
-        print("Is this correct, I have no clue!")
+        print("Is this correct, we think so")
         scene[band].attrs['sun_zenith_angle_correction_applied'] = 'False'
     return nimg
 
+def homogenize(scene):
+    pass
 
+def recalibrate_meteosat(scene):
+    pass
+
+def fix_pixel_time(scene):
+    """Fix the time pixel variable, original file does not contain units."""
+    del scene["pixel_time"].coords["crs"]
+    scene["pixel_time"].encoding['coordinates'] = "lon lat"
+    scene["pixel_time"].data = scene["pixel_time"].data * np.timedelta64(1, 's') + scene['temp_11_00um'].attrs["start_time"]
+    
 def process_one_scene(scene_files, out_path,
                       engine='h5netcdf',
                       orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
-    scn_ = Scene(reader='isccp-ng_l1g_nc', filenames=scene_files)
-
-    scn_.load(BANDNAMES + ANGLE_NAMES)
-
-    
-    lat_t = scn_['temp_11_00um'].coords['lat'].values
-    lon_t = scn_['temp_11_00um'].coords['lon'].values
-    
-    scn_['latitude'] = xr.DataArray(np.tile( lat_t[:, np.newaxis], (1, len(lon_t))), dims=["y", "x"])
-    scn_['longitude'] = xr.DataArray(np.tile( lon_t, (len(lat_t), 1)), dims=["y", "x"])
-
-    for var in BANDNAMES + ANGLE_NAMES:
-        scn_[var] = scn_[var].drop('time')
-        scn_[var] = scn_[var].drop('lat')
-        scn_[var] = scn_[var].drop('lon')
-        scn_[var] = scn_[var].rename({'lon': 'x','lat': 'y'})
-        scn_[var] = np.squeeze(scn_[var][0,:,:])
-        # print(scn_[var].dims)
+    scn_ = Scene(reader='multiple_sensors_isccpng_l1g_nc', filenames=scene_files)
+    scn_.load(BANDNAMES + ANGLE_NAMES + ["wmo_id", "pixel_time", "lon", "lat"])
 
     # one ir channel
     irch = scn_['temp_11_00um']
 
-    # Set header and band attributes
     set_header_and_band_attrs(scn_, orbit_n=orbit_n)
-
-    # Rename longitude, latitude to lon, lat.
-    rename_latitude_longitude(scn_)
-
-    # Adjust lons to valid range:
+    fix_pixel_time(scn_)
+    # rename_latitude_longitude(scn_)
     adjust_lons_to_valid_range(scn_)
-
-    # Convert angles to PPS
     convert_angles(scn_, delete_azimuth=True)
     update_angle_attributes(scn_, irch)
-
-    # Apply sunz correction
     apply_sunz_correction(scn_, REFL_BANDS)
-
+    recalibrate_meteosat(scn_)
+    homogenize(scn_)
+    
     filename = compose_filename(scn_, out_path, instrument='seviri', band=irch)
+    encoding = get_encoding_isccpng(scn_)
+
     scn_.save_datasets(writer='cf',
                        filename=filename,
                        header_attrs=get_header_attrs(scn_, band=irch, sensor='seviri'),
                        engine=engine,
                        include_lonlats=False,
                        flatten_attrs=True,
-                       encoding=get_encoding_isccpng(scn_))
+                       encoding=encoding)
     print("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),
         time.time()-tic))
+    return filename

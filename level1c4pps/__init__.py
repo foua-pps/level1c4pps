@@ -318,7 +318,7 @@ def get_band_encoding(dataset, bandnames, pps_tagnames, chunks=None):
         # pygac qual flags
         enc = {'dtype': 'int16', 'zlib': True,
                'complevel': 4, '_FillValue': -32001.0}
-    elif name in ['scanline_timestamps']:
+    elif name in ['scanline_timestamps', 'pixel_time']:
         # pygac scanline_timestamps
         enc = {'dtype': 'int64',
                'zlib': True,
@@ -454,11 +454,15 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
             attr_value = scene[band].attrs.pop(attr, None)
             if attr not in scene.attrs:
                 scene.attrs[attr] = attr_value
-        for coord_name in ['acq_time', 'latitude', 'longitude']:
+        for coord_name in ['acq_time', 'latitude', 'longitude', 'start_time', 'end_time', "crs"]:
             try:
                 del scene[band].coords[coord_name]
             except KeyError:
                 pass
+        try:
+            del scene[band].encoding['coordinates']
+        except (AttributeError, KeyError):
+            pass
     return nimg
 
 
@@ -556,7 +560,7 @@ def compose_filename(scene, out_path, instrument, band=None):
         end_time = band.attrs['end_time']
     platform_name = scene.attrs['platform']
     orbit_number = int(scene.attrs['orbit_number'])
-    out_path_with_dates = start_time.strftime(out_path)
+    out_path_with_dates = datetime.strftime(dt64_to_datetime(start_time), out_path)
     filename = os.path.join(
         out_path_with_dates,
         "S_NWC_{:s}_{:s}_{:05d}_{:s}Z_{:s}Z.nc".format(
