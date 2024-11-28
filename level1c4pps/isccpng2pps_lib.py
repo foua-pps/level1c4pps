@@ -28,6 +28,7 @@ import xarray as xr
 import numpy as np
 from satpy.scene import Scene
 from level1c4pps import (get_encoding,
+                         dt64_to_datetime,
                          compose_filename,
                          apply_sunz_correction,
                          rename_latitude_longitude,
@@ -110,7 +111,31 @@ def homogenize(scene):
     pass
 
 def recalibrate_meteosat(scene):
-    pass
+    """nominal calibration is applied, redo with meirnik calibration."""
+    from satpy.readers.seviri_base import MeirinkCalibrationHandler
+    start_time = dt64_to_datetime(scene["refl_00_65um"].attrs["start_time"])
+    channel_name = {"refl_00_65um": "VIS006",
+                    "refl_00_86um": "VIS008",
+                    "refl_01_60um": "IR_016"}
+    platform_id = {55: 321,
+                   70: 324}
+    # Normally read from file (HRIT). We do not have access to nominal calibration
+    calibration_nominal = {2021: {321: {"VIS006": 24.974,
+                                        "VIS008": 32.377,
+                                        "IR_016": 23.710},
+                                  324: {"VIS006": 21.241,  
+                                        "VIS008": 27.921,
+                                        "IR_016": 23.112}
+                                   }}
+    
+    for wmo_id in platform_id:        
+        for band in channel_name:
+            old_gain = calibration_nominal[start_time.year][platform_id[wmo_id]][channel_name[band]]
+            meirink = MeirinkCalibrationHandler(calib_mode="MEIRINK-2023")
+            new_gain = 1000.0 * meirink.get_slope(platform_id[wmo_id], channel_name[band], start_time)
+            scene[band] = scene[band] * new_gain / old_gain
+
+
 
 def fix_pixel_time(scene):
     """Fix the time pixel variable, original file does not contain units."""
