@@ -56,9 +56,6 @@ if __name__ == "__main__":
                         help="Engine for saving netcdf files netcdf4 or h5netcdf (default).")
     parser.add_argument('--use-nominal-time-in-filename', action='store_true',
                         help='Use nominal scan timestamps in output filename.')
-    parser.add_argument('--no-sun-earth-distance-correction',
-                        action='store_true',
-                        help='Do not apply sun earth distance correction.')
     options = parser.parse_args()
     process_one_scan(
         options.files,

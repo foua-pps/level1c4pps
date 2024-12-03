@@ -75,15 +75,14 @@ class TestSeviri2PPS(unittest.TestCase):
         filenames = ['MSG4-SEVI-MSG15-1234-NA-20190409121243.927000000Z']
         res = seviri2pps.load_and_calibrate(
             filenames,
-            apply_sun_earth_distance_correction=False,
             rotate=False,
             clip_calib=False
         )
 
         # Compare results and expectations
         vis006_exp = xr.DataArray(
-            [[1.034205, 2.06841],
-             [3.102615, 4.13682]],
+            [[1.0, 2.0],
+             [3.0, 4.0]],
             dims=('y', 'x')
         )
         ir_108_exp = xr.DataArray(
@@ -91,10 +90,9 @@ class TestSeviri2PPS(unittest.TestCase):
              [7, 8]],
             dims=('y', 'x')
         )
-        res['VIS006'].sun_earth_distance_correction_factor
         xr.testing.assert_allclose(res['VIS006'], vis006_exp)
         xr.testing.assert_equal(res['IR_108'], ir_108_exp)
-        self.assertFalse(
+        self.assertTrue(
             res['VIS006'].attrs['sun_earth_distance_correction_applied'],
         )
 
@@ -106,7 +104,6 @@ class TestSeviri2PPS(unittest.TestCase):
         filenames = ['MSG4-SEVI-MSG15-1234-NA-20190409121243.927000000Z']
         res = seviri2pps.load_and_calibrate(
             filenames,
-            apply_sun_earth_distance_correction=False,
             rotate=True,
             clip_calib=False
         )

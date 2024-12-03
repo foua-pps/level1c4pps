@@ -38,7 +38,6 @@ import time
 from datetime import datetime, timedelta
 from satpy.scene import Scene
 import satpy.utils
-from satpy.readers.utils import remove_earthsun_distance_correction
 from trollsift.parser import globify, Parser
 from pyorbital.astronomy import get_alt_az, sun_zenith_angle
 from pyorbital.orbital import get_observer_look
@@ -93,7 +92,7 @@ NATIVE_FILE_PATTERN = ('{platform_shortname:4s}-{instr:4s}-'
 # MSG4-SEVI-MSG15-1234-NA-20190409121243.927000000Z
 
 
-def load_and_calibrate(filenames, apply_sun_earth_distance_correction, rotate,
+def load_and_calibrate(filenames, rotate,
                        clip_calib):
     """Load and calibrate data.
 
@@ -101,8 +100,6 @@ def load_and_calibrate(filenames, apply_sun_earth_distance_correction, rotate,
 
     Args:
         filenames: List of data files
-        apply_sun_earth_distance_correction: If True, apply sun-earth-distance-
-            correction to visible channels.
         rotate: Rotate image so that pixel (0, 0) is N-W.
         clip_calib: If True, do not extrapolate calibration coefficients beyond
             the time coverage of the calibration dataset. Instead, clip at the
@@ -124,9 +121,6 @@ def load_and_calibrate(filenames, apply_sun_earth_distance_correction, rotate,
     _check_is_seviri_data(scn_)
     _load_bands(scn_, rotate)
     _update_scene_attrs(scn_, {'image_rotated': rotate})
-
-    if not apply_sun_earth_distance_correction:
-        remove_sun_earth_distance_correction(scn_)
 
     return scn_
 
@@ -162,22 +156,6 @@ def _get_upper_right_corner(rotation_flag):
 
 def _update_scene_attrs(scene, attrs):
     scene.attrs.update(attrs)
-
-
-def remove_sun_earth_distance_correction(scene):
-    """Remove sun-earth-distance correction from visible channels.
-
-    This is required because a downstream CLAAS module (CPP) does not recognize
-    the "sun_earth_distance_correction_applied" attribute and applies the
-    correction anyway.
-    """
-    for band in BANDNAMES:
-        is_vis = scene[band].attrs['calibration'] == 'reflectance'
-        correction_applied = scene[band].attrs.get(
-            'sun_earth_distance_correction_applied', False
-        )
-        if is_vis and correction_applied:
-            scene[band] = remove_earthsun_distance_correction(scene[band])
 
 
 def get_lonlats(dataset):
@@ -590,7 +568,6 @@ class SEVIRIFilenameParser:
 
 def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf',
                      use_nominal_time_in_filename=False,
-                     apply_sun_earth_distance_correction=True,
                      clip_calib=False,
                      save_azimuth_angles=False):
     """Make level 1c files in PPS-format."""
@@ -601,7 +578,6 @@ def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf',
     tic = time.time()
     scn_ = load_and_calibrate(
         tslot_files,
-        apply_sun_earth_distance_correction=apply_sun_earth_distance_correction,
         rotate=rotate,
         clip_calib=clip_calib
     )
