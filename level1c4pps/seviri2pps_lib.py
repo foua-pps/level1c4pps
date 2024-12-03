@@ -44,7 +44,11 @@ from pyorbital.astronomy import get_alt_az, sun_zenith_angle
 from pyorbital.orbital import get_observer_look
 
 from level1c4pps.calibration_coefs import get_calibration, CalibrationData
-from level1c4pps import make_azidiff_angle, get_encoding, compose_filename, update_angle_attributes
+from level1c4pps import (make_azidiff_angle,
+                         get_encoding,
+                         compose_filename,
+                         update_angle_attributes,
+                         fix_sun_earth_distance_correction_factor)
 
 
 try:
@@ -274,10 +278,15 @@ def set_attrs(scene):
         scene[band].attrs['wavelength'] = [scene[band].attrs['wavelength'].min,
                                            scene[band].attrs['wavelength'].central,
                                            scene[band].attrs['wavelength'].max]
+
         if 'sun_earth_distance_correction_factor' not in scene[band].attrs:
             scene[band].attrs['sun_earth_distance_correction_applied'] = False
             scene[band].attrs['sun_earth_distance_correction_factor'] = 1.0
+        else:
+            fix_sun_earth_distance_correction_factor(scene, band, scene[band].attrs['start_time'])
+            
         scene[band].attrs['sun_zenith_angle_correction_applied'] = False
+        
         scene[band].attrs['name'] = "image{:d}".format(image_num)
 
         # Cosmetics
