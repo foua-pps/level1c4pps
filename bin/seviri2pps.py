@@ -63,6 +63,5 @@ if __name__ == "__main__":
         rotate=not options.no_rotation,
         engine=options.nc_engine,
         use_nominal_time_in_filename=options.use_nominal_time_in_filename,
-        apply_sun_earth_distance_correction=not options.no_sun_earth_distance_correction,
         save_azimuth_angles=options.azimuth_angles,
     )
