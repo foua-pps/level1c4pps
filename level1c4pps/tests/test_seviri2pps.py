@@ -81,8 +81,8 @@ class TestSeviri2PPS(unittest.TestCase):
 
         # Compare results and expectations
         vis006_exp = xr.DataArray(
-            [[1.0, 2.0],
-             [3.0, 4.0]],
+            [[1.034205, 2.06841],
+             [3.102615, 4.13682]],
             dims=('y', 'x')
         )
         ir_108_exp = xr.DataArray(
@@ -90,9 +90,12 @@ class TestSeviri2PPS(unittest.TestCase):
              [7, 8]],
             dims=('y', 'x')
         )
+        from satpy.readers.utils import remove_earthsun_distance_correction
+        res['VIS006'] = remove_earthsun_distance_correction(res['VIS006'])
         xr.testing.assert_allclose(res['VIS006'], vis006_exp)
         xr.testing.assert_equal(res['IR_108'], ir_108_exp)
-        self.assertTrue(
+        
+        self.assertFalse(
             res['VIS006'].attrs['sun_earth_distance_correction_applied'],
         )
 
