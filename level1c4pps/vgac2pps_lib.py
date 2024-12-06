@@ -323,6 +323,136 @@ SBAF = {
             "slope": 1.002,
             "offset": -0.69,
             "comment": "Based on collocation data for VZA < 3 and SZA 0-180",
+        }
+    },
+    "v7": {
+        "r06": {
+            "viirs_channel": "M05",
+            "slope": 0.8534,
+            "offset":1.8517,
+            "comment": "Based on collocation data for VZA < 15",
+        },
+        "r09": {
+            "viirs_channel": "M07",
+            "slope":0.8507,
+            "offset":1.1157,
+            "comment": "Based on collocation data for VZA < 15",
+        },
+        "tb37": {
+            "viirs_channel": "M12",
+            "slope":0.9734,
+            "offset":6.1707,
+            "comment": "Based on collocation data for VZA < 15",
+        },
+        "tb11": {
+            "viirs_channel": "M15",
+            "slope": 1.0006,
+            "offset": -0.0378,
+            "comment": "Based on collocation data for VZA < 15",
+        },
+        "tb12": {
+            "viirs_channel": "M16",
+            "slope": 0.9906,
+            "offset": 2.1505,
+            "comment": "Based on collocation data for VZA < 15",
+        }
+    },
+    "v8": {
+        "r06_day": {
+            "viirs_channel": "M05",
+            "slope": 0.8960,
+            "offset": 1.7118,
+            "max_sunzenith": 80,
+            "comment": "Based on collocation data for VZA < 15",
+        },
+        "r09_day": {
+            "viirs_channel": "M07",
+            "slope": 0.8907,
+            "offset": 0.5547,
+            "max_sunzenith": 80,
+            "comment": "Based on collocation data for VZA < 15",
+        },
+        "tb37_day": {
+            "viirs_channel": "M12",
+            "slope": 0.9817,
+            "offset": 3.0744,
+            "max_sunzenith": 80,
+            "comment": "Based on collocations for VZA < 15 and SZA < 80",
+        },
+        "tb11_day": {
+            "viirs_channel": "M15",
+            "slope": 0.9926,
+            "offset": 2.0934,
+            "max_sunzenith": 80,
+            "comment": "Based on collocation data for VZA < 15 and SZA < 80",
+        },
+        "tb12_day": {
+            "viirs_channel": "M16",
+            "slope": 0.9774,
+            "offset": 5.6555,
+            "max_sunzenith": 80,
+            "comment": "Based on collocation data for VZA < 15 and SZA < 80",
+        },
+        "r06_twilight": {
+            "viirs_channel": "M05",
+            "slope": 0.6710,
+            "offset": 4.5075,
+            "min_sunzenith": 80,
+            "max_sunzenith": 90,
+            "comment": "Based on collocation data for VZA < 15 and 80<= SZA <=90",
+        },
+        "r09_twilight": {
+            "viirs_channel": "M07",
+            "slope": 0.7120,
+            "offset": 3.7473,
+            "min_sunzenith": 80,
+            "max_sunzenith": 90,
+            "comment": "Based on collocation data for VZA < 15 and 80<= SZA <=90",
+        },
+        "tb37_twilight": {
+            "viirs_channel": "M12",
+            "slope": 0.9711,
+            "offset": 6.77,
+            "min_sunzenith": 80,
+            "max_sunzenith": 90,
+            "comment": "Based on collocation data for VZA < 15 and 80<= SZA <=90",
+        },
+        "tb11_twilight": {
+            "viirs_channel": "M15",
+            "slope": 1.0024,
+            "offset": -0.5164,
+            "min_sunzenith": 80,
+            "max_sunzenith": 90,
+            "comment": "Based on collocation data for VZA < 15 and 80<= SZA <=90",
+        },
+        "tb12_twilight": {
+            "viirs_channel": "M16",
+            "slope": 0.9973,
+            "offset": -0.7479,
+            "min_sunzenith": 80,
+            "max_sunzenith": 90,
+            "comment": "Based on collocation data for VZA < 15 and 80<= SZA <=90",
+        },
+        "tb37_night": {
+            "viirs_channel": "M12",
+            "slope": 0.9948,
+            "offset": 1.3254,
+            "min_sunzenith": 90,
+            "comment": "Based on collocations for VZA < 15  and SZA >90",
+        },
+        "tb11_night": {
+            "viirs_channel": "M15",
+            "slope": 1.0042,
+            "offset": -0.9186,
+            "min_sunzenith": 90,
+            "comment": "Based on collocations for VZA < 15  and SZA >90",
+        },
+        "tb12_night": {
+            "viirs_channel": "M16",
+            "slope": 0.9962,
+            "offset": 0.7373,
+            "min_sunzenith": 90,
+            "comment": "Based on collocation data for VZA < 15 and SZA > 90",
         },
     },
     "KNMI": {
@@ -438,8 +568,14 @@ SBAF = {
         "cfg_file_night": "ch4_satz_max_15_SUNZ_90_180_tdiff_120_sec_20241120.yaml",
         "cfg_file_twilight": "ch7_satz_max_15_SUNZ_80_89_tdiff_120_sec_20241120.yaml",
         "comment": "NN based on AVHRR and VGAC matchups using all AVHRR heritage channels"
-        }
+        },
+    "NN_v4": {
+        "cfg_file_day": "ch7_satz_max_15_SUNZ_0_80_tdiff_120_sec_20241204.yaml",
+        "cfg_file_night": "ch4_satz_max_15_SUNZ_90_180_tdiff_120_sec_20241204.yaml",
+        "cfg_file_twilight": "ch7_satz_max_15_SUNZ_80_89_tdiff_120_sec_20241204.yaml",
+        "comment": "NN based on AVHRR and VGAC matchups using all AVHRR heritage channels"
     }
+}
 
 
 def convert_to_noaa19_neural_network(scene, sbaf_version):
