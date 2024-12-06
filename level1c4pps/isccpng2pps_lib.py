@@ -100,6 +100,42 @@ coef_offset_list = {
     '55_nig': [0.00000, 0.00000, 0.00000, -1.61703, -0.258592, -0.278584, -0.442302, 0.0806762, 0.0877965, 0.0597462, 8.17879]
 }
 
+coef_slope_list_v1 = {
+    '270_day': [1.00166, 0.948021, 1.00000, 0.926764, 0.991329, 0.999300,
+                1.01977, 1.03453, 0.996781, 1.02343, 0.863748],
+    '270_all': [1.00000, 1.00000, 1.00000, 0.940848, 0.990431, 1.00483,
+                1.01947, 1.01835, 0.996272, 1.02239, 0.890045],
+    '271_day': [1.00313, 0.947739, 1.00000, 0.928358, 0.991436, 0.999576,
+                1.01939, 1.03306, 0.996656, 1.02405, 0.894260],
+    '271_all': [1.00000, 1.00000, 1.00000, 0.939285, 0.990504, 1.00481,
+                1.01907, 1.01759, 0.996129, 1.02298, 0.917607],
+    '173_day': [1.00169, 0.945509, 1.00000, 0.929371, 1.00905, 1.00090,
+                1.01065, 1.02516, 0.996015, 1.02885, 0.871186],
+    '173_all': [1.00000, 1.00000, 1.00000, 0.938706, 1.00526, 1.00413, 1.01050,
+                1.01338, 0.995399, 1.02742, 0.896835],
+    '55_day': [0.999577, 0.999643, 1.00000, 1.01192, 1.00193, 1.00093, 1.00202,
+               0.998663, 0.999412, 0.999663, 0.945356],
+    '55_all': [1.00000, 1.00000, 1.00000, 1.00882, 1.00146, 1.00121, 1.00194,
+               0.999321, 0.999513, 0.999684, 0.955400]
+}
+coef_offset_list_v1 = {
+    '270_day': [-0.00207069, 0.161403, 0.00000, 18.4795, 1.58729, -0.0312020,
+                -4.93224, -7.83331, 1.13395, -5.51940, 30.5574],
+    '270_all': [0.00000, 0.00000, 0.00000, 14.4615, 1.80946, -1.50406,
+                -4.94939, -3.61878, 1.23287, -5.28908, 23.4361],
+    '271_day': [-0.0107727, 0.161054, 0.00000, 17.7929, 1.57229, -0.0877037,
+                -4.83326, -7.49875, 1.17318, -5.66102, 23.6271],
+    '271_all': [0.00000, 0.00000, 0.00000, 14.7561, 1.80263, -1.48189,
+                -4.84116, -3.46801, 1.27653, -5.42165, 17.3323],
+    '173_day': [-0.00100716, 0.162379, 0.00000, 17.3952, -2.21718, -0.347357,
+                -2.62520, -5.68860, 1.37321, -6.76384, 28.8614],
+    '173_all': [0.00000, 0.00000, 0.00000, 14.8503, -1.29354, -1.20664,
+                -2.63734, -2.61762, 1.49858, -6.43452, 21.9239],
+    '55_day': [0.00444712, 0.0162967, 0.00000, -2.83943, -0.417072, -0.181784,
+               -0.486767, 0.304194, 0.134653, 0.0706959, 12.3763],
+    '55_all': [0.00000, 0.00000, 0.00000, -1.94343, -0.302762, -0.259928,
+               -0.471424, 0.131567, 0.104622, 0.0658078, 9.71430]
+}
 satellite_names = {270: "GOES-16",  # ABI
                    271: "GOES-17",  # ABI
                    173: "Himawari-8",  # AHI
@@ -134,20 +170,21 @@ def set_header_and_band_attrs(scene, orbit_n=00000):
 def homogenize_channel(scene, wmo_id, illum, band, sol_zen):
     """Homogenize one satellite for one band."""
     data = scene[band]
-    dwmo_id = scene["wmo_id"]
+    dwmo_id = scene["wmo_id"].values
     ch_index = coef_slope_chan.index(band)
-    k = coef_slope_list[str(wmo_id) + illum][ch_index]
-    c = coef_offset_list[str(wmo_id) + illum][ch_index]
+    k = coef_slope_list_v1[str(wmo_id) + illum][ch_index]
+    c = coef_offset_list_v1[str(wmo_id) + illum][ch_index]
     logger.info(
         f"Homogenizing channel {band} for {satellite_names[wmo_id]} for illum:{illum}"
         f" with respect to SEVIRI on MSG4 using y={k} * x + {c}")
     dn_discr = 90
     if (illum == '_day'):
         update = ((dwmo_id == wmo_id) & (data > 0) & (sol_zen < dn_discr))
-        scene[band].where(update,  scene[band] * k + c)
-    if (illum == '_nig'):
+        scene[band].values = np.where(update, scene[band].values * k + c, scene[band].values)
+
+    if (illum == '_day'):
         update = ((dwmo_id == wmo_id) & (data > 0) & (sol_zen >= dn_discr))
-        scene[band].where(update,  scene[band] * k + c)
+        scene[band].values = np.where(update, scene[band].values * k + c, scene[band].values)
 
 
 def homogenize(scene):
@@ -156,8 +193,7 @@ def homogenize(scene):
     for band in BANDNAMES:
         for wmo_id in [270, 271, 173, 55]:
             homogenize_channel(scene, wmo_id, '_day', band, sol_zen)
-            homogenize_channel(scene, wmo_id, '_nig', band, sol_zen)
-
+            # homogenize_channel(scene, wmo_id, '_nig', band, sol_zen)
 
 def recalibrate_meteosat(scene):
     """Nominal calibration is applied, redo with meirnik calibration."""
@@ -178,10 +214,14 @@ def recalibrate_meteosat(scene):
                                   }}
     for wmo_id in platform_id:
         for band in channel_name:
+            dwmo_id = scene["wmo_id"]
             old_gain = calibration_nominal[start_time.year][platform_id[wmo_id]][channel_name[band]]
             meirink = MeirinkCalibrationHandler(calib_mode="MEIRINK-2023")
             new_gain = 1000.0 * meirink.get_slope(platform_id[wmo_id], channel_name[band], start_time)
-            scene[band] = scene[band] * new_gain / old_gain
+            update = scene["wmo_id"].values == wmo_id
+            logger.info(
+                f"Recalibrating channel {band} for {satellite_names[wmo_id]} using y *= {new_gain} /{old_gain}")
+            scene[band].values = np.where(update, scene[band].values * new_gain / old_gain, scene[band].values)
 
 
 def fix_pixel_time(scene):
@@ -208,9 +248,9 @@ def process_one_scene(scene_files, out_path,
     adjust_lons_to_valid_range(scn_)
     convert_angles(scn_, delete_azimuth=True)
     update_angle_attributes(scn_, irch)
-    apply_sunz_correction(scn_, REFL_BANDS)
     recalibrate_meteosat(scn_)
     homogenize(scn_)
+    apply_sunz_correction(scn_, REFL_BANDS)
 
     filename = compose_filename(scn_, out_path, instrument='seviri', band=irch)
     encoding = get_encoding_isccpng(scn_)
