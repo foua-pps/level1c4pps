@@ -172,8 +172,8 @@ def homogenize_channel(scene, wmo_id, illum, band, sol_zen):
     data = scene[band]
     dwmo_id = scene["wmo_id"].values
     ch_index = coef_slope_chan.index(band)
-    k = coef_slope_list_v1[str(wmo_id) + illum][ch_index]
-    c = coef_offset_list_v1[str(wmo_id) + illum][ch_index]
+    k = coef_slope_list[str(wmo_id) + illum][ch_index]
+    c = coef_offset_list[str(wmo_id) + illum][ch_index]
     logger.info(
         f"Homogenizing channel {band} for {satellite_names[wmo_id]} for illum:{illum}"
         f" with respect to SEVIRI on MSG4 using y={k} * x + {c}")
@@ -182,7 +182,7 @@ def homogenize_channel(scene, wmo_id, illum, band, sol_zen):
         update = ((dwmo_id == wmo_id) & (data > 0) & (sol_zen < dn_discr))
         scene[band].values = np.where(update, scene[band].values * k + c, scene[band].values)
 
-    if (illum == '_day'):
+    if (illum == '_nig'):
         update = ((dwmo_id == wmo_id) & (data > 0) & (sol_zen >= dn_discr))
         scene[band].values = np.where(update, scene[band].values * k + c, scene[band].values)
 
@@ -193,7 +193,7 @@ def homogenize(scene):
     for band in BANDNAMES:
         for wmo_id in [270, 271, 173, 55]:
             homogenize_channel(scene, wmo_id, '_day', band, sol_zen)
-            # homogenize_channel(scene, wmo_id, '_nig', band, sol_zen)
+            homogenize_channel(scene, wmo_id, '_nig', band, sol_zen)
 
 def recalibrate_meteosat(scene):
     """Nominal calibration is applied, redo with meirnik calibration."""
