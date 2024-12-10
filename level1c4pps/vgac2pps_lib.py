@@ -581,7 +581,7 @@ SBAF = {
 def convert_to_noaa19_neural_network(scene, sbaf_version):
     """Applies AVHRR SBAF to VGAC channels using NN approach"""
 
-    if sbaf_version in ["NN_v1", "NN_v2", "NN_v3"]:
+    if sbaf_version in ["NN_v1", "NN_v2", "NN_v3", "NN_v4"]:
         day_cfg_file = SBAF[sbaf_version]['cfg_file_day']
         night_cfg_file = SBAF[sbaf_version]['cfg_file_night']
         twilight_cfg_file = SBAF[sbaf_version]['cfg_file_twilight']
