@@ -438,14 +438,20 @@ SBAF = {
         "cfg_file_night": "ch4_satz_max_15_SUNZ_90_180_tdiff_120_sec_20241120.yaml",
         "cfg_file_twilight": "ch7_satz_max_15_SUNZ_80_89_tdiff_120_sec_20241120.yaml",
         "comment": "NN based on AVHRR and VGAC matchups using all AVHRR heritage channels"
-        }
+        },
+    "NN_v4": {
+        "cfg_file_day": "ch7_satz_max_15_SUNZ_0_80_tdiff_120_sec_20241204.yaml",
+        "cfg_file_night": "ch4_satz_max_15_SUNZ_90_180_tdiff_120_sec_20241204.yaml",
+        "cfg_file_twilight": "ch7_satz_max_15_SUNZ_80_89_tdiff_120_sec_20241204.yaml",
+        "comment": "NN based on AVHRR and VGAC matchups using all AVHRR heritage channels"
     }
+}
 
 
 def convert_to_noaa19_neural_network(scene, sbaf_version):
     """Applies AVHRR SBAF to VGAC channels using NN approach"""
 
-    if sbaf_version in ["NN_v1", "NN_v2", "NN_v3"]:
+    if sbaf_version in ["NN_v1", "NN_v2", "NN_v3", "NN_v4"]:
         day_cfg_file = SBAF[sbaf_version]['cfg_file_day']
         night_cfg_file = SBAF[sbaf_version]['cfg_file_night']
         twilight_cfg_file = SBAF[sbaf_version]['cfg_file_twilight']
@@ -563,8 +569,9 @@ def set_header_and_band_attrs(scene, orbit_n=0):
     for band in REFL_BANDS:
         if band not in scene:
             continue
-        # For VIIRS data sun_zenith_angle_correction_applied is applied always!
+        # Original VGAC files provide normalized reflectances AND Earth-Sun distance corrected data
         scene[band].attrs["sun_zenith_angle_correction_applied"] = "True"
+        scene[band].attrs['sun_earth_distance_correction_applied'] = "True"
     return nimg
 
 
