@@ -428,7 +428,7 @@ SBAF = {
         "tb12_twilight": {
             "viirs_channel": "M16",
             "slope": 0.9967,
-            "offset": -0.7479,
+            "offset": 0.6742,
             "min_sunzenith": 80,
             "max_sunzenith": 90,
             "comment": "Based on collocation data for VZA < 15 and 80<= SZA <=90",
