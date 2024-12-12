@@ -563,8 +563,9 @@ def set_header_and_band_attrs(scene, orbit_n=0):
     for band in REFL_BANDS:
         if band not in scene:
             continue
-        # For VIIRS data sun_zenith_angle_correction_applied is applied always!
+        # Original VGAC files provide normalized reflectances AND Earth-Sun distance corrected data
         scene[band].attrs["sun_zenith_angle_correction_applied"] = "True"
+        scene[band].attrs['sun_earth_distance_correction_applied'] = "True"
     return nimg
 
 
