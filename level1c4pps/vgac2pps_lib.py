@@ -427,7 +427,7 @@ SBAF = {
         },
         "tb12_twilight": {
             "viirs_channel": "M16",
-            "slope": 0.9973,
+            "slope": 0.9967,
             "offset": -0.7479,
             "min_sunzenith": 80,
             "max_sunzenith": 90,
