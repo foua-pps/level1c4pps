@@ -91,7 +91,7 @@ class TestSeviri2PPS(unittest.TestCase):
         res['VIS006'] = remove_earthsun_distance_correction(res['VIS006'])
         xr.testing.assert_allclose(res['VIS006'], vis006_exp)
         xr.testing.assert_equal(res['IR_108'], ir_108_exp)
-        
+
         self.assertFalse(
             res['VIS006'].attrs['sun_earth_distance_correction_applied'],
         )
@@ -206,7 +206,7 @@ class TestSeviri2PPS(unittest.TestCase):
         scene['VIS006'].attrs['sun_earth_distance_correction_factor'] = 0.9833241577909706
         scene['IR_108'].attrs['orbital_parameters'] = {'orb_a': 1,
                                                        'orb_b': 2}
-        scene['IR_108'].attrs['georef_offset_corrected'] =  True
+        scene['IR_108'].attrs['georef_offset_corrected'] = True
         scene['IR_108'].attrs['platform_name'] = "my_platform_name"
 
         seviri2pps.set_attrs(scene)
@@ -228,7 +228,6 @@ class TestSeviri2PPS(unittest.TestCase):
         self.assertAlmostEqual(scene['VIS006'].sun_earth_distance,
                                sun_earth_distance, places=7)
 
-             
     def test_get_mean_acq_time(self):
         """Test computation of mean scanline acquisition time."""
         seviri2pps.BANDNAMES = ['VIS006', 'IR_108']
@@ -438,7 +437,7 @@ class TestSeviri2PPS(unittest.TestCase):
         encoding = seviri2pps.get_encoding_seviri(scene)
         for key in encoding_exp:
             print(key)
-            print(encoding[key],encoding_exp[key])
+            print(encoding[key], encoding_exp[key])
 
             self.assertDictEqual(encoding[key], encoding_exp[key])
 

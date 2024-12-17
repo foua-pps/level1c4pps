@@ -207,7 +207,7 @@ LATLON_ATTRIBUTES = {
         'standard_name': "longitude",
         'units': 'degrees_east',
         'valid_range': np.array([-180, 180], dtype='float32')}
-    }
+}
 
 
 def make_azidiff_angle(sata, suna, divisor=360):
@@ -364,20 +364,21 @@ def adjust_lons_to_valid_range(scene):
     # scene['lon'] = centered_modulus(scene['lon']) # makes lon loose attrs satpy 0.24.0
     scene['lon'].values = centered_modulus(scene['lon'].values)
 
+
 def fix_sun_earth_distance_correction_factor(scene, band, start_time):
     from pyorbital.astronomy import sun_earth_distance_correction
     date_control = np.datetime64("2019-01-01T00:00:00")
     sun_earth_distance_20190409 = sun_earth_distance_correction(date_control)
     sun_earth_distance = sun_earth_distance_correction(start_time)
     if (np.abs(sun_earth_distance_20190409 - 0.9833280675966011) < 0.00001 and
-        np.abs(sun_earth_distance - scene[band].attrs['sun_earth_distance_correction_factor']) < 0.00001):
+            np.abs(sun_earth_distance - scene[band].attrs['sun_earth_distance_correction_factor']) < 0.00001):
         logger.info("The sun earth distance correction attribute contain the sun earth distance, not the square.")
         logger.info("Updating and adding sun earth distance correction attributes.")
         current_factor = scene[band].attrs['sun_earth_distance_correction_factor']
-        scene[band].attrs['satpy_sun_earth_distance_correction_factor'] =  current_factor
+        scene[band].attrs['satpy_sun_earth_distance_correction_factor'] = current_factor
         scene[band].attrs['pps_sun_earth_distance_correction_factor'] = sun_earth_distance * sun_earth_distance
         scene[band].attrs['sun_earth_distance'] = sun_earth_distance
-        scene[band].attrs['sun_earth_distance_correction_factor'] = sun_earth_distance * sun_earth_distance    
+        scene[band].attrs['sun_earth_distance_correction_factor'] = sun_earth_distance * sun_earth_distance
 
 
 def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch, orbit_n=0):

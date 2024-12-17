@@ -119,7 +119,7 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf', orbit_n=0):
     update_angle_attributes(scene, band)
     for angle in ['sunzenith', 'satzenith', 'azimuthdiff']:
         scene[angle].attrs['file_key'] = ANGLE_ATTRIBUTES['mersi_file_key'][angle]
-    filename=compose_filename(scene, out_path, instrument=sensor.replace('-', ''), band=band)
+    filename = compose_filename(scene, out_path, instrument=sensor.replace('-', ''), band=band)
     scene.save_datasets(
         writer='cf',
         filename=filename,

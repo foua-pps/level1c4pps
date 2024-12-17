@@ -172,7 +172,7 @@ SBAF = {
             "slope": 1.003,
             "offset": -0.84,
             "comment": "based on nadir collocation data for SZA 0-180",
-            },
+        },
     },
     "v4": {
         "r06": {
@@ -322,19 +322,19 @@ SBAF = {
         "r06": {
             "viirs_channel": "M05",
             "slope": 0.8534,
-            "offset":1.8517,
+            "offset": 1.8517,
             "comment": "Based on collocation data for VZA < 15",
         },
         "r09": {
             "viirs_channel": "M07",
-            "slope":0.8507,
-            "offset":1.1157,
+            "slope": 0.8507,
+            "offset": 1.1157,
             "comment": "Based on collocation data for VZA < 15",
         },
         "tb37": {
             "viirs_channel": "M12",
-            "slope":0.9734,
-            "offset":6.1707,
+            "slope": 0.9734,
+            "offset": 6.1707,
             "comment": "Based on collocation data for VZA < 15",
         },
         "tb11": {
@@ -549,19 +549,19 @@ SBAF = {
         "cfg_file_night": "ch4_SATZ_less_25_SUNZ_90_180_TD_5_min.yaml",
         "cfg_file_twilight": None,
         "comment": "NN based on AVHRR and VGAC matchups using all AVHRR heritage channels"
-        },
+    },
     "NN_v2": {
         "cfg_file_day": "ch7_satz_max_25_SUNZ_0_80_tdiff_300_sec_20241031.yaml",
         "cfg_file_night": "ch4_satz_max_25_SUNZ_90_180_tdiff_300_sec_20241031.yaml",
         "cfg_file_twilight": "ch7_satz_max_25_SUNZ_80_89_tdiff_300_sec_20241031.yaml",
         "comment": "NN based on AVHRR and VGAC matchups using all AVHRR heritage channels"
-        },
+    },
     "NN_v3": {
         "cfg_file_day": "ch7_satz_max_15_SUNZ_0_80_tdiff_120_sec_20241120.yaml",
         "cfg_file_night": "ch4_satz_max_15_SUNZ_90_180_tdiff_120_sec_20241120.yaml",
         "cfg_file_twilight": "ch7_satz_max_15_SUNZ_80_89_tdiff_120_sec_20241120.yaml",
         "comment": "NN based on AVHRR and VGAC matchups using all AVHRR heritage channels"
-        },
+    },
     "NN_v4": {
         "cfg_file_day": "ch7_satz_max_15_SUNZ_0_80_tdiff_120_sec_20241204.yaml",
         "cfg_file_night": "ch4_satz_max_15_SUNZ_90_180_tdiff_120_sec_20241204.yaml",
@@ -574,7 +574,7 @@ SBAF = {
 def convert_to_noaa19_neural_network(scene, sbaf_version):
     """Applies AVHRR SBAF to VGAC channels using NN approach"""
 
-    from sbafs_ann.convert_vgac import convert_to_vgac_with_nn 
+    from sbafs_ann.convert_vgac import convert_to_vgac_with_nn
     if sbaf_version in ["NN_v1", "NN_v2", "NN_v3", "NN_v4"]:
         day_cfg_file = SBAF[sbaf_version]['cfg_file_day']
         night_cfg_file = SBAF[sbaf_version]['cfg_file_night']
@@ -628,7 +628,7 @@ def convert_to_noaa19_KNMI_v2(scene, sbaf_version):
                 filt,
                 slope * scene[viirs_channel].values + offset,
                 scene[viirs_channel].values
-                )
+            )
             logger.info(f"{avhrr_chan:<13} = {slope:<6}*{viirs_channel:<3}+{offset:<5} ({comment})")
         else:
             if avhrr_chan == "tb37_twilight":
@@ -847,7 +847,7 @@ def process_one_scene(scene_files, out_path, engine="h5netcdf",
                            flatten_attrs=True,
                            encoding=encoding)
         logger.info("Saved file {:s} after {:3.1f} seconds".format(
-             os.path.basename(filename),
-             time.time()-tic))
+            os.path.basename(filename),
+            time.time()-tic))
         filenames.append(filename)
     return filenames

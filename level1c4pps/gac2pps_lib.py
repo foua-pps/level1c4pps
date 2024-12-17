@@ -38,7 +38,6 @@ from packaging.version import Version
 logger = logging.getLogger('gac2pps')
 
 
-
 BANDNAMES = ['1', '2', '3', '3a', '3b', '4', '5']
 
 REFL_BANDS = ['1', '2', '3a']

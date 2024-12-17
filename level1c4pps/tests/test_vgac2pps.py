@@ -39,8 +39,6 @@ except ModuleNotFoundError:
     no_sbaf_module = True
 
 
-        
-
 class TestVgac2PPS(unittest.TestCase):
     """Test vgac2pps_lib."""
 
@@ -206,8 +204,8 @@ class TestVgac2PPS(unittest.TestCase):
                                        1.0, decimal=4)
 
         np.testing.assert_equal(pps_nc.__dict__["platform"], "vgac20")
-        self.assertTrue(np.abs(pps_nc.variables['image1'][0, 0, 400] - pps_nc_viirs.variables['image1'][0, 0, 400]) > 0.01)
-
+        self.assertTrue(np.abs(pps_nc.variables['image1'][0, 0, 400] -
+                        pps_nc_viirs.variables['image1'][0, 0, 400]) > 0.01)
 
     def test_process_one_scene_midnight(self):
         """Test process one scene for one example file."""

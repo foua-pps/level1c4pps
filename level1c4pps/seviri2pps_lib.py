@@ -256,9 +256,9 @@ def set_attrs(scene):
             scene[band].attrs['sun_earth_distance_correction_factor'] = 1.0
         else:
             fix_sun_earth_distance_correction_factor(scene, band, scene[band].attrs['start_time'])
-            
+
         scene[band].attrs['sun_zenith_angle_correction_applied'] = False
-        
+
         scene[band].attrs['name'] = "image{:d}".format(image_num)
 
         # Cosmetics
