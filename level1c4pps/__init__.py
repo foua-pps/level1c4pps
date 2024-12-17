@@ -16,10 +16,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with level1c4pps.  If not, see <http://www.gnu.org/licenses/>.
-# Author(s):
-
-#   Adam.Dybbroe <adam.dybbroe@smhi.se>
-#   Nina Hakansson <nina.hakansson@smhi.se>
 
 """Package Initializer for level1c4pps."""
 from importlib.metadata import version

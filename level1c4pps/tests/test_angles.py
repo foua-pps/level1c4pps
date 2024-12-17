@@ -1,12 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-# Copyright (c) 2019 Adam.Dybbroe
-
-# Author(s):
-
-#   Adam.Dybbroe <a000680@c21529.ad.smhi.se>
-
+# Copyright (c) 2019 level1c4pps developers
+#
+# This file is part of level1c4pps
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or

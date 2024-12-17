@@ -16,12 +16,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with level1c4pps.  If not, see <http://www.gnu.org/licenses/>.
-# Author(s):
-
-#   Martin Raspaud <martin.raspaud@smhi.se>
-#   Nina Hakansson <nina.hakansson@smhi.se>
-#   Adam.Dybbroe <adam.dybbroe@smhi.se>
-#   Bengt.Rydberg >bengt.rydberg@smhi.se>
 
 """Functions to convert MERSI-2/3 level-1 data to a NWCSAF/PPS level-1c formated netCDF/CF file."""
 

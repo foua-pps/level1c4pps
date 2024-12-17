@@ -16,11 +16,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with level1c4pps.  If not, see <http://www.gnu.org/licenses/>.
-# Author(s):
-
-#   Martin Raspaud <martin.raspaud@smhi.se>
-#   Nina Hakansson <nina.hakansson@smhi.se>
-#   Adam.Dybbroe <adam.dybbroe@smhi.se>
 
 """Script to convert MODIS level-1 to PPS level-1c format using Pytroll/Satpy."""
 
