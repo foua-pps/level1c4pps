@@ -76,7 +76,7 @@ PPS_TAGNAMES = {'S2': 'ch_r06',  # or S1
                 'F2': 'ch_tbxx'}
 
 BANDNAMES_PPS = ['S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9']
-BANDNAMES_DEFAULT = ['S2', 'S3', 'S4', 'S5',  'S6', 'S7', 'S8', 'S9']
+BANDNAMES_DEFAULT = ['S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9']
 
 
 def get_encoding_slstr(scene):
@@ -137,4 +137,4 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf',
                        encoding=get_encoding_slstr(scn_))
     print("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),
-        time.time()-tic))
+        time.time() - tic))

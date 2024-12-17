@@ -53,24 +53,24 @@ REFL_BANDS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11',
 ANGLE_NAMES = ['satellite_zenith_angle', 'solar_zenith_angle',
                'satellite_azimuth_angle', 'solar_azimuth_angle']
 
-PPS_TAGNAMES = {'1':  'ch_r06',
-                '2':  'ch_r09',
+PPS_TAGNAMES = {'1': 'ch_r06',
+                '2': 'ch_r09',
                 '26': 'ch_r13',
-                '6':  'ch_r16',
+                '6': 'ch_r16',
                 '20': 'ch_tb37',
                 '29': 'ch_tb85',
                 '31': 'ch_tb11',
                 '32': 'ch_tb12',
                 # Not used yet:
-                '7':  'ch_r21',
+                '7': 'ch_r21',
                 '27': 'ch_tb67',
                 '28': 'ch_tb73',
                 '33': 'ch_tb133',
-                '3':  'ch_rxx',
-                '4':  'ch_rxx',
-                '5':  'ch_rxx',
-                '8':  'ch_rxx',
-                '9':  'ch_rxx',
+                '3': 'ch_rxx',
+                '4': 'ch_rxx',
+                '5': 'ch_rxx',
+                '8': 'ch_rxx',
+                '9': 'ch_rxx',
                 '10': 'ch_rxx',
                 '11': 'ch_rxx',
                 '12': 'ch_rxx',
@@ -152,5 +152,5 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf', all_channels=Fal
                        encoding=get_encoding_modis(scn_))
     print("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),
-        time.time()-tic))
+        time.time() - tic))
     return filename

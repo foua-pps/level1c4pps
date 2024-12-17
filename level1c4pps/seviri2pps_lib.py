@@ -205,7 +205,7 @@ def get_satellite_angles(dataset, lons, lats):
     # else:
     #    => There have been updates to SatPy and this script
     #       need to be modified.
-    if not (get_observer_look(0, 0, 36000*1000,
+    if not (get_observer_look(0, 0, 36000 * 1000,
                               datetime.now(timezone.utc), np.array([16]),
                               np.array([58]), np.array([0]))[1] > 30 and
             get_observer_look(0, 0, 36000,
@@ -624,7 +624,7 @@ def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf',
                        exclude_attrs=['raw_metadata'])
     print("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),
-        time.time()-tic))  # About 40 seconds
+        time.time() - tic))  # About 40 seconds
     return filename
 
 

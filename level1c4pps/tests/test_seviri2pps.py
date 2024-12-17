@@ -169,7 +169,7 @@ class TestSeviri2PPS(unittest.TestCase):
     def test_get_satellite_angles(self, get_satpos, get_observer_look):
         """Test getting satellite angles."""
         def get_observer_look_patched(lon, lat, alt, *args):
-            if alt == 36000*1000:
+            if alt == 36000 * 1000:
                 return None, 31  # > 30
             elif alt == 36000:
                 return None, 22  # < 20
@@ -386,7 +386,7 @@ class TestSeviri2PPS(unittest.TestCase):
         scene = Scene()
         scene.attrs = {'start_time': dt.datetime(2009, 7, 1, 12, 15)}
         scene_dict = {'VIS006': vis006, 'IR_108': ir_108, 'lat': lat, 'lon': lon,
-                      'sunzenith': sunzenith, 'satzenith': satzenith,  'azimuthdiff': azimuthdiff}
+                      'sunzenith': sunzenith, 'satzenith': satzenith, 'azimuthdiff': azimuthdiff}
         for key in scene_dict:
             pps_name = scene_dict[key].attrs['name']
             scene[key] = scene_dict[key]

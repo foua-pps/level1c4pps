@@ -36,7 +36,7 @@ logger = logging.getLogger('viirs2pps')
 
 # Order of BANDNAMES decides order of channels in file. Not important
 # but nice to have the same order for I- and M-bands
-BANDNAMES = ["M01",  "M02", "M03", "M04",
+BANDNAMES = ["M01", "M02", "M03", "M04",
              "M05", "M06", "M07",  # 0.6, 0.7, 0.9 M-band
              "I01", "I02",         # 0.6, 0.9 I-band
              "M08", "M09",         # 1.2, 1.3 M-band
@@ -61,9 +61,9 @@ MBAND_PPS = ["M05", "M07", "M09", "M10", "M11", "M12", "M14", "M15", "M16"]
 IBAND_PPS_I = ["I01", "I02", "I03", "I04"]
 IBAND_PPS_M = ["M09", "M14", "M15", "M16"]
 
-MBAND_DEFAULT = ["M05", "M07", "M09", "M10",  "M11", "M12", "M14", "M15", "M16"]
+MBAND_DEFAULT = ["M05", "M07", "M09", "M10", "M11", "M12", "M14", "M15", "M16"]
 IBAND_DEFAULT_I = ["I01", "I02", "I03", "I04"]
-IBAND_DEFAULT_M = ["M09",   "M11", "M14", "M15", "M16"]
+IBAND_DEFAULT_M = ["M09", "M11", "M14", "M15", "M16"]
 
 ANGLE_NAMES = ['satellite_zenith_angle', 'solar_zenith_angle',
                'satellite_azimuth_angle', 'solar_azimuth_angle']
@@ -107,10 +107,10 @@ def set_header_and_band_attrs(scene, orbit_n=0):
     scene.attrs['source'] = "viirs2pps.py"
     if 'I04' in scene:
         # If highresolution we should have I04,
-        scene.attrs['number_of_scans'] = scene['I04'].values.shape[0]/scene['I04'].attrs['rows_per_scan']
+        scene.attrs['number_of_scans'] = scene['I04'].values.shape[0] / scene['I04'].attrs['rows_per_scan']
     else:
         # else use 11um.
-        scene.attrs['number_of_scans'] = scene['M15'].values.shape[0]/scene['M15'].attrs['rows_per_scan']
+        scene.attrs['number_of_scans'] = scene['M15'].values.shape[0] / scene['M15'].attrs['rows_per_scan']
     for band in REFL_BANDS:
         if band not in scene:
             continue
@@ -172,5 +172,5 @@ def process_one_scene(scene_files, out_path, use_iband_res=False, reader='viirs_
                        encoding=get_encoding_viirs(scn_))
     print("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),
-        time.time()-tic))
+        time.time() - tic))
     return filename

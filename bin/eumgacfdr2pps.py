@@ -52,7 +52,7 @@ if __name__ == "__main__":
                         required=False, default=99999,
                         help="Orbit number (default is 99999).")
     options = parser.parse_args()
-    process_one_file(options.file, options.out_dir,  start_line=options.start_line,
+    process_one_file(options.file, options.out_dir, start_line=options.start_line,
                      end_line=options.end_line, engine=options.nc_engine,
                      remove_broken=not options.no_remove_bad,
                      orbit_n=options.orbit_number)

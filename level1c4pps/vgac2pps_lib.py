@@ -36,7 +36,7 @@ logger = logging.getLogger("vgac2pps")
 
 # Order of BANDNAMES decides order of channels in file. Not important
 # but nice to have the same order for I- and M-bands
-BANDNAMES = ["M01",  "M02", "M03", "M04",
+BANDNAMES = ["M01", "M02", "M03", "M04",
              "M05", "M06", "M07",  # 0.6, 0.7, 0.9 M-band
              "I01", "I02",         # 0.6, 0.9 I-band
              "M08", "M09",         # 1.2, 1.3 M-band
@@ -61,7 +61,7 @@ MBAND_PPS = ["M05", "M07", "M09", "M10", "M11", "M12", "M14", "M15", "M16"]
 # "M10", "M14" are not AVHRR channels, but needed for NN SABAF
 MBAND_AVHRR = ["M05", "M07", "M12", "M15", "M16", "M10", "M14"]
 
-MBAND_DEFAULT = ["M05", "M07", "M09", "M10",  "M11", "M12", "M14", "M15", "M16"]
+MBAND_DEFAULT = ["M05", "M07", "M09", "M10", "M11", "M12", "M14", "M15", "M16"]
 
 
 ANGLE_NAMES = ["vza", "sza", "azn", "azi"]
@@ -122,7 +122,7 @@ SBAF = {
         "tb12": {
             "viirs_channel": "M16",
             "slope": 0.9934,
-            "offset":  1.52,
+            "offset": 1.52,
             "comment": "based on nadir collocation data for SZA 0-180",
         },
     },
@@ -634,7 +634,7 @@ def convert_to_noaa19_KNMI_v2(scene, sbaf_version):
             if avhrr_chan == "tb37_twilight":
                 # 70 < SZA < 85: BT = (1-f)*BT(day) + f*BT(night), f=(SZA-70)/15
 
-                f = (scene["sunzenith"].values - scaling["min_sunzenith"])/15
+                f = (scene["sunzenith"].values - scaling["min_sunzenith"]) / 15
                 tb37_day_slope = scaling["tb37_day"]["slope"]
                 tb37_day_offset = scaling["tb37_day"]["offset"]
                 tb37_night_slope = scaling["tb37_night"]["slope"]
@@ -644,13 +644,14 @@ def convert_to_noaa19_KNMI_v2(scene, sbaf_version):
 
                 scene[viirs_channel].values = np.where(
                     filt,
-                    (1-f)*tb37_day + f*tb37_night,
+                    (1 - f) * tb37_day + f * tb37_night,
                     scene[viirs_channel].values
                 )
 
             elif avhrr_chan == "tb12":
                 # BT(5) = BT(ch4)-1.1646*(BT(M15)-BT(M16))-0.235
-                scene[viirs_channel].values = scene["M15"].values-1.1646*(tb11_original-scene["M16"].values)-0.235
+                scene[viirs_channel].values = scene["M15"].values - \
+                    1.1646 * (tb11_original - scene["M16"].values) - 0.235
             else:
                 logger.exception(f'Unknown channel, {avhrr_chan}, or missing slope parameter')
             logger.info(f"{avhrr_chan:<13}: ({comment})")
@@ -848,6 +849,6 @@ def process_one_scene(scene_files, out_path, engine="h5netcdf",
                            encoding=encoding)
         logger.info("Saved file {:s} after {:3.1f} seconds".format(
             os.path.basename(filename),
-            time.time()-tic))
+            time.time() - tic))
         filenames.append(filename)
     return filenames

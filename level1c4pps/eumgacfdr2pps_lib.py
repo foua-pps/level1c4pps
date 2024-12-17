@@ -244,5 +244,5 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None,
 
     logger.info("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),
-        time.time()-tic))
+        time.time() - tic))
     return filename

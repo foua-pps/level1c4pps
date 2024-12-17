@@ -180,12 +180,12 @@ ANGLE_ATTRIBUTES = {
         'sunazimuth': np.array([-18000, 18000], dtype='int16'),
         'satazimuth': np.array([-18000, 18000], dtype='int16'),
     },
-    'mersi_file_key':  {
+    'mersi_file_key': {
         'sunzenith': 'Geolocation/SolarZenithAngle',
         'satzenith': 'Geolocation/SensorZenithAngle',
         'azimuthdiff': 'Geolocation/SensorSolarAzimuthDifference',
     },
-    'standard_name':  {
+    'standard_name': {
         'sunzenith': 'solar_zenith_angle',
         'satzenith': 'sensor_zenith_angle',  # platform in ppsv2018
         'azimuthdiff': 'absolute_angle_of_rotation_from_solar_azimuth_to_platform_azimuth',
@@ -212,7 +212,7 @@ LATLON_ATTRIBUTES = {
 
 def make_azidiff_angle(sata, suna, divisor=360):
     """Calculate azimuth difference angle."""
-    daz = abs(sata-suna)
+    daz = abs(sata - suna)
     half_divisor = divisor / 2.0
     daz = daz % divisor
     if isinstance(daz, np.ndarray):

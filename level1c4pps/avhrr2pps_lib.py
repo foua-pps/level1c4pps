@@ -45,9 +45,9 @@ ANGLE_NAMES_AAPP = ['sensor_zenith_angle', 'solar_zenith_angle',
 
 REFL_BANDS = ['1', '2', '3a']
 
-PPS_TAGNAMES = {'1':  'ch_r06',
-                '2':  'ch_r09',
-                '3a':  'ch_r16',
+PPS_TAGNAMES = {'1': 'ch_r06',
+                '2': 'ch_r09',
+                '3a': 'ch_r16',
                 '3b': 'ch_tb37',
                 '4': 'ch_tb11',
                 '5': 'ch_tb12'}
@@ -128,5 +128,5 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf', orbit_n=0):
                        encoding=get_encoding_avhrr(scn_))
     print("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),
-        time.time()-tic))
+        time.time() - tic))
     return filename

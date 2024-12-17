@@ -22,7 +22,7 @@
 import unittest
 
 from level1c4pps.tests import (test_angles, test_seviri2pps, test_gac2pps,
-                               test_mersi2pps,  test_modis2pps, test_slstr2pps,
+                               test_mersi2pps, test_modis2pps, test_slstr2pps,
                                test_viirs2pps, test_eumgacfdr2pps,
                                test_avhrr2pps, test_init)
 
