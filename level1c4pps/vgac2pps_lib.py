@@ -28,7 +28,6 @@
 import os
 import time
 from satpy.scene import Scene
-from sbafs_ann.convert_vgac import convert_to_vgac_with_nn
 from level1c4pps import (get_encoding, compose_filename,
                          set_header_and_band_attrs_defaults,
                          rename_latitude_longitude,
@@ -581,6 +580,7 @@ SBAF = {
 def convert_to_noaa19_neural_network(scene, sbaf_version):
     """Applies AVHRR SBAF to VGAC channels using NN approach"""
 
+    from sbafs_ann.convert_vgac import convert_to_vgac_with_nn 
     if sbaf_version in ["NN_v1", "NN_v2", "NN_v3", "NN_v4"]:
         day_cfg_file = SBAF[sbaf_version]['cfg_file_day']
         night_cfg_file = SBAF[sbaf_version]['cfg_file_night']
