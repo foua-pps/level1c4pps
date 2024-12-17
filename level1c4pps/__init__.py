@@ -409,7 +409,7 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
     sensor_name = (fix_too_great_attributes(sensor_name)).upper()
     scene.attrs['sensor'] = sensor_name.upper()
     scene.attrs['instrument'] = sensor_name.upper()
-    nowutc = datetime.utcnow()
+    nowutc = datetime.now(timezone.utc)
     scene.attrs['orbit_number'] = int(orbit_n)
     scene.attrs['date_created'] = nowutc.strftime("%Y-%m-%dT%H:%M:%SZ")
     scene.attrs['version_level1c4pps_satpy'] = satpy.__version__

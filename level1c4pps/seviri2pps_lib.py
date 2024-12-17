@@ -29,7 +29,7 @@ import xarray as xr
 import dask.array as da
 from glob import glob
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from satpy.scene import Scene
 import satpy.utils
 from trollsift.parser import globify, Parser
@@ -206,10 +206,10 @@ def get_satellite_angles(dataset, lons, lats):
     #    => There have been updates to SatPy and this script
     #       need to be modified.
     if not (get_observer_look(0, 0, 36000*1000,
-                              datetime.utcnow(), np.array([16]),
+                              datetime.now(timezone.utc), np.array([16]),
                               np.array([58]), np.array([0]))[1] > 30 and
             get_observer_look(0, 0, 36000,
-                              datetime.utcnow(), np.array([16]),
+                              datetime.now(timezone.utc), np.array([16]),
                               np.array([58]), np.array([0]))[1] < 23 and
             sat_alt > 38000):
         raise UnexpectedSatpyVersion(
@@ -239,7 +239,7 @@ def set_attrs(scene):
     scene.attrs['instrument'] = 'SEVIRI'
     scene.attrs['source'] = "seviri2pps.py"
     scene.attrs['orbit_number'] = 99999
-    nowutc = datetime.utcnow()
+    nowutc = datetime.now(timezone.utc)
     scene.attrs['date_created'] = nowutc.strftime("%Y-%m-%dT%H:%M:%SZ")
 
     # For each band
