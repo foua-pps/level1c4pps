@@ -572,8 +572,7 @@ SBAF = {
 
 
 def convert_to_noaa19_neural_network(scene, sbaf_version):
-    """Applies AVHRR SBAF to VGAC channels using NN approach"""
-
+    """Apply AVHRR SBAF to VGAC channels using NN approach."""
     from sbafs_ann.convert_vgac import convert_to_vgac_with_nn
     if sbaf_version in ["NN_v1", "NN_v2", "NN_v3", "NN_v4"]:
         day_cfg_file = SBAF[sbaf_version]['cfg_file_day']
@@ -587,8 +586,7 @@ def convert_to_noaa19_neural_network(scene, sbaf_version):
 
 
 def convert_to_noaa19_linear(scene, SBAF):
-    """ Apply linear regression"""
-
+    """Apply linear regression."""
     for avhhr_chan, scaling in SBAF.items():
         viirs_channel = scaling["viirs_channel"]
         offset = scaling["offset"]
@@ -607,8 +605,7 @@ def convert_to_noaa19_linear(scene, SBAF):
 
 
 def convert_to_noaa19_KNMI_v2(scene, sbaf_version):
-    """ Apply 1 channel linear regression SBAF for KNMI version 2"""
-
+    """Apply 1 channel linear regression SBAF for KNMI version 2."""
     # I need to save the t11 values before the SBAF adjustment as they are needed for the tb12 SBAF
     tb11_original = scene["M15"].values.copy()
     for avhrr_chan, scaling in SBAF[sbaf_version].items():
@@ -658,8 +655,7 @@ def convert_to_noaa19_KNMI_v2(scene, sbaf_version):
 
 
 def convert_to_noaa19(scene, sbaf_version):
-    """ Applies AVHRR SBAF to VGAC channels"""
-
+    """Apply AVHRR SBAF to VGAC channels."""
     logger.info(f"Using SBAF_{sbaf_version}")
 
     if "NN" in sbaf_version:

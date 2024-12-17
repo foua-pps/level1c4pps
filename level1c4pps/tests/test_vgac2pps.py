@@ -30,10 +30,9 @@ from satpy import Scene
 
 import level1c4pps.vgac2pps_lib as vgac2pps
 import numpy as np
-import pytest
 
 try:
-    import sbafs_ann
+    import sbafs_ann  # noqa: F401
     no_sbaf_module = False
 except ModuleNotFoundError:
     no_sbaf_module = True
@@ -134,7 +133,6 @@ class TestVgac2PPS(unittest.TestCase):
 
     def test_process_one_scene_n19(self):
         """Test process one scene for one example file."""
-
         vgac2pps.process_one_scene(
             ['./level1c4pps/tests/VGAC_VJ102MOD_A2018305_1042_n004946_K005.nc'],
             out_path='./level1c4pps/tests/',
@@ -171,8 +169,6 @@ class TestVgac2PPS(unittest.TestCase):
     @unittest.skipIf(no_sbaf_module, "Install sbafs_ann to test NN-SBAFS.")
     def test_process_one_scene_n19_nn(self):
         """Test process one scene for one example file."""
-        import sbafs_ann
-
         vgac2pps.process_one_scene(
             ['./level1c4pps/tests/VGAC_VJ102MOD_A2018305_1042_n004946_K005.nc'],
             out_path='./level1c4pps/tests/',
@@ -209,7 +205,6 @@ class TestVgac2PPS(unittest.TestCase):
 
     def test_process_one_scene_midnight(self):
         """Test process one scene for one example file."""
-
         vgac2pps.process_one_scene(
             ['./level1c4pps/tests/VGAC_VNPP02MOD_A2012365_2304_n06095_K005.nc'],
             out_path='./level1c4pps/tests/'

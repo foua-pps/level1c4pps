@@ -34,7 +34,6 @@ from level1c4pps import (get_encoding, compose_filename,
                          get_header_attrs, convert_angles)
 import logging
 
-from packaging.version import Version
 logger = logging.getLogger('gac2pps')
 
 

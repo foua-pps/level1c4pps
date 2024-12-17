@@ -65,7 +65,6 @@ class TestSeviri2PPS(unittest.TestCase):
     @mock.patch('level1c4pps.seviri2pps_lib.Scene')
     def test_load_and_calibrate(self, mocked_scene):
         """Test loading and calibrating the data."""
-
         mocked_scene.return_value = get_fake_scene()
 
         # Load and calibrate
