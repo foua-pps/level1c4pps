@@ -1,5 +1,7 @@
 build
+dist
 *py~
 *pyc
 *~
 *.egg*
+*#*

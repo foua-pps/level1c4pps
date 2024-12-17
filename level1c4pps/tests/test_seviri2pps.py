@@ -16,9 +16,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with level1c4pps.  If not, see <http://www.gnu.org/licenses/>.
-# Author(s):
-
-#   Stephan Finkensieper <stephan.finkensieper@dwd.de>
 
 """Unit tests for the seviri2pps_lib module."""
 
@@ -68,7 +65,6 @@ class TestSeviri2PPS(unittest.TestCase):
     @mock.patch('level1c4pps.seviri2pps_lib.Scene')
     def test_load_and_calibrate(self, mocked_scene):
         """Test loading and calibrating the data."""
-
         mocked_scene.return_value = get_fake_scene()
 
         # Load and calibrate
@@ -94,7 +90,7 @@ class TestSeviri2PPS(unittest.TestCase):
         res['VIS006'] = remove_earthsun_distance_correction(res['VIS006'])
         xr.testing.assert_allclose(res['VIS006'], vis006_exp)
         xr.testing.assert_equal(res['IR_108'], ir_108_exp)
-        
+
         self.assertFalse(
             res['VIS006'].attrs['sun_earth_distance_correction_applied'],
         )
@@ -172,7 +168,7 @@ class TestSeviri2PPS(unittest.TestCase):
     def test_get_satellite_angles(self, get_satpos, get_observer_look):
         """Test getting satellite angles."""
         def get_observer_look_patched(lon, lat, alt, *args):
-            if alt == 36000*1000:
+            if alt == 36000 * 1000:
                 return None, 31  # > 30
             elif alt == 36000:
                 return None, 22  # < 20
@@ -209,7 +205,7 @@ class TestSeviri2PPS(unittest.TestCase):
         scene['VIS006'].attrs['sun_earth_distance_correction_factor'] = 0.9833241577909706
         scene['IR_108'].attrs['orbital_parameters'] = {'orb_a': 1,
                                                        'orb_b': 2}
-        scene['IR_108'].attrs['georef_offset_corrected'] =  True
+        scene['IR_108'].attrs['georef_offset_corrected'] = True
         scene['IR_108'].attrs['platform_name'] = "my_platform_name"
 
         seviri2pps.set_attrs(scene)
@@ -231,7 +227,6 @@ class TestSeviri2PPS(unittest.TestCase):
         self.assertAlmostEqual(scene['VIS006'].sun_earth_distance,
                                sun_earth_distance, places=7)
 
-             
     def test_get_mean_acq_time(self):
         """Test computation of mean scanline acquisition time."""
         seviri2pps.BANDNAMES = ['VIS006', 'IR_108']
@@ -390,7 +385,7 @@ class TestSeviri2PPS(unittest.TestCase):
         scene = Scene()
         scene.attrs = {'start_time': dt.datetime(2009, 7, 1, 12, 15)}
         scene_dict = {'VIS006': vis006, 'IR_108': ir_108, 'lat': lat, 'lon': lon,
-                      'sunzenith': sunzenith, 'satzenith': satzenith,  'azimuthdiff': azimuthdiff}
+                      'sunzenith': sunzenith, 'satzenith': satzenith, 'azimuthdiff': azimuthdiff}
         for key in scene_dict:
             pps_name = scene_dict[key].attrs['name']
             scene[key] = scene_dict[key]
@@ -441,7 +436,7 @@ class TestSeviri2PPS(unittest.TestCase):
         encoding = seviri2pps.get_encoding_seviri(scene)
         for key in encoding_exp:
             print(key)
-            print(encoding[key],encoding_exp[key])
+            print(encoding[key], encoding_exp[key])
 
             self.assertDictEqual(encoding[key], encoding_exp[key])
 

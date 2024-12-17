@@ -1,13 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Copyright (c) 2019, 2021 Pytroll
+# Copyright (c) 2019 level1c4pps developers
 
-# Author(s):
-
-#   Nina Håkansson <nina.hakansson@smhi.se>
-#   Erik Johansson <erik.johansson@smhi.se>
-#   Adam Dybbroe <adam.dybbroe@smhi.se>
+# Author(s): AUTHORS.md
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,8 +42,8 @@ setup(name=NAME,
       # version=version.__version__,
       description='Tools to convert various satellite level-1 data formats to NWCSAF/PPS level-1c format',
       long_description=README,
-      author='Nina Hakansson',
-      author_email='nina.hakansson@smhi.se',
+      author='NWCSAF PPS Team et al.',
+      author_email='6160529+ninahakansson@users.noreply.github.com',
       classifiers=["Development Status :: 3 - Alpha",
                    "Intended Audience :: Science/Research",
                    "License :: OSI Approved :: GNU General Public License v3 " +

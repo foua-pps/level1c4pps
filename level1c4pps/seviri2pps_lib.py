@@ -16,12 +16,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with level1c4pps.  If not, see <http://www.gnu.org/licenses/>.
-# Author(s):
-
-#   Martin Raspaud <martin.raspaud@smhi.se>
-#   Nina Hakansson <nina.hakansson@smhi.se>
-#   Adam.Dybbroe <adam.dybbroe@smhi.se>
-#   Stephan Finkensieper <stephan.finkensieper@dwd.de>
 
 # This program was developed by CMSAF to be used for the processing of
 # CLAAS3.
@@ -35,7 +29,7 @@ import xarray as xr
 import dask.array as da
 from glob import glob
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from satpy.scene import Scene
 import satpy.utils
 from trollsift.parser import globify, Parser
@@ -211,11 +205,11 @@ def get_satellite_angles(dataset, lons, lats):
     # else:
     #    => There have been updates to SatPy and this script
     #       need to be modified.
-    if not (get_observer_look(0, 0, 36000*1000,
-                              datetime.utcnow(), np.array([16]),
+    if not (get_observer_look(0, 0, 36000 * 1000,
+                              datetime.now(timezone.utc), np.array([16]),
                               np.array([58]), np.array([0]))[1] > 30 and
             get_observer_look(0, 0, 36000,
-                              datetime.utcnow(), np.array([16]),
+                              datetime.now(timezone.utc), np.array([16]),
                               np.array([58]), np.array([0]))[1] < 23 and
             sat_alt > 38000):
         raise UnexpectedSatpyVersion(
@@ -245,7 +239,7 @@ def set_attrs(scene):
     scene.attrs['instrument'] = 'SEVIRI'
     scene.attrs['source'] = "seviri2pps.py"
     scene.attrs['orbit_number'] = 99999
-    nowutc = datetime.utcnow()
+    nowutc = datetime.now(timezone.utc)
     scene.attrs['date_created'] = nowutc.strftime("%Y-%m-%dT%H:%M:%SZ")
 
     # For each band
@@ -262,9 +256,9 @@ def set_attrs(scene):
             scene[band].attrs['sun_earth_distance_correction_factor'] = 1.0
         else:
             fix_sun_earth_distance_correction_factor(scene, band, scene[band].attrs['start_time'])
-            
+
         scene[band].attrs['sun_zenith_angle_correction_applied'] = False
-        
+
         scene[band].attrs['name'] = "image{:d}".format(image_num)
 
         # Cosmetics
@@ -630,7 +624,7 @@ def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf',
                        exclude_attrs=['raw_metadata'])
     print("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),
-        time.time()-tic))  # About 40 seconds
+        time.time() - tic))  # About 40 seconds
     return filename
 
 

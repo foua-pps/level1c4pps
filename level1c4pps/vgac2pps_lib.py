@@ -16,19 +16,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with level1c4pps.  If not, see <http://www.gnu.org/licenses/>.
-# Author(s):
-
-#   Martin Raspaud <martin.raspaud@smhi.se>
-#   Nina Hakansson <nina.hakansson@smhi.se>
-#   Adam.Dybbroe <adam.dybbroe@smhi.se>
-#   Salomom Eliasson <salomon.eliasson@smhi.se>
 
 """Functions to convert VGAC level-1c data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
 
 import os
 import time
 from satpy.scene import Scene
-from sbafs_ann.convert_vgac import convert_to_vgac_with_nn
 from level1c4pps import (get_encoding, compose_filename,
                          set_header_and_band_attrs_defaults,
                          rename_latitude_longitude,
@@ -43,7 +36,7 @@ logger = logging.getLogger("vgac2pps")
 
 # Order of BANDNAMES decides order of channels in file. Not important
 # but nice to have the same order for I- and M-bands
-BANDNAMES = ["M01",  "M02", "M03", "M04",
+BANDNAMES = ["M01", "M02", "M03", "M04",
              "M05", "M06", "M07",  # 0.6, 0.7, 0.9 M-band
              "I01", "I02",         # 0.6, 0.9 I-band
              "M08", "M09",         # 1.2, 1.3 M-band
@@ -68,7 +61,7 @@ MBAND_PPS = ["M05", "M07", "M09", "M10", "M11", "M12", "M14", "M15", "M16"]
 # "M10", "M14" are not AVHRR channels, but needed for NN SABAF
 MBAND_AVHRR = ["M05", "M07", "M12", "M15", "M16", "M10", "M14"]
 
-MBAND_DEFAULT = ["M05", "M07", "M09", "M10",  "M11", "M12", "M14", "M15", "M16"]
+MBAND_DEFAULT = ["M05", "M07", "M09", "M10", "M11", "M12", "M14", "M15", "M16"]
 
 
 ANGLE_NAMES = ["vza", "sza", "azn", "azi"]
@@ -129,7 +122,7 @@ SBAF = {
         "tb12": {
             "viirs_channel": "M16",
             "slope": 0.9934,
-            "offset":  1.52,
+            "offset": 1.52,
             "comment": "based on nadir collocation data for SZA 0-180",
         },
     },
@@ -179,7 +172,7 @@ SBAF = {
             "slope": 1.003,
             "offset": -0.84,
             "comment": "based on nadir collocation data for SZA 0-180",
-            },
+        },
     },
     "v4": {
         "r06": {
@@ -329,19 +322,19 @@ SBAF = {
         "r06": {
             "viirs_channel": "M05",
             "slope": 0.8534,
-            "offset":1.8517,
+            "offset": 1.8517,
             "comment": "Based on collocation data for VZA < 15",
         },
         "r09": {
             "viirs_channel": "M07",
-            "slope":0.8507,
-            "offset":1.1157,
+            "slope": 0.8507,
+            "offset": 1.1157,
             "comment": "Based on collocation data for VZA < 15",
         },
         "tb37": {
             "viirs_channel": "M12",
-            "slope":0.9734,
-            "offset":6.1707,
+            "slope": 0.9734,
+            "offset": 6.1707,
             "comment": "Based on collocation data for VZA < 15",
         },
         "tb11": {
@@ -556,19 +549,19 @@ SBAF = {
         "cfg_file_night": "ch4_SATZ_less_25_SUNZ_90_180_TD_5_min.yaml",
         "cfg_file_twilight": None,
         "comment": "NN based on AVHRR and VGAC matchups using all AVHRR heritage channels"
-        },
+    },
     "NN_v2": {
         "cfg_file_day": "ch7_satz_max_25_SUNZ_0_80_tdiff_300_sec_20241031.yaml",
         "cfg_file_night": "ch4_satz_max_25_SUNZ_90_180_tdiff_300_sec_20241031.yaml",
         "cfg_file_twilight": "ch7_satz_max_25_SUNZ_80_89_tdiff_300_sec_20241031.yaml",
         "comment": "NN based on AVHRR and VGAC matchups using all AVHRR heritage channels"
-        },
+    },
     "NN_v3": {
         "cfg_file_day": "ch7_satz_max_15_SUNZ_0_80_tdiff_120_sec_20241120.yaml",
         "cfg_file_night": "ch4_satz_max_15_SUNZ_90_180_tdiff_120_sec_20241120.yaml",
         "cfg_file_twilight": "ch7_satz_max_15_SUNZ_80_89_tdiff_120_sec_20241120.yaml",
         "comment": "NN based on AVHRR and VGAC matchups using all AVHRR heritage channels"
-        },
+    },
     "NN_v4": {
         "cfg_file_day": "ch7_satz_max_15_SUNZ_0_80_tdiff_120_sec_20241204.yaml",
         "cfg_file_night": "ch4_satz_max_15_SUNZ_90_180_tdiff_120_sec_20241204.yaml",
@@ -579,8 +572,8 @@ SBAF = {
 
 
 def convert_to_noaa19_neural_network(scene, sbaf_version):
-    """Applies AVHRR SBAF to VGAC channels using NN approach"""
-
+    """Apply AVHRR SBAF to VGAC channels using NN approach."""
+    from sbafs_ann.convert_vgac import convert_to_vgac_with_nn
     if sbaf_version in ["NN_v1", "NN_v2", "NN_v3", "NN_v4"]:
         day_cfg_file = SBAF[sbaf_version]['cfg_file_day']
         night_cfg_file = SBAF[sbaf_version]['cfg_file_night']
@@ -593,8 +586,7 @@ def convert_to_noaa19_neural_network(scene, sbaf_version):
 
 
 def convert_to_noaa19_linear(scene, SBAF):
-    """ Apply linear regression"""
-
+    """Apply linear regression."""
     for avhhr_chan, scaling in SBAF.items():
         viirs_channel = scaling["viirs_channel"]
         offset = scaling["offset"]
@@ -613,8 +605,7 @@ def convert_to_noaa19_linear(scene, SBAF):
 
 
 def convert_to_noaa19_KNMI_v2(scene, sbaf_version):
-    """ Apply 1 channel linear regression SBAF for KNMI version 2"""
-
+    """Apply 1 channel linear regression SBAF for KNMI version 2."""
     # I need to save the t11 values before the SBAF adjustment as they are needed for the tb12 SBAF
     tb11_original = scene["M15"].values.copy()
     for avhrr_chan, scaling in SBAF[sbaf_version].items():
@@ -634,13 +625,13 @@ def convert_to_noaa19_KNMI_v2(scene, sbaf_version):
                 filt,
                 slope * scene[viirs_channel].values + offset,
                 scene[viirs_channel].values
-                )
+            )
             logger.info(f"{avhrr_chan:<13} = {slope:<6}*{viirs_channel:<3}+{offset:<5} ({comment})")
         else:
             if avhrr_chan == "tb37_twilight":
                 # 70 < SZA < 85: BT = (1-f)*BT(day) + f*BT(night), f=(SZA-70)/15
 
-                f = (scene["sunzenith"].values - scaling["min_sunzenith"])/15
+                f = (scene["sunzenith"].values - scaling["min_sunzenith"]) / 15
                 tb37_day_slope = scaling["tb37_day"]["slope"]
                 tb37_day_offset = scaling["tb37_day"]["offset"]
                 tb37_night_slope = scaling["tb37_night"]["slope"]
@@ -650,21 +641,21 @@ def convert_to_noaa19_KNMI_v2(scene, sbaf_version):
 
                 scene[viirs_channel].values = np.where(
                     filt,
-                    (1-f)*tb37_day + f*tb37_night,
+                    (1 - f) * tb37_day + f * tb37_night,
                     scene[viirs_channel].values
                 )
 
             elif avhrr_chan == "tb12":
                 # BT(5) = BT(ch4)-1.1646*(BT(M15)-BT(M16))-0.235
-                scene[viirs_channel].values = scene["M15"].values-1.1646*(tb11_original-scene["M16"].values)-0.235
+                scene[viirs_channel].values = scene["M15"].values - \
+                    1.1646 * (tb11_original - scene["M16"].values) - 0.235
             else:
                 logger.exception(f'Unknown channel, {avhrr_chan}, or missing slope parameter')
             logger.info(f"{avhrr_chan:<13}: ({comment})")
 
 
 def convert_to_noaa19(scene, sbaf_version):
-    """ Applies AVHRR SBAF to VGAC channels"""
-
+    """Apply AVHRR SBAF to VGAC channels."""
     logger.info(f"Using SBAF_{sbaf_version}")
 
     if "NN" in sbaf_version:
@@ -853,7 +844,7 @@ def process_one_scene(scene_files, out_path, engine="h5netcdf",
                            flatten_attrs=True,
                            encoding=encoding)
         logger.info("Saved file {:s} after {:3.1f} seconds".format(
-             os.path.basename(filename),
-             time.time()-tic))
+            os.path.basename(filename),
+            time.time() - tic))
         filenames.append(filename)
     return filenames
