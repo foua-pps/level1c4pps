@@ -16,11 +16,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with level1c4pps.  If not, see <http://www.gnu.org/licenses/>.
-# Author(s):
-
-#   Martin Raspaud <martin.raspaud@smhi.se>
-#   Nina Hakansson <nina.hakansson@smhi.se>
-#   Adam.Dybbroe <adam.dybbroe@smhi.se>
 
 """Utilities to convert AVHRR GAC formattet data to PPS level-1c format."""
 
@@ -39,9 +34,7 @@ from level1c4pps import (get_encoding, compose_filename,
                          get_header_attrs, convert_angles)
 import logging
 
-from packaging.version import Version
 logger = logging.getLogger('gac2pps')
-
 
 
 BANDNAMES = ['1', '2', '3', '3a', '3b', '4', '5']
@@ -171,5 +164,5 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None, engine='h5netcd
 
     print("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),
-        time.time()-tic))
+        time.time() - tic))
     return filename

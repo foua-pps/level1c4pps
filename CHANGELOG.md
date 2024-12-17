@@ -1,3 +1,27 @@
+## Version <0.2.35> (2024/12/16)
+
+### Issues Closed
+
+* [Issue 94](https://github.com/foua-pps/level1c4pps/issues/94) - VGAC sun-earth distance correction attribute is set wrong ([PR 102](https://github.com/foua-pps/level1c4pps/pull/102) by [@ninahakansson](https://github.com/ninahakansson))
+* [Issue 93](https://github.com/foua-pps/level1c4pps/issues/93) - VGAC time unit is in microseconds not milliseconds ([PR 96](https://github.com/foua-pps/level1c4pps/pull/96) by [@BengtRydberg](https://github.com/BengtRydberg))
+* [Issue 79](https://github.com/foua-pps/level1c4pps/issues/79) - Satpy doesn't support Python 3.8 anymore
+
+In this release 3 issues were closed.
+
+### Pull Requests Merged
+
+* [PR 102](https://github.com/foua-pps/level1c4pps/pull/102) - Fix VGAC sun earth distance applied attribute, by [@ninahakansson](https://github.com/ninahakansson) ([94](https://github.com/foua-pps/level1c4pps/issues/94))
+* [PR 100](https://github.com/foua-pps/level1c4pps/pull/100) - Sbaf n nv4, by [@salomoneliassonSMHI](https://github.com/salomoneliassonSMHI)
+* [PR 99](https://github.com/foua-pps/level1c4pps/pull/99) - Add fix for sun_earth_distance_correction_factor, by [@ninahakansson](https://github.com/ninahakansson)
+* [PR 97](https://github.com/foua-pps/level1c4pps/pull/97) - Sbaf nn, by [@salomoneliassonSMHI](https://github.com/salomoneliassonSMHI)
+* [PR 96](https://github.com/foua-pps/level1c4pps/pull/96) - vgac time units, by [@BengtRydberg](https://github.com/BengtRydberg) ([93](https://github.com/foua-pps/level1c4pps/issues/93))
+* [PR 95](https://github.com/foua-pps/level1c4pps/pull/95) - vgac cli bugfix, by [@BengtRydberg](https://github.com/BengtRydberg)
+* [PR 92](https://github.com/foua-pps/level1c4pps/pull/92) - removed check for pygac and numpy2.0 gac2pps_lib.py, by [@ikaur17](https://github.com/ikaur17)
+* [PR 91](https://github.com/foua-pps/level1c4pps/pull/91) - adding support for handling mersi3 data, by [@BengtRydberg](https://github.com/BengtRydberg)
+* [PR 90](https://github.com/foua-pps/level1c4pps/pull/90) - Adding v3 SBAFs, by [@salomoneliassonSMHI](https://github.com/salomoneliassonSMHI)
+
+In this release 9 pull requests were closed.
+
 ## Version <0.2.34> (2024/08/29)
 
 ### Issues Closed

@@ -16,16 +16,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with level1c4pps.  If not, see <http://www.gnu.org/licenses/>.
-# Author(s):
-
-#   Nina Hakansson <nina.hakansson@smhi.se>
 
 """Test Initializer for level1c4pps."""
 
 import unittest
 
 from level1c4pps.tests import (test_angles, test_seviri2pps, test_gac2pps,
-                               test_mersi2pps,  test_modis2pps, test_slstr2pps,
+                               test_mersi2pps, test_modis2pps, test_slstr2pps,
                                test_viirs2pps, test_eumgacfdr2pps,
                                test_avhrr2pps, test_init)
 

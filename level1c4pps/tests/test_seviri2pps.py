@@ -16,9 +16,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with level1c4pps.  If not, see <http://www.gnu.org/licenses/>.
-# Author(s):
-
-#   Stephan Finkensieper <stephan.finkensieper@dwd.de>
 
 """Unit tests for the seviri2pps_lib module."""
 
@@ -68,24 +65,17 @@ class TestSeviri2PPS(unittest.TestCase):
     @mock.patch('level1c4pps.seviri2pps_lib.Scene')
     def test_load_and_calibrate(self, mocked_scene):
         """Test loading and calibrating the data."""
-
         mocked_scene.return_value = get_fake_scene()
 
         # Load and calibrate
         filenames = ['MSG4-SEVI-MSG15-1234-NA-20190409121243.927000000Z']
         res = seviri2pps.load_and_calibrate(
             filenames,
-            apply_sun_earth_distance_correction=False,
             rotate=False,
             clip_calib=False
         )
 
         # Compare results and expectations
-        vis006_exp_pyspectral_1_7_1 = xr.DataArray(
-            [[1.07025268, 2.14050537],
-             [3.21075805, 4.28101074]],
-            dims=('y', 'x')
-        )
         vis006_exp = xr.DataArray(
             [[1.034205, 2.06841],
              [3.102615, 4.13682]],
@@ -96,12 +86,11 @@ class TestSeviri2PPS(unittest.TestCase):
              [7, 8]],
             dims=('y', 'x')
         )
-        if res['VIS006'][0, 0] > 1.04:
-            # pyspectral 1.7.1 and older
-            xr.testing.assert_allclose(res['VIS006'], vis006_exp_pyspectral_1_7_1)
-        else:
-            xr.testing.assert_allclose(res['VIS006'], vis006_exp)
+        from satpy.readers.utils import remove_earthsun_distance_correction
+        res['VIS006'] = remove_earthsun_distance_correction(res['VIS006'])
+        xr.testing.assert_allclose(res['VIS006'], vis006_exp)
         xr.testing.assert_equal(res['IR_108'], ir_108_exp)
+
         self.assertFalse(
             res['VIS006'].attrs['sun_earth_distance_correction_applied'],
         )
@@ -114,7 +103,6 @@ class TestSeviri2PPS(unittest.TestCase):
         filenames = ['MSG4-SEVI-MSG15-1234-NA-20190409121243.927000000Z']
         res = seviri2pps.load_and_calibrate(
             filenames,
-            apply_sun_earth_distance_correction=False,
             rotate=True,
             clip_calib=False
         )
@@ -180,7 +168,7 @@ class TestSeviri2PPS(unittest.TestCase):
     def test_get_satellite_angles(self, get_satpos, get_observer_look):
         """Test getting satellite angles."""
         def get_observer_look_patched(lon, lat, alt, *args):
-            if alt == 36000*1000:
+            if alt == 36000 * 1000:
                 return None, 31  # > 30
             elif alt == 36000:
                 return None, 22  # < 20
@@ -211,15 +199,14 @@ class TestSeviri2PPS(unittest.TestCase):
     def test_set_attrs(self):
         """Test setting scene attributes."""
         seviri2pps.BANDNAMES = ['VIS006', 'IR_108']
-        vis006 = mock.MagicMock(attrs={'wavelength': WavelengthRange(0.56, 0.635, 0.71)})
-        ir108 = mock.MagicMock(attrs={'platform_name': 'myplatform',
-                                      'wavelength': WavelengthRange(9.8, 10.8, 11.8),
-                                      'orbital_parameters': {'orb_a': 1,
-                                                             'orb_b': 2},
-                                      'georef_offset_corrected': True})
-        scene_dict = {'VIS006': vis006, 'IR_108': ir108}
-        scene = mock.MagicMock(attrs={})
-        scene.__getitem__.side_effect = scene_dict.__getitem__
+        scene = get_fake_scene()
+        scene['VIS006'].attrs['sun_earth_distance_correction_applied'] = True
+        scene['VIS006'].attrs['start_time'] = dt.datetime(2020, 1, 1, 12)
+        scene['VIS006'].attrs['sun_earth_distance_correction_factor'] = 0.9833241577909706
+        scene['IR_108'].attrs['orbital_parameters'] = {'orb_a': 1,
+                                                       'orb_b': 2}
+        scene['IR_108'].attrs['georef_offset_corrected'] = True
+        scene['IR_108'].attrs['platform_name'] = "my_platform_name"
 
         seviri2pps.set_attrs(scene)
         self.assertEqual(scene['VIS006'].attrs['name'], 'image0')
@@ -229,6 +216,16 @@ class TestSeviri2PPS(unittest.TestCase):
         self.assertNotIn('orb_a', scene.attrs)
         self.assertNotIn('orbital_parameters', scene.attrs)
         self.assertNotIn('georef_offset_corrected', scene.attrs)
+        exp_sun_earth_distance_correction_factor = 0.9669263992953216
+        sun_earth_distance = 0.9833241577909706
+        self.assertAlmostEqual(scene['VIS006'].sun_earth_distance_correction_factor,
+                               exp_sun_earth_distance_correction_factor, places=7)
+        self.assertAlmostEqual(scene['VIS006'].pps_sun_earth_distance_correction_factor,
+                               exp_sun_earth_distance_correction_factor, places=7)
+        self.assertAlmostEqual(scene['VIS006'].satpy_sun_earth_distance_correction_factor,
+                               sun_earth_distance, places=7)
+        self.assertAlmostEqual(scene['VIS006'].sun_earth_distance,
+                               sun_earth_distance, places=7)
 
     def test_get_mean_acq_time(self):
         """Test computation of mean scanline acquisition time."""
@@ -388,7 +385,7 @@ class TestSeviri2PPS(unittest.TestCase):
         scene = Scene()
         scene.attrs = {'start_time': dt.datetime(2009, 7, 1, 12, 15)}
         scene_dict = {'VIS006': vis006, 'IR_108': ir_108, 'lat': lat, 'lon': lon,
-                      'sunzenith': sunzenith, 'satzenith': satzenith,  'azimuthdiff': azimuthdiff}
+                      'sunzenith': sunzenith, 'satzenith': satzenith, 'azimuthdiff': azimuthdiff}
         for key in scene_dict:
             pps_name = scene_dict[key].attrs['name']
             scene[key] = scene_dict[key]
@@ -439,7 +436,7 @@ class TestSeviri2PPS(unittest.TestCase):
         encoding = seviri2pps.get_encoding_seviri(scene)
         for key in encoding_exp:
             print(key)
-            print(encoding[key],encoding_exp[key])
+            print(encoding[key], encoding_exp[key])
 
             self.assertDictEqual(encoding[key], encoding_exp[key])
 

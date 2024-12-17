@@ -16,11 +16,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with level1c4pps.  If not, see <http://www.gnu.org/licenses/>.
-# Author(s):
-
-#   Martin Raspaud <martin.raspaud@smhi.se>
-#   Nina Hakansson <nina.hakansson@smhi.se>
-#   Adam.Dybbroe <adam.dybbroe@smhi.se>
 
 """Script to convert VIIRS level-1 to PPS level-1c format using Pytroll/Satpy."""
 
@@ -41,7 +36,7 @@ if __name__ == "__main__":
                         help="Output directory where to store the level1c file")
     parser.add_argument('--iband', action='store_true',
                         help="Iband resolution include I01-I03, M15-M16 and optional M09, M14")
-    parser.add_argument('--reader', type=str,  nargs='?',
+    parser.add_argument('--reader', type=str, nargs='?',
                         required=False, default="viirs_sdr",
                         help="VIIRS reader default: viirs_sdr")
     parser.add_argument('-ne', '--nc_engine', type=str, nargs='?',

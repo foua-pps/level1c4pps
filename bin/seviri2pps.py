@@ -16,12 +16,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with level1c4pps.  If not, see <http://www.gnu.org/licenses/>.
-# Author(s):
-
-#   Martin Raspaud <martin.raspaud@smhi.se>
-#   Nina Hakansson <nina.hakansson@smhi.se>
-#   Adam.Dybbroe <adam.dybbroe@smhi.se>
-#   Stephan Finkensieper <stephan.finkensieper@dwd.de>
 
 # This program was developed by CMSAF to be used for the processing of
 # CLAAS3.
@@ -56,9 +50,6 @@ if __name__ == "__main__":
                         help="Engine for saving netcdf files netcdf4 or h5netcdf (default).")
     parser.add_argument('--use-nominal-time-in-filename', action='store_true',
                         help='Use nominal scan timestamps in output filename.')
-    parser.add_argument('--no-sun-earth-distance-correction',
-                        action='store_true',
-                        help='Do not apply sun earth distance correction.')
     options = parser.parse_args()
     process_one_scan(
         options.files,
@@ -66,6 +57,5 @@ if __name__ == "__main__":
         rotate=not options.no_rotation,
         engine=options.nc_engine,
         use_nominal_time_in_filename=options.use_nominal_time_in_filename,
-        apply_sun_earth_distance_correction=not options.no_sun_earth_distance_correction,
         save_azimuth_angles=options.azimuth_angles,
     )

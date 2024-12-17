@@ -16,17 +16,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with level1c4pps.  If not, see <http://www.gnu.org/licenses/>.
-# Author(s):
-
-#   Stephan Finkensieper <stephan.finkensieper@dwd.de>
-#   Nina Hakansson <nina.hakansson@smhi.se>
 
 """Unit tests for the gac2pps_lib module."""
 
 import datetime as dt
 import netCDF4
 import unittest
-from datetime import datetime
+from datetime import datetime, timezone
 try:
     from unittest import mock
 except ImportError:
@@ -48,8 +44,8 @@ class TestGac2PPS(unittest.TestCase):
         ir_108 = mock.MagicMock(attrs={'name': 'image1',
                                        'id_tag': 'ch_tb11',
                                        'wavelength': [1, 2, 3, 'um'],
-                                       'start_time': datetime.utcnow(),
-                                       'end_time': datetime.utcnow(),
+                                       'start_time': datetime.now(timezone.utc),
+                                       'end_time': datetime.now(timezone.utc),
                                        'platform_name': 'tirosn',
                                        'orbit_number': 99999})
         qual_f = mock.MagicMock(attrs={'name': 'qual_flags',
@@ -78,8 +74,8 @@ class TestGac2PPS(unittest.TestCase):
                        'zlib': True,
                        'complevel': 4,
                        'add_offset': 273.15},
-            'qual_flags':  {'dtype': 'int16', 'zlib': True,
-                            'complevel': 4, '_FillValue': -32001.0},
+            'qual_flags': {'dtype': 'int16', 'zlib': True,
+                           'complevel': 4, '_FillValue': -32001.0},
             'scanline_timestamps': {'dtype': 'int64', 'zlib': True,
                                     'units': 'milliseconds since 1970-01-01',
                                     'complevel': 4, '_FillValue': -1.0},

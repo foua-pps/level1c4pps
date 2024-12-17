@@ -16,10 +16,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with level1c4pps.  If not, see <http://www.gnu.org/licenses/>.
-# Author(s):
-
-#   Adam.Dybbroe <adam.dybbroe@smhi.se>
-#   Nina Hakansson <nina.hakansson@smhi.se>
 
 """Package Initializer for level1c4pps."""
 from importlib.metadata import version
@@ -184,12 +180,12 @@ ANGLE_ATTRIBUTES = {
         'sunazimuth': np.array([-18000, 18000], dtype='int16'),
         'satazimuth': np.array([-18000, 18000], dtype='int16'),
     },
-    'mersi_file_key':  {
+    'mersi_file_key': {
         'sunzenith': 'Geolocation/SolarZenithAngle',
         'satzenith': 'Geolocation/SensorZenithAngle',
         'azimuthdiff': 'Geolocation/SensorSolarAzimuthDifference',
     },
-    'standard_name':  {
+    'standard_name': {
         'sunzenith': 'solar_zenith_angle',
         'satzenith': 'sensor_zenith_angle',  # platform in ppsv2018
         'azimuthdiff': 'absolute_angle_of_rotation_from_solar_azimuth_to_platform_azimuth',
@@ -211,12 +207,12 @@ LATLON_ATTRIBUTES = {
         'standard_name': "longitude",
         'units': 'degrees_east',
         'valid_range': np.array([-180, 180], dtype='float32')}
-    }
+}
 
 
 def make_azidiff_angle(sata, suna, divisor=360):
     """Calculate azimuth difference angle."""
-    daz = abs(sata-suna)
+    daz = abs(sata - suna)
     half_divisor = divisor / 2.0
     daz = daz % divisor
     if isinstance(daz, np.ndarray):
@@ -369,6 +365,22 @@ def adjust_lons_to_valid_range(scene):
     scene['lon'].values = centered_modulus(scene['lon'].values)
 
 
+def fix_sun_earth_distance_correction_factor(scene, band, start_time):
+    from pyorbital.astronomy import sun_earth_distance_correction
+    date_control = np.datetime64("2019-01-01T00:00:00")
+    sun_earth_distance_20190409 = sun_earth_distance_correction(date_control)
+    sun_earth_distance = sun_earth_distance_correction(start_time)
+    if (np.abs(sun_earth_distance_20190409 - 0.9833280675966011) < 0.00001 and
+            np.abs(sun_earth_distance - scene[band].attrs['sun_earth_distance_correction_factor']) < 0.00001):
+        logger.info("The sun earth distance correction attribute contain the sun earth distance, not the square.")
+        logger.info("Updating and adding sun earth distance correction attributes.")
+        current_factor = scene[band].attrs['sun_earth_distance_correction_factor']
+        scene[band].attrs['satpy_sun_earth_distance_correction_factor'] = current_factor
+        scene[band].attrs['pps_sun_earth_distance_correction_factor'] = sun_earth_distance * sun_earth_distance
+        scene[band].attrs['sun_earth_distance'] = sun_earth_distance
+        scene[band].attrs['sun_earth_distance_correction_factor'] = sun_earth_distance * sun_earth_distance
+
+
 def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch, orbit_n=0):
     """Add some default values for band attributes."""
     # Set some header attributes:
@@ -398,7 +410,7 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
     sensor_name = (fix_too_great_attributes(sensor_name)).upper()
     scene.attrs['sensor'] = sensor_name.upper()
     scene.attrs['instrument'] = sensor_name.upper()
-    nowutc = datetime.utcnow()
+    nowutc = datetime.now(timezone.utc)
     scene.attrs['orbit_number'] = int(orbit_n)
     scene.attrs['date_created'] = nowutc.strftime("%Y-%m-%dT%H:%M:%SZ")
     scene.attrs['version_level1c4pps_satpy'] = satpy.__version__
@@ -422,6 +434,7 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
         else:
             # Assume factor applied if available as attribute.
             scene[band].attrs['sun_earth_distance_correction_applied'] = 'True'
+            fix_sun_earth_distance_correction_factor(scene, band, irch.attrs['start_time'])
         if 'wavelength' in  scene[band].attrs:   
             scene[band].attrs['wavelength'] = scene[band].attrs['wavelength'][0:3]
         scene[band].attrs['sun_zenith_angle_correction_applied'] = 'False'
