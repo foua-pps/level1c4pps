@@ -87,7 +87,7 @@ NATIVE_FILE_PATTERN = ('{platform_shortname:4s}-{instr:4s}-'
 
 
 def load_and_calibrate(filenames, rotate,
-                       clip_calib, path_to_external_ir_calibration):
+                       clip_calib, path_to_external_ir_calibration=None):
     """Load and calibrate data.
 
     Uses inter-calibration coefficients from Meirink et al.
