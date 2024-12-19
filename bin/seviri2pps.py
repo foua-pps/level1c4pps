@@ -50,6 +50,9 @@ if __name__ == "__main__":
                         help="Engine for saving netcdf files netcdf4 or h5netcdf (default).")
     parser.add_argument('--use-nominal-time-in-filename', action='store_true',
                         help='Use nominal scan timestamps in output filename.')
+    parser.add_argument('--path_to_external_ir_calibration', type=str, default=None,
+                        help='Path to external IR calibration.')
+    
     options = parser.parse_args()
     process_one_scan(
         options.files,
@@ -57,5 +60,6 @@ if __name__ == "__main__":
         rotate=not options.no_rotation,
         engine=options.nc_engine,
         use_nominal_time_in_filename=options.use_nominal_time_in_filename,
+        path_to_external_ir_calibration=options.path_to_external_ir_calibration,
         save_azimuth_angles=options.azimuth_angles,
     )

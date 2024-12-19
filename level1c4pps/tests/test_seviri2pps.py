@@ -72,7 +72,7 @@ class TestSeviri2PPS(unittest.TestCase):
         res = seviri2pps.load_and_calibrate(
             filenames,
             rotate=False,
-            clip_calib=False
+            clip_calib=False,
         )
 
         # Compare results and expectations
@@ -612,6 +612,22 @@ class TestCalibration:
         """Test MODIS-intercalibrated gain and offset for specific time."""
         coefs = calib.get_calibration(platform=platform, time=timestamp)
         self._assert_coefs_close(coefs, expected)
+
+
+    def test_get_calibration_ir_no_file(self):
+        """Test get ir calibration with mising json file."""
+        with pytest.raises(FileNotFoundError):
+            coefs = calib.get_calibration(
+                platform="MSG2",
+                time=dt.datetime(2007, 6, 5, 0, 0),
+                path_to_external_ir_calibration=".")
+
+    def test_get_calibration_ir(self):
+        """Test get ir calibration with mising json file."""
+        coefs = calib.get_calibration(
+            platform="MSG2",
+            time=dt.datetime(2007, 6, 18, 0, 0),
+            path_to_external_ir_calibration="./level1c4pps/tests/")
 
     def test_calibration_is_smooth(self):
         """Test that calibration is smooth in time."""
