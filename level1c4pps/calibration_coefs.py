@@ -75,7 +75,6 @@ def get_calibration(platform, time, clip=False, path_to_external_ir_calibration=
             time=time,
             clip=clip
         )
-        
     if path_to_external_ir_calibration is not None:
         for channel in ('IR_039', 'IR_087', 'IR_108', 'IR_120',
                         'IR_134', 'IR_097', 'WV_062', 'WV_073'):
@@ -85,8 +84,6 @@ def get_calibration(platform, time, clip=False, path_to_external_ir_calibration=
                 channel=channel,
                 time=time,
             )
-
-        
     return coefs
 
 
@@ -119,8 +116,9 @@ def _convert_to_datetime(date_or_time):
 
 
 def _is_date(date_or_time):
+    """Check that we have a datetime date object."""
     # datetime is a subclass of date, therefore we cannot use isinstance here
-    return type(date_or_time) == datetime.date
+    return type(date_or_time) == datetime.date  # noqa E721
 
 
 def _check_is_valid_time(time):
@@ -166,12 +164,12 @@ def _calc_gain_offset(a, b, days_since_ref_time):
 def _microwatts_to_milliwatts(microwatts):
     return microwatts / 1000.0
 
+
 def ir_calib_eumetsat(ir_calib_path, platform="MSG2", channel="IR_039", time=datetime.datetime(2048, 1, 18, 12, 0)):
     """Get IR calibration from EUMETSAT, modified by CMSAF."""
     filename = "{:s}/TIR_calib_{:s}_{:s}.json".format(ir_calib_path,
                                                       platform,
                                                       channel)
-    
     with open(filename, 'r') as fhand:
         data = json.load(fhand)
         for item in data:
@@ -181,7 +179,8 @@ def ir_calib_eumetsat(ir_calib_path, platform="MSG2", channel="IR_039", time=dat
                 break
             gain, offset = item[1:]
     return {'gain': gain, 'offset': offset}
- 
+
+
 if __name__ == '__main__':
     time = datetime.datetime(2018, 1, 18, 12, 0)
     platform = 'MSG3'
@@ -197,7 +196,4 @@ if __name__ == '__main__':
         gain, offset = ir_calib_eumetsat(platform=platform, channel=channel,
                                          time=time)
         coefs[channel] = {'gain': gain, 'offset': offset}
-
-               
-
     print(coefs)
