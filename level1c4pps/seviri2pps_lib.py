@@ -630,7 +630,12 @@ def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf',
     return filename
 
 
-def process_all_scans_in_dname(dname, out_path, ok_dates=None, rotate=False):
+def process_all_scans_in_dname(dname, out_path,
+                               ok_dates=None,
+                               rotate=False,
+                               path_to_external_ir_calibration=None,
+                               save_azimuth_angles=False):
+
     """Make level 1c files for all files in directory dname."""
     parser = Parser(HRIT_FILE_PATTERN)
     fl_ = glob(os.path.join(dname, globify(HRIT_FILE_PATTERN)))
@@ -647,6 +652,10 @@ def process_all_scans_in_dname(dname, out_path, ok_dates=None, rotate=False):
         tslot_files = [f for f in fl_ if parser.parse(
             os.path.basename(f))['start_time'] == uqdate]
         try:
-            process_one_scan(tslot_files, out_path, rotate=rotate)
+            process_one_scan(tslot_files,
+                             out_path,
+                             rotate=rotate,
+                             path_to_external_ir_calibration=path_to_external_ir_calibration,
+                             save_azimuth_angles=save_azimuth_angles)
         except Exception:
             pass
