@@ -110,7 +110,7 @@ def load_and_calibrate(filenames, rotate,
         platform=info['platform_shortname'],
         time=info['start_time'],
         clip=clip_calib,
-        path_to_external_ir_calibration=path_to_external_ir_calibration)
+        calib_ir_path=path_to_external_ir_calibration)
     scn_ = _create_scene(file_format, filenames, calib_coefs)
     _check_is_seviri_data(scn_)
     _load_bands(scn_, rotate)

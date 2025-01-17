@@ -620,14 +620,15 @@ class TestCalibration:
             coefs = calib.get_calibration(
                 platform="MSG2",
                 time=dt.datetime(2007, 6, 5, 0, 0),
-                path_to_external_ir_calibration=".")
+                calib_ir_path=".")
 
     def test_get_calibration_ir(self):
-        """Test get ir calibration with mising json file."""
+        """Test get ir calibration.."""
         coefs = calib.get_calibration(
             platform="MSG2",
             time=dt.datetime(2007, 6, 18, 0, 0),
-            path_to_external_ir_calibration="./level1c4pps/tests/")
+            calib_ir_path="./level1c4pps/tests/")
+        np.testing.assert_almost_equal(coefs['IR_120']['gain'], 0.003567, decimal=6) 
 
     def test_calibration_is_smooth(self):
         """Test that calibration is smooth in time."""

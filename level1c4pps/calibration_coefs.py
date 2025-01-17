@@ -22,6 +22,7 @@
 import datetime
 from enum import Enum
 import json
+import os
 
 
 class CalibrationData(Enum):
@@ -56,7 +57,7 @@ class CalibrationData(Enum):
     SATPY_CALIB_MODE = 'Nominal'
 
 
-def get_calibration(platform, time, clip=False, path_to_external_ir_calibration=None):
+def get_calibration(platform, time, clip=False, calib_ir_path=None):
     """Get MODIS-intercalibrated gain and offset for specific time.
 
     Args:
@@ -75,11 +76,11 @@ def get_calibration(platform, time, clip=False, path_to_external_ir_calibration=
             time=time,
             clip=clip
         )
-    if path_to_external_ir_calibration is not None:
+    if calib_ir_path is not None:
         for channel in ('IR_039', 'IR_087', 'IR_108', 'IR_120',
                         'IR_134', 'IR_097', 'WV_062', 'WV_073'):
-            coefs[channel] = ir_calib_eumetsat(
-                path_to_external_ir_calibration,
+            coefs[channel] = get_ir_calibration_coeffs(
+                calib_ir_path,
                 platform=platform,
                 channel=channel,
                 time=time,
@@ -165,11 +166,10 @@ def _microwatts_to_milliwatts(microwatts):
     return microwatts / 1000.0
 
 
-def ir_calib_eumetsat(ir_calib_path, platform="MSG2", channel="IR_039", time=datetime.datetime(2048, 1, 18, 12, 0)):
+def get_ir_calibration_coeffs(ir_calib_path, platform="MSG2", channel="IR_039", time=datetime.datetime(2048, 1, 18, 12, 0)):
     """Get IR calibration from EUMETSAT, modified by CMSAF."""
-    filename = "{:s}/TIR_calib_{:s}_{:s}.json".format(ir_calib_path,
-                                                      platform,
-                                                      channel)
+
+    filename = os.path.join(ir_calib_path, f"TIR_calib_{platform}_{channel}.json")
     with open(filename, 'r') as fhand:
         data = json.load(fhand)
         for item in data:
@@ -193,7 +193,7 @@ if __name__ == '__main__':
 
     for channel in ('IR_039', 'IR_087', 'IR_108', 'IR_120',
                     'IR_134', 'IR_097', 'WV_062', 'WV_073'):
-        gain, offset = ir_calib_eumetsat(platform=platform, channel=channel,
-                                         time=time)
+        gain, offset = get_ir_calibration_coeffs(platform=platform, channel=channel,
+                                                 time=time)
         coefs[channel] = {'gain': gain, 'offset': offset}
     print(coefs)
