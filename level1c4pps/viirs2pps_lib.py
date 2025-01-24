@@ -114,8 +114,11 @@ def set_header_and_band_attrs(scene, orbit_n=0):
     for band in REFL_BANDS:
         if band not in scene:
             continue
-        # For VIIRS data sun_zenith_angle_correction_applied is applied always!
+        # SDR has data has sun_zenith_angle_correction_applied, viirs_compact does not!
+        # We now read data with the sunz_corrected modifier
         scene[band].attrs['sun_zenith_angle_correction_applied'] = 'True'
+        if "sunz_corrected" not in scene['M05'].attrs['modifiers']:
+            logger.exception(f"Data is not sunz_corrected!")
     return nimg
 
 
@@ -140,12 +143,17 @@ def process_one_scene(scene_files, out_path, use_iband_res=False, reader='viirs_
         MY_IBAND_I = IBAND_PPS_I
         MY_IBAND_M = IBAND_PPS_M
 
+    MY_MBAND_REFL = [band for band in MY_MBAND if band in REFL_BANDS]
+    MY_MBAND_TB = [band for band in MY_MBAND if band not in REFL_BANDS]
+
     if use_iband_res:
         scn_.load(MY_IBAND_I + ANGLE_NAMES + ['i_latitude', 'i_longitude'], resolution=371)
         scn_.load(MY_IBAND_M, resolution=742)
         scn_ = scn_.resample(resampler='native')
     elif reader == "viirs_compact":
-        scn_.load(MY_MBAND + ANGLE_NAMES + ['latitude_m', 'longitude_m'], resolution=742)
+        scn_.load(MY_MBAND_TB + ANGLE_NAMES + ['latitude_m', 'longitude_m'], resolution=742)
+        scn_.load(MY_MBAND_REFL, modifiers="sunz_corrected")
+
     else:
         scn_.load(MY_MBAND + ANGLE_NAMES + ['m_latitude', 'm_longitude'], resolution=742)
 
