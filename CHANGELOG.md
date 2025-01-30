@@ -1,3 +1,19 @@
+## Version <0.2.36> (2025/01/30)
+
+### Issues Closed
+
+* [Issue 107](https://github.com/foua-pps/level1c4pps/issues/107) - VIIRS compact reflectances not sun normalized ([PR 108](https://github.com/foua-pps/level1c4pps/pull/108) by [@ninahakansson](https://github.com/ninahakansson))
+
+In this release 1 issue was closed.
+
+### Pull Requests Merged
+
+* [PR 108](https://github.com/foua-pps/level1c4pps/pull/108) - Fix sunz normalization for viirs_compact, by [@ninahakansson](https://github.com/ninahakansson) ([107](https://github.com/foua-pps/level1c4pps/issues/107))
+* [PR 104](https://github.com/foua-pps/level1c4pps/pull/104) - Fix warnings from boa, by [@ninahakansson](https://github.com/ninahakansson)
+* [PR 103](https://github.com/foua-pps/level1c4pps/pull/103) - Fix github tests, by [@ninahakansson](https://github.com/ninahakansson)
+
+In this release 3 pull requests were closed.
+
 ## Version <0.2.35> (2024/12/16)
 
 ### Issues Closed
