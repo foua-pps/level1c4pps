@@ -37,6 +37,7 @@ class TestViirs2PPS(unittest.TestCase):
         """Create a test scene."""
         viirs2pps.BANDNAMES = ['M05', 'M15']
         vis006 = mock.MagicMock(attrs={'name': 'image0',
+                                       'modifiers': ("sunz_correction", ),
                                        'wavelength': [1, 2, 3, 'um'],
                                        'id_tag': 'ch_r06'})
         ir_108 = mock.MagicMock(attrs={

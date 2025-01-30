@@ -437,6 +437,8 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
             fix_sun_earth_distance_correction_factor(scene, band, irch.attrs['start_time'])
         scene[band].attrs['wavelength'] = scene[band].attrs['wavelength'][0:3]
         scene[band].attrs['sun_zenith_angle_correction_applied'] = 'False'
+        if "sunz_corrected" in scene[band].attrs.get('modifiers', []):
+            scene[band].attrs['sun_zenith_angle_correction_applied'] = 'True'
         if idtag in PPS_TAGNAMES_TO_IMAGE_NR:
             scene[band].attrs['name'] = PPS_TAGNAMES_TO_IMAGE_NR[idtag]
         else:
