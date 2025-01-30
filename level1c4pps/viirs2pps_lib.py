@@ -150,7 +150,7 @@ def process_one_scene(scene_files, out_path, use_iband_res=False, reader='viirs_
     elif reader == "viirs_compact":
         scn_.load(MY_MBAND_TB + ANGLE_NAMES + ['latitude_m', 'longitude_m'], resolution=742)
         # Load reflective bands with sunz-correction (not the default for VIIRS compact).
-        scn_.load(MY_MBAND_REFL, modifiers="sunz_corrected")
+        scn_.load(MY_MBAND_REFL, modifiers=("sunz_corrected", ))
     else:
         scn_.load(MY_MBAND + ANGLE_NAMES + ['m_latitude', 'm_longitude'], resolution=742)
 
