@@ -40,7 +40,8 @@ install_requires = [
     "satpy[avhrr_l1b_eps,viirs_l1b,viirs_sdr,viirs_compact]!=0.38.*,!=0.39.*,!=0.40.*,!=0.41.*",
 ]
 extras_requires = {
-    "extra": "satpy[avhrr_l1b_gaclac,seviri_l1b_hrit,seviri_l1b_native,seviri_l1b_nc,vii_l1b_nc]"
+     "gaclac": "satpy[avhrr_l1b_gaclac]",
+     "seviri": "satpy[seviri_l1b_hrit,seviri_l1b_native,seviri_l1b_nc]",
 }
 NAME = "level1c4pps"
 README = open('README.md', 'r').read()
