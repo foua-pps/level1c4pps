@@ -32,9 +32,17 @@ except ImportError:
     pass
 
 
-requires = ['satpy!=0.38.*,!=0.39.*,!=0.40.*,!=0.41.*', 'pyorbital', 'trollsift', 'pyspectral', 'h5netcdf']
-
-
+install_requires = [
+    "h5netcdf",
+    "pyorbital",
+    "pyspectral",
+    "trollsift",
+    "satpy[avhrr_l1b_eps,viirs_l1b,viirs_sdr,viirs_compact]!=0.38.*,!=0.39.*,!=0.40.*,!=0.41.*",
+]
+extras_requires = {
+     "gaclac": "satpy[avhrr_l1b_gaclac]",
+     "seviri": "satpy[seviri_l1b_hrit,seviri_l1b_native,seviri_l1b_nc]",
+}
 NAME = "level1c4pps"
 README = open('README.md', 'r').read()
 
@@ -68,6 +76,7 @@ setup(name=NAME,
       zip_safe=False,
       use_scm_version=True,
       python_requires='>=3.7',
-      install_requires=requires,
+      install_requires=install_requires,
+      extras_require=extras_requires,
       test_suite='level1c4pps.tests.suite',
       )
