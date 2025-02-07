@@ -290,7 +290,7 @@ def interpolate_nats(acq_times, filename_starttime):
     if len(index_to_update) > 0:
         logger.info(f'Interpolating timestamp at index {index_to_update}')
         interp = np.interp(x_val, x_val_ok, y_val_ok)
-        acq_times[update] = dt64_to_datetime(interp[update])
+        acq_times[index_to_update] = dt64_to_datetime(interp[index_to_update])
     return acq_times
 
 
