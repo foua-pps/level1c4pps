@@ -35,9 +35,11 @@ import satpy.utils
 from trollsift.parser import globify, Parser
 from pyorbital.astronomy import get_alt_az, sun_zenith_angle
 from pyorbital.orbital import get_observer_look
-
+from level1c4pps import dt64_to_datetime
 from level1c4pps.calibration_coefs import get_calibration, CalibrationData
 from level1c4pps import (make_azidiff_angle,
+                         convert_angles,
+                         apply_sunz_correction,
                          get_encoding,
                          compose_filename,
                          update_angle_attributes,
@@ -267,6 +269,17 @@ def set_attrs(scene):
                      'platform_name', 'sensor', 'georef_offset_corrected']:
             scene[band].attrs.pop(attr, None)
 
+def interpolate_nats(acq_times):
+    """Interpolate NaTs."""
+    # out_times.interpolate_na(dim = "y")  => can't cast array data from dtype('<M8[ns]') to dtype('float64')
+    is_nat = np.isnat(acq_times.values)
+    x_val = np.array(list(range(0, len(acq_times))))
+    x_val_ok = x_val[~is_nat]
+    y_val_ok = acq_times.values[~is_nat].astype('float64')
+    interp = np.interp(x_val, x_val_ok, y_val_ok)
+    acq_times[is_nat] = dt64_to_datetime(interp[is_nat])
+    return acq_times
+
 
 def get_mean_acq_time(scene):
     """Compute mean scanline acquisition time over all bands."""
@@ -284,7 +297,8 @@ def get_mean_acq_time(scene):
 
     # Compute average over all bands (skip NaNs)
     acq_times = xr.concat(acq_times, 'bands')
-    return acq_times.mean(dim='bands', skipna=True).astype(dtype)
+    out_times = acq_times.mean(dim='bands', skipna=True).astype(dtype)
+    return interpolate_nats(out_times)
 
 
 def update_coords(scene):
