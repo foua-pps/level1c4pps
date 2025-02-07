@@ -50,10 +50,13 @@ if __name__ == "__main__":
                         help="Engine for saving netcdf files netcdf4 or h5netcdf (default).")
     parser.add_argument('--use-nominal-time-in-filename', action='store_true',
                         help='Use nominal scan timestamps in output filename.')
-    parser.add_argument('--path_to_external_ir_calibration', type=str, default=None,
+    parser.add_argument('--path-to-external-ir-calibration', type=str, default=".",
                         help='Path to external IR calibration.')
-    
+    parser.add_argument('--use-nominal-ir-calibration', action='store_true',
+                        help='Use nominal IR claibration.')
     options = parser.parse_args()
+    if options.use_nominal_ir_calibration:
+        options.path_to_external_ir_calibration = None
     process_one_scan(
         options.files,
         out_path=options.out_dir,

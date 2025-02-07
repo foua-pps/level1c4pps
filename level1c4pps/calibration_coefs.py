@@ -22,7 +22,10 @@
 import datetime
 from enum import Enum
 import json
+import logging
 import os
+
+logger = logging.getLogger("calibration")
 
 
 class CalibrationData(Enum):
@@ -170,6 +173,7 @@ def get_ir_calibration_coeffs(ir_calib_path, platform="MSG2", channel="IR_039", 
     """Get IR calibration from EUMETSAT, modified by CMSAF."""
 
     filename = os.path.join(ir_calib_path, f"TIR_calib_{platform}_{channel}.json")
+    logger.info(f'Using IR calibration from {filename}')
     with open(filename, 'r') as fhand:
         data = json.load(fhand)
         for item in data:
