@@ -22,7 +22,10 @@
 import datetime
 from enum import Enum
 import json
+import logging
 import os
+
+logger = logging.getLogger("calibration")
 
 
 class CalibrationData(Enum):
@@ -123,6 +126,7 @@ def _is_date(date_or_time):
 
 
 def _check_is_valid_time(time):
+    """Check that we have a valid time."""
     ref_time = CalibrationData.REF_TIME.value
     if time < ref_time:
         raise ValueError('Given time ({0}) is < reference time ({1})'.format(
@@ -166,10 +170,11 @@ def _microwatts_to_milliwatts(microwatts):
     return microwatts / 1000.0
 
 
-def get_ir_calibration_coeffs(ir_calib_path, platform="MSG2", channel="IR_039", time=datetime.datetime(2048, 1, 18, 12, 0)):
+def get_ir_calibration_coeffs(ir_calib_path, platform="MSG2", channel="IR_039",
+                              time=datetime.datetime(2048, 1, 18, 12, 0)):
     """Get IR calibration from EUMETSAT, modified by CMSAF."""
-
     filename = os.path.join(ir_calib_path, f"TIR_calib_{platform}_{channel}.json")
+    logger.info(f'Using IR calibration from {filename}')
     with open(filename, 'r') as fhand:
         data = json.load(fhand)
         for item in data:

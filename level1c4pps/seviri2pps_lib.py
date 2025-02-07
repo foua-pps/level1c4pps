@@ -649,7 +649,6 @@ def process_all_scans_in_dname(dname, out_path,
                                rotate=False,
                                path_to_external_ir_calibration=None,
                                save_azimuth_angles=False):
-
     """Make level 1c files for all files in directory dname."""
     parser = Parser(HRIT_FILE_PATTERN)
     fl_ = glob(os.path.join(dname, globify(HRIT_FILE_PATTERN)))
