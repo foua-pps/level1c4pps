@@ -45,13 +45,14 @@ from level1c4pps import (make_azidiff_angle,
                          update_angle_attributes,
                          fix_sun_earth_distance_correction_factor)
 
-
+import logging
 try:
     FileNotFoundError
 except NameError:
     # Python 2
     FileNotFoundError = IOError
 
+logger = logging.getLogger("seviri2pps")
 
 class UnexpectedSatpyVersion(Exception):
     """Exception if unexpected satpy version."""
@@ -117,7 +118,7 @@ def load_and_calibrate(filenames, rotate,
     _check_is_seviri_data(scn_)
     _load_bands(scn_, rotate)
     _update_scene_attrs(scn_, {'image_rotated': rotate})
-
+    scn_.attrs["filename_starttime"] = info['start_time']
     return scn_
 
 
@@ -269,15 +270,27 @@ def set_attrs(scene):
                      'platform_name', 'sensor', 'georef_offset_corrected']:
             scene[band].attrs.pop(attr, None)
 
-def interpolate_nats(acq_times):
+def interpolate_nats(acq_times, filename_starttime):
     """Interpolate NaTs."""
     # out_times.interpolate_na(dim = "y")  => can't cast array data from dtype('<M8[ns]') to dtype('float64')
-    is_nat = np.isnat(acq_times.values)
+
+    update = np.isnat(acq_times.values)
+
+    too_late = [ind for (ind, acq_time_i) in enumerate(acq_times.values) if not np.isnat(acq_time_i)
+                and dt64_to_datetime(acq_time_i) - filename_starttime > timedelta(seconds=60*15)]
+    too_early = [ind for (ind, acq_time_i) in enumerate(acq_times.values) if not np.isnat(acq_time_i)
+                 and dt64_to_datetime(acq_time_i) - filename_starttime < timedelta(seconds=0) ]
+    update[too_late] = True
+    update[too_early] = True
     x_val = np.array(list(range(0, len(acq_times))))
-    x_val_ok = x_val[~is_nat]
-    y_val_ok = acq_times.values[~is_nat].astype('float64')
-    interp = np.interp(x_val, x_val_ok, y_val_ok)
-    acq_times[is_nat] = dt64_to_datetime(interp[is_nat])
+    x_val_ok = x_val[~update]
+    y_val_ok = acq_times.values[~update].astype('float64')
+    index_to_update = [ind for ind in np.where(update)[0] if ind > 52 and ind < 3660]
+    
+    if len(index_to_update) > 0:
+        logger.info(f'Interpolating timestamp at index {index_to_update}')
+        interp = np.interp(x_val, x_val_ok, y_val_ok)
+        acq_times[update] = dt64_to_datetime(interp[update])
     return acq_times
 
 
@@ -298,7 +311,7 @@ def get_mean_acq_time(scene):
     # Compute average over all bands (skip NaNs)
     acq_times = xr.concat(acq_times, 'bands')
     out_times = acq_times.mean(dim='bands', skipna=True).astype(dtype)
-    return interpolate_nats(out_times)
+    return interpolate_nats(out_times, scene.attrs["filename_starttime"])
 
 
 def update_coords(scene):
