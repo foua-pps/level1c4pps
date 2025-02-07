@@ -613,7 +613,6 @@ class TestCalibration:
         coefs = calib.get_calibration(platform=platform, time=timestamp)
         self._assert_coefs_close(coefs, expected)
 
-
     def test_get_calibration_ir_no_file(self):
         """Test get ir calibration with mising json file."""
         with pytest.raises(FileNotFoundError):
@@ -628,7 +627,7 @@ class TestCalibration:
             platform="MSG2",
             time=dt.datetime(2007, 6, 18, 0, 0),
             calib_ir_path="./level1c4pps/tests/")
-        np.testing.assert_almost_equal(coefs['IR_120']['gain'], 0.003567, decimal=6) 
+        np.testing.assert_almost_equal(coefs['IR_120']['gain'], 0.003567, decimal=6)
 
     def test_calibration_is_smooth(self):
         """Test that calibration is smooth in time."""
