@@ -229,25 +229,34 @@ class TestSeviri2PPS(unittest.TestCase):
 
     def test_get_mean_acq_time(self):
         """Test computation of mean scanline acquisition time."""
+        scene = get_fake_scene()
         seviri2pps.BANDNAMES = ['VIS006', 'IR_108']
         vis006 = xr.DataArray(
-            data=[0, 0, 0],
+            data=list(range(56)),
             dims=('y', ),
-            coords={'acq_time': ('y', [None,
-                                       None,
-                                       dt.datetime(2009, 7, 1, 12, 1, 0)])})
+            coords={'acq_time': ('y', [None] * 52 + [None,
+                                                     np.nan,
+                                                     dt.datetime(2008, 7, 1, 12, 1, 0),
+                                                     dt.datetime(2009, 7, 1, 12, 1, 0)])})
         ir_108 = xr.DataArray(
-            data=[0, 0, 0],
+            data=list(range(56)),
             dims=('y', ),
-            coords={'acq_time': ('y', [None,
-                                       dt.datetime(2009, 7, 1, 12, 0, 30),
-                                       dt.datetime(2009, 7, 1, 12, 1, 30)])})
-        scene = {'VIS006': vis006, 'IR_108': ir_108}
+            coords={'acq_time': ('y', [None] * 52 + [dt.datetime(2009, 7, 1, 12, 0, 30),
+                                                      np.nan,
+                                                      dt.datetime(2008, 7, 1, 12, 1, 30),
+                                                      dt.datetime(2009, 7, 1, 12, 1, 30)])})
+        scene['VIS006']  = vis006
+        scene['IR_108'] = ir_108
+        scene.attrs["filename_starttime"] = dt.datetime(2009, 7, 1, 12, 0, 30)
+
         acq_exp = np.array(['NaT',
                             '2009-07-01 12:00:30',
+                            '2009-07-01 12:00:45',
+                            '2009-07-01 12:01:00',
                             '2009-07-01 12:01:15'], dtype='datetime64[s]')
         acq = seviri2pps.get_mean_acq_time(scene)
-        np.testing.assert_array_equal(acq, acq_exp)
+        print (acq)
+        np.testing.assert_array_equal(acq[-5:], acq_exp)
 
     @mock.patch('level1c4pps.seviri2pps_lib.get_mean_acq_time')
     def test_update_coords(self, get_mean_acq_time):
