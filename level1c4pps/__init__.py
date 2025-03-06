@@ -542,6 +542,7 @@ def platform_name_to_use_in_filename(platform_name):
     replace_dict = {'aqua': '2',
                     '-': '',
                     'jpss1': 'noaa20',
+                    'jpss2': 'noaa21',
                     'terra': '1',
                     'suomi': ''}
     for orig, new in replace_dict.items():

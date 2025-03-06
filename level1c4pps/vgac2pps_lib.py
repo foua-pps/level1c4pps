@@ -782,6 +782,12 @@ def fix_timestamp_datatype(scene, encoding):
     if "milliseconds" in encoding[param]["units"]:
         scene[param].data = scene[param].data.astype('datetime64[ms]')
 
+def fix_platform_name(scene, scene_files):
+    """For some NOAA20/NOAA21 production the platform name in the global attribute is set to Suomi-NPP."""
+    if "VGAC_VN20" in os.path.basename(scene_files[0]):
+        scene.attrs['platform'] = "JPSS-1"
+    if "VGAC_VN21" in os.path.basename(scene_files[0]):
+        scene.attrs['platform'] = "JPSS-2"
 
 def process_one_scene(scene_files, out_path, engine="h5netcdf",
                       all_channels=False, pps_channels=False, orbit_n=0,
@@ -807,6 +813,7 @@ def process_one_scene(scene_files, out_path, engine="h5netcdf",
     scn_in.load(MY_MBAND
                 + ANGLE_NAMES
                 + ["latitude", "longitude", "scanline_timestamps"])
+    fix_platform_name(scn_in, scene_files)
     if split_files_at_midnight:
         scenes = split_scene_at_midnight(scn_in)
     else:
