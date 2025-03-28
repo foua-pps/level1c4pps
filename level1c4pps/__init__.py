@@ -438,6 +438,8 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
         if 'wavelength' in  scene[band].attrs:   
             scene[band].attrs['wavelength'] = scene[band].attrs['wavelength'][0:3]
         scene[band].attrs['sun_zenith_angle_correction_applied'] = 'False'
+        if "sunz_corrected" in scene[band].attrs.get('modifiers', []):
+            scene[band].attrs['sun_zenith_angle_correction_applied'] = 'True'
         if idtag in PPS_TAGNAMES_TO_IMAGE_NR:
             scene[band].attrs['name'] = PPS_TAGNAMES_TO_IMAGE_NR[idtag]
         else:
@@ -545,6 +547,7 @@ def platform_name_to_use_in_filename(platform_name):
     replace_dict = {'aqua': '2',
                     '-': '',
                     'jpss1': 'noaa20',
+                    'jpss2': 'noaa21',
                     'terra': '1',
                     'suomi': ''}
     for orig, new in replace_dict.items():

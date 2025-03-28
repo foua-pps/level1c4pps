@@ -35,21 +35,24 @@ import satpy.utils
 from trollsift.parser import globify, Parser
 from pyorbital.astronomy import get_alt_az, sun_zenith_angle
 from pyorbital.orbital import get_observer_look
-
+from level1c4pps import dt64_to_datetime
 from level1c4pps.calibration_coefs import get_calibration, CalibrationData
 from level1c4pps import (make_azidiff_angle,
+                         convert_angles,
+                         apply_sunz_correction,
                          get_encoding,
                          compose_filename,
                          update_angle_attributes,
                          fix_sun_earth_distance_correction_factor)
 
-
+import logging
 try:
     FileNotFoundError
 except NameError:
     # Python 2
     FileNotFoundError = IOError
 
+logger = logging.getLogger("seviri2pps")
 
 class UnexpectedSatpyVersion(Exception):
     """Exception if unexpected satpy version."""
@@ -87,7 +90,7 @@ NATIVE_FILE_PATTERN = ('{platform_shortname:4s}-{instr:4s}-'
 
 
 def load_and_calibrate(filenames, rotate,
-                       clip_calib):
+                       clip_calib, path_to_external_ir_calibration=None):
     """Load and calibrate data.
 
     Uses inter-calibration coefficients from Meirink et al.
@@ -109,13 +112,13 @@ def load_and_calibrate(filenames, rotate,
     calib_coefs = get_calibration(
         platform=info['platform_shortname'],
         time=info['start_time'],
-        clip=clip_calib
-    )
+        clip=clip_calib,
+        calib_ir_path=path_to_external_ir_calibration)
     scn_ = _create_scene(file_format, filenames, calib_coefs)
     _check_is_seviri_data(scn_)
     _load_bands(scn_, rotate)
     _update_scene_attrs(scn_, {'image_rotated': rotate})
-
+    scn_.attrs["filename_starttime"] = info['start_time']
     return scn_
 
 
@@ -267,6 +270,29 @@ def set_attrs(scene):
                      'platform_name', 'sensor', 'georef_offset_corrected']:
             scene[band].attrs.pop(attr, None)
 
+def interpolate_nats(acq_times, filename_starttime):
+    """Interpolate NaTs."""
+    # out_times.interpolate_na(dim = "y")  => can't cast array data from dtype('<M8[ns]') to dtype('float64')
+
+    update = np.isnat(acq_times.values)
+
+    too_late = [ind for (ind, acq_time_i) in enumerate(acq_times.values) if not np.isnat(acq_time_i)
+                and dt64_to_datetime(acq_time_i) - filename_starttime > timedelta(seconds=60*15)]
+    too_early = [ind for (ind, acq_time_i) in enumerate(acq_times.values) if not np.isnat(acq_time_i)
+                 and dt64_to_datetime(acq_time_i) - filename_starttime < timedelta(seconds=0) ]
+    update[too_late] = True
+    update[too_early] = True
+    x_val = np.array(list(range(0, len(acq_times))))
+    x_val_ok = x_val[~update]
+    y_val_ok = acq_times.values[~update].astype('float64')
+    index_to_update = [ind for ind in np.where(update)[0] if ind > 52 and ind < 3660]
+    
+    if len(index_to_update) > 0:
+        logger.info(f'Interpolating timestamp at index {index_to_update}')
+        interp = np.interp(x_val, x_val_ok, y_val_ok)
+        acq_times[index_to_update] = dt64_to_datetime(interp[index_to_update])
+    return acq_times
+
 
 def get_mean_acq_time(scene):
     """Compute mean scanline acquisition time over all bands."""
@@ -284,7 +310,8 @@ def get_mean_acq_time(scene):
 
     # Compute average over all bands (skip NaNs)
     acq_times = xr.concat(acq_times, 'bands')
-    return acq_times.mean(dim='bands', skipna=True).astype(dtype)
+    out_times = acq_times.mean(dim='bands', skipna=True).astype(dtype)
+    return interpolate_nats(out_times, scene.attrs["filename_starttime"])
 
 
 def update_coords(scene):
@@ -563,6 +590,7 @@ class SEVIRIFilenameParser:
 def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf',
                      use_nominal_time_in_filename=False,
                      clip_calib=False,
+                     path_to_external_ir_calibration=None,
                      save_azimuth_angles=False):
     """Make level 1c files in PPS-format."""
     for fname in tslot_files:
@@ -573,7 +601,8 @@ def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf',
     scn_ = load_and_calibrate(
         tslot_files,
         rotate=rotate,
-        clip_calib=clip_calib
+        clip_calib=clip_calib,
+        path_to_external_ir_calibration=path_to_external_ir_calibration,
     )
     if hasattr(scn_, 'start_time'):
         scn_.attrs['start_time'] = scn_.start_time
@@ -628,7 +657,11 @@ def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf',
     return filename
 
 
-def process_all_scans_in_dname(dname, out_path, ok_dates=None, rotate=False):
+def process_all_scans_in_dname(dname, out_path,
+                               ok_dates=None,
+                               rotate=False,
+                               path_to_external_ir_calibration=None,
+                               save_azimuth_angles=False):
     """Make level 1c files for all files in directory dname."""
     parser = Parser(HRIT_FILE_PATTERN)
     fl_ = glob(os.path.join(dname, globify(HRIT_FILE_PATTERN)))
@@ -645,6 +678,10 @@ def process_all_scans_in_dname(dname, out_path, ok_dates=None, rotate=False):
         tslot_files = [f for f in fl_ if parser.parse(
             os.path.basename(f))['start_time'] == uqdate]
         try:
-            process_one_scan(tslot_files, out_path, rotate=rotate)
+            process_one_scan(tslot_files,
+                             out_path,
+                             rotate=rotate,
+                             path_to_external_ir_calibration=path_to_external_ir_calibration,
+                             save_azimuth_angles=save_azimuth_angles)
         except Exception:
             pass

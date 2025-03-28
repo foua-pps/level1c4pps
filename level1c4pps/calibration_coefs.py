@@ -21,6 +21,11 @@
 
 import datetime
 from enum import Enum
+import json
+import logging
+import os
+
+logger = logging.getLogger("calibration")
 
 
 class CalibrationData(Enum):
@@ -55,7 +60,7 @@ class CalibrationData(Enum):
     SATPY_CALIB_MODE = 'Nominal'
 
 
-def get_calibration(platform, time, clip=False):
+def get_calibration(platform, time, clip=False, calib_ir_path=None):
     """Get MODIS-intercalibrated gain and offset for specific time.
 
     Args:
@@ -74,6 +79,15 @@ def get_calibration(platform, time, clip=False):
             time=time,
             clip=clip
         )
+    if calib_ir_path is not None:
+        for channel in ('IR_039', 'IR_087', 'IR_108', 'IR_120',
+                        'IR_134', 'IR_097', 'WV_062', 'WV_073'):
+            coefs[channel] = get_ir_calibration_coeffs(
+                calib_ir_path,
+                platform=platform,
+                channel=channel,
+                time=time,
+            )
     return coefs
 
 
@@ -106,11 +120,13 @@ def _convert_to_datetime(date_or_time):
 
 
 def _is_date(date_or_time):
+    """Check that we have a datetime date object."""
     # datetime is a subclass of date, therefore we cannot use isinstance here
-    return type(date_or_time) == datetime.date
+    return type(date_or_time) == datetime.date  # noqa E721
 
 
 def _check_is_valid_time(time):
+    """Check that we have a valid time."""
     ref_time = CalibrationData.REF_TIME.value
     if time < ref_time:
         raise ValueError('Given time ({0}) is < reference time ({1})'.format(
@@ -154,6 +170,22 @@ def _microwatts_to_milliwatts(microwatts):
     return microwatts / 1000.0
 
 
+def get_ir_calibration_coeffs(ir_calib_path, platform="MSG2", channel="IR_039",
+                              time=datetime.datetime(2048, 1, 18, 12, 0)):
+    """Get IR calibration from EUMETSAT, modified by CMSAF."""
+    filename = os.path.join(ir_calib_path, f"TIR_calib_{platform}_{channel}.json")
+    logger.info(f'Using IR calibration from {filename}')
+    with open(filename, 'r') as fhand:
+        data = json.load(fhand)
+        for item in data:
+            date_s = item[0]
+            date_i = datetime.datetime.strptime(date_s, "%Y-%m-%dT%H:%M:%S.%f")
+            if date_i > time:
+                break
+            gain, offset = item[1:]
+    return {'gain': gain, 'offset': offset}
+
+
 if __name__ == '__main__':
     time = datetime.datetime(2018, 1, 18, 12, 0)
     platform = 'MSG3'
@@ -164,4 +196,9 @@ if __name__ == '__main__':
                                      time=time)
         coefs[channel] = {'gain': gain, 'offset': offset}
 
+    for channel in ('IR_039', 'IR_087', 'IR_108', 'IR_120',
+                    'IR_134', 'IR_097', 'WV_062', 'WV_073'):
+        gain, offset = get_ir_calibration_coeffs(platform=platform, channel=channel,
+                                                 time=time)
+        coefs[channel] = {'gain': gain, 'offset': offset}
     print(coefs)
