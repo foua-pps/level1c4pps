@@ -42,7 +42,7 @@ if __name__ == "__main__":
                         help='List of ISCCP-NG files to process')
     parser.add_argument('-o', '--out_dir', type=str, nargs='?',
                         required=False, default='.',
-                        help="Output directory where to store level1c file.")
+                        help="Output directory where to store level1c file, can include time directives (%Y%m%d).")
     parser.add_argument('-ne', '--nc_engine', type=str, nargs='?',
                         required=False, default='h5netcdf',
                         help="Engine for saving netcdf files netcdf4 or h5netcdf (default).")

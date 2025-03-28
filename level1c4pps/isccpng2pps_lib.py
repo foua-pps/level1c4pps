@@ -76,6 +76,22 @@ PPS_TAGNAMES = {'refl_01_60um': "ch_r16",
 
 BANDNAMES = list(PPS_TAGNAMES.keys())
 
+channel_name = {"refl_00_65um": "VIS006",
+                "refl_00_86um": "VIS008",
+                "refl_01_60um": "IR_016"}
+
+platform_id = {55: 321,
+               70: 324}
+# Normally read from file (HRIT). We do not have access to nominal calibration
+# So we need to have that here. So far only 2021 
+calibration_nominal = {2021: {321: {"VIS006": 24.974,
+                                    "VIS008": 32.377,
+                                    "IR_016": 23.710},
+                              324: {"VIS006": 21.241,
+                                    "VIS008": 27.921,
+                                    "IR_016": 23.112}
+                              }}
+    
 coef_slope_chan = ['refl_00_65um', 'refl_00_86um', 'refl_01_60um',
                    'temp_03_80um', 'temp_06_20um', 'temp_07_30um', 'temp_08_60um',
                    'temp_09_70um', 'temp_11_00um', 'temp_12_00um', 'temp_13_30um']
@@ -145,10 +161,7 @@ satellite_names = {270: "GOES-16",  # ABI
 
 def get_encoding_isccpng(scene):
     """Get netcdf encoding for all datasets."""
-    return get_encoding(scene,
-                        BANDNAMES,
-                        PPS_TAGNAMES,
-                        chunks=None)
+    return get_encoding(scene, BANDNAMES, PPS_TAGNAMES, chunks=None)
 
 
 def set_header_and_band_attrs(scene, orbit_n=00000):
@@ -178,12 +191,12 @@ def homogenize_channel(scene, wmo_id, illum, band, sol_zen):
         f"Homogenizing channel {band} for {satellite_names[wmo_id]} for illum:{illum}"
         f" with respect to SEVIRI on MSG4 using y={k} * x + {c}")
     dn_discr = 90
-    if (illum == '_day'):
-        update = ((dwmo_id == wmo_id) & (data > 0) & (sol_zen < dn_discr))
+    if illum == '_day':
+        update = (dwmo_id == wmo_id) & (data > 0) & (sol_zen < dn_discr)
         scene[band].values = np.where(update, scene[band].values * k + c, scene[band].values)
 
-    if (illum == '_nig'):
-        update = ((dwmo_id == wmo_id) & (data > 0) & (sol_zen >= dn_discr))
+    if illum == '_nig':
+        update = (dwmo_id == wmo_id) & (data > 0) & (sol_zen >= dn_discr)
         scene[band].values = np.where(update, scene[band].values * k + c, scene[band].values)
 
 
@@ -191,27 +204,15 @@ def homogenize(scene):
     """Homogenize data to Meteosat-11."""
     sol_zen = scene["sunzenith"]
     for band in BANDNAMES:
-        for wmo_id in [270, 271, 173, 55]:
-            homogenize_channel(scene, wmo_id, '_day', band, sol_zen)
-            homogenize_channel(scene, wmo_id, '_nig', band, sol_zen)
+        for wmo_id in satellite_names:
+            for illumination in ["_day", "_night"]:
+                homogenize_channel(scene, wmo_id, illlumination, band, sol_zen)
+
 
 def recalibrate_meteosat(scene):
     """Nominal calibration is applied, redo with meirnik calibration."""
     from satpy.readers.seviri_base import MeirinkCalibrationHandler
     start_time = dt64_to_datetime(scene["refl_00_65um"].attrs["start_time"])
-    channel_name = {"refl_00_65um": "VIS006",
-                    "refl_00_86um": "VIS008",
-                    "refl_01_60um": "IR_016"}
-    platform_id = {55: 321,
-                   70: 324}
-    # Normally read from file (HRIT). We do not have access to nominal calibration
-    calibration_nominal = {2021: {321: {"VIS006": 24.974,
-                                        "VIS008": 32.377,
-                                        "IR_016": 23.710},
-                                  324: {"VIS006": 21.241,
-                                        "VIS008": 27.921,
-                                        "IR_016": 23.112}
-                                  }}
     for wmo_id in platform_id:
         for band in channel_name:
             dwmo_id = scene["wmo_id"]
