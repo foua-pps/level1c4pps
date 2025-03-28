@@ -1,3 +1,19 @@
+## Version <0.2.37> (2025/03/28)
+
+### Issues Closed
+
+* [Issue 98](https://github.com/foua-pps/level1c4pps/issues/98) - Include new EUMETSAT IR calibration for SEVIRI ([PR 105](https://github.com/foua-pps/level1c4pps/pull/105) by [@ninahakansson](https://github.com/ninahakansson))
+
+In this release 1 issue was closed.
+
+### Pull Requests Merged
+
+* [PR 110](https://github.com/foua-pps/level1c4pps/pull/110) - Fix platform names for NOAA20 and NOAA21, by [@ninahakansson](https://github.com/ninahakansson)
+* [PR 109](https://github.com/foua-pps/level1c4pps/pull/109) - Interpolate broken timestamps, by [@ninahakansson](https://github.com/ninahakansson)
+* [PR 106](https://github.com/foua-pps/level1c4pps/pull/106) - better dependecy handling, by [@BengtRydberg](https://github.com/BengtRydberg)
+* [PR 105](https://github.com/foua-pps/level1c4pps/pull/105) - SEVIRI IR calibration, by [@ninahakansson](https://github.com/ninahakansson) ([98](https://github.com/foua-pps/level1c4pps/issues/98))
+
+In this release 4 pull requests were closed.
 ## Version <0.2.36> (2025/01/30)
 
 ### Issues Closed
