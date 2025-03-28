@@ -205,20 +205,22 @@ def homogenize(scene):
     sol_zen = scene["sunzenith"]
     for band in BANDNAMES:
         for wmo_id in satellite_names:
-            for illumination in ["_day", "_night"]:
-                homogenize_channel(scene, wmo_id, illlumination, band, sol_zen)
+            if wmo_id == 70:
+                continue  # Meteosat11
+            for illumination in ["_day", "_nig"]:
+                homogenize_channel(scene, wmo_id, illumination, band, sol_zen)
 
 
 def recalibrate_meteosat(scene):
     """Nominal calibration is applied, redo with meirnik calibration."""
-    from satpy.readers.seviri_base import MeirinkCalibrationHandler
+    from satpy.readers.seviri_base import MeirinkCoefficients
     start_time = dt64_to_datetime(scene["refl_00_65um"].attrs["start_time"])
     for wmo_id in platform_id:
         for band in channel_name:
             dwmo_id = scene["wmo_id"]
             old_gain = calibration_nominal[start_time.year][platform_id[wmo_id]][channel_name[band]]
-            meirink = MeirinkCalibrationHandler(calib_mode="MEIRINK-2023")
-            new_gain = 1000.0 * meirink.get_slope(platform_id[wmo_id], channel_name[band], start_time)
+            meirink = MeirinkCoefficients(platform_id[wmo_id], channel_name[band], start_time)
+            new_gain = 1000.0 * meirink._get_gain()['MEIRINK-2023']
             update = scene["wmo_id"].values == wmo_id
             logger.info(
                 f"Recalibrating channel {band} for {satellite_names[wmo_id]} using y *= {new_gain} /{old_gain}")
