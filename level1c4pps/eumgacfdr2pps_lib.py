@@ -126,7 +126,6 @@ def set_header_and_band_attrs(scene, orbit_n=99999):
             continue
         if band in REFL_BANDS:
             scene[band].attrs['sun_earth_distance_correction_applied'] = 'True'
-        del scene[band].encoding['coordinates']
     return nimg
 
 
