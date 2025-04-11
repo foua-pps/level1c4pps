@@ -51,6 +51,8 @@ PPS_TAGNAMES_TO_IMAGE_NR = {'ch_r06': 'image1',
                             'ch_tb133': 'image13'}
 
 ATTRIBUTES_TO_DELETE_FROM_CHANNELS = [
+    'ancillary_variables',
+    'pixel_quality',
     '_satpy_id',
     '_satpy_id_calibration',
     '_satpy_id_modifiers',
@@ -58,6 +60,7 @@ ATTRIBUTES_TO_DELETE_FROM_CHANNELS = [
     '_satpy_id_resolution',
     '_satpy_id_wavelength',
     'ancillary_variables',
+    '_FillValue',
     'area',
     'calibration',
     'comment',
@@ -95,7 +98,7 @@ RENAME_VARS = {
 
 REQUIRED_CHANNEL_VARS = [
     'name',
-    '_FillValue',
+
     'add_offset',
     'coordinates',
     'description',
@@ -468,7 +471,7 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
             attr_value = scene[band].attrs.pop(attr, None)
             if attr not in scene.attrs:
                 scene.attrs[attr] = attr_value
-        for coord_name in ['acq_time', 'latitude', 'longitude']:
+        for coord_name in ['acq_time', 'latitude', 'longitude', 'crs']:
             try:
                 del scene[band].coords[coord_name]
             except KeyError:
@@ -540,6 +543,7 @@ def platform_name_to_use_in_filename(platform_name):
     if new_name == 'sga1':
         new_name = 'metopsga1'
     replace_dict = {'aqua': '2',
+                    'mtgi1': 'mtg1',
                     '-': '',
                     'jpss1': 'noaa20',
                     'jpss2': 'noaa21',
