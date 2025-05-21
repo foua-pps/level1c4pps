@@ -133,38 +133,11 @@ def get_solar_angles(scene, lons, lats):
     """
     suna = np.full(lons.shape, np.nan)
     sunz = np.full(lons.shape, np.nan)
-    #mean_acq_time = get_mean_acq_time(scene)
-    for line, acq_time in enumerate(lons[0,:]):
-        _, suna_line = get_alt_az(scene.start_time, lons[line, :], lats[line, :])
-        suna_line = np.rad2deg(suna_line)
-        suna[line, :] = suna_line
-        sunz[line, :] = sun_zenith_angle(scene.start_time, lons[line, :], lats[line, :])
+    acq_time =  scene["ir_105_time"]
+    _, suna = get_alt_az(acq_time, lons, lats)
+    suna = np.rad2deg(suna)
+    sunz = sun_zenith_angle(acq_time, lons, lats)
     return suna, sunz
-
-def set_exact_time_and_crop(scene, start_line, end_line, time_key="scanline_timestamps"):
-    """Crop datasets and update start_time end_time objects."""
-    if start_line is None:
-        start_line = 0
-    if end_line is None:
-        end_line = len(scene[time_key]) - 1
-    #start_time_dt64 = scene[time_key].values[start_line]
-    #end_time_dt64 = scene[time_key].values[end_line]
-    #start_time = dt64_to_datetime(start_time_dt64)
-    #end_time = dt64_to_datetime(end_time_dt64)
-    for ds in BANDNAMES + ["lon", "lat", "sunzenith", "satzenith", "azimuthdiff"]:
-        if ds in scene and "x" in scene[ds].dims:
-            scene[ds] = scene[ds].isel(x=slice(start_line, end_line + 1))
-            try:
-                pass
-                # Update scene attributes to get the filenames right
-                #scene[ds].attrs["start_time"] = start_time
-                #scene[ds].attrs["end_time"] = end_time
-            except TypeError:
-                pass
-    #if start_time_dt64 != scene[time_key].values[0]:
-    #    raise ValueError
-    #if end_time_dt64 != scene[time_key].values[-1]:
-    #    raise ValueError
 
 def process_one_scene(scene_files, out_path,
                       engine='h5netcdf',
@@ -173,30 +146,13 @@ def process_one_scene(scene_files, out_path,
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scn_in = Scene(reader='fci_l1c_nc', filenames=scene_files)
-
-
     MY_BANDNAMES = BANDNAMES_DEFAULT
     if all_channels:
         MY_BANDNAMES = BANDNAMES
     if pps_channels:
         MY_BANDNAMES = BANDNAMES_PPS
-
-    scn_in.load(MY_BANDNAMES)
-    
-    scn_ = scn_in.resample(scn_in.coarsest_area(), datasets=MY_BANDNAMES, resampler='native')
-    #import pdb ; pdb.set_trace()
-    for band in MY_BANDNAMES:
-        print(band)
-        # scn_in[band].values
-        print("new")
-        #scn_[band].values
-    #scn_in = None    
-    #scn_ = scn_.resample(scn_["ir_105"].area, resampler='native')
-    #for dataset in scn_:
-    #    scn_[dataset] = new_scn[dataset]
-    
-    #import pdb;pdb.set_trace()
-    # one ir channel
+    scn_in.load(MY_BANDNAMES + ["ir_105_time"] )
+    scn_ = scn_in.resample(scn_in.coarsest_area(), datasets=MY_BANDNAMES + ["ir_105_time"], resampler='native')
     irch = scn_['ir_105']
     lons, lats = get_lonlats(scn_['ir_105'])
     suna, sunz = get_solar_angles(scn_, lons=lons, lats=lats)
@@ -204,13 +160,6 @@ def process_one_scene(scene_files, out_path,
     azidiff = make_azidiff_angle(sata, suna)
     sata = None
     suna = None
-
-    # Update coordinates
-
-    # update_coords(scn_)
-
-
-    # Add ancillary datasets to the scene
     add_ancillary_datasets(scn_,
                            lons=lons, lats=lats,
                            sunz=sunz, satz=satz,
@@ -220,26 +169,9 @@ def process_one_scene(scene_files, out_path,
                            save_azimuth_angles=False,
                            chunks=(464, 928))
     # add_proj_satpos(scn_, irch_name="ir_105")
-
-    
-    # Set header and band attributes
-    #set_exact_time_and_crop(scn_, 0, 928)
     set_header_and_band_attrs(scn_, orbit_n=orbit_n)
-    #import pdb;pdb.set_trace()
-    
-    # Rename longitude, latitude to lon, lat.
-    # rename_latitude_longitude(scn_)
-
-    # Adjust lons to valid range:
-    #adjust_lons_to_valid_range(scn_)
-
-    # Convert angles to PPS
-    #convert_angles(scn_, delete_azimuth=True)
-    #update_angle_attributes(scn_, irch)
-
-    # Apply sunz correction
+    scn_["ir_105_time"].attrs.pop("_FillValue", None)
     # apply_sunz_correction(scn_, REFL_BANDS)
-    #import pdb ; pdb.set_trace()
     filename = compose_filename(scn_, out_path, instrument='fci', band=irch)
     scn_.save_datasets(writer='cf',
                        filename=filename,
@@ -250,6 +182,5 @@ def process_one_scene(scene_files, out_path,
                        pretty=True,
                        encoding=get_encoding_fci(scn_))
     print("Saved file {:s} after {:3.1f} seconds".format(
-        os.path.basename(filename),
-        time.time() - tic))
+        os.path.basename(filename), time.time() - tic))
     return filename
