@@ -327,7 +327,7 @@ def get_band_encoding(dataset, bandnames, pps_tagnames, chunks=None):
     elif name in ['ir_105_time']:
         enc = {'dtype': 'int64',
                'zlib': True,
-               #'units': 'milliseconds since 2020-01-01',
+               'units': 'milliseconds since 1970-01-01',
                'complevel': 4,
                '_FillValue': -1.0}
     if not enc:

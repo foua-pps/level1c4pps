@@ -27,6 +27,7 @@ from level1c4pps import (get_encoding, compose_filename,
                          update_angle_attributes, get_header_attrs,
                          set_header_and_band_attrs_defaults,
                          convert_angles,
+                         dt64_to_datetime,
                          adjust_lons_to_valid_range)
 from level1c4pps.seviri2pps_lib import (get_lonlats,
                                         # get_solar_angles,
@@ -38,6 +39,8 @@ import logging
 import numpy as np
 from pyorbital.astronomy import get_alt_az, sun_zenith_angle
 import hdf5plugin
+import datetime as dt
+import pytz
 
 # from satpy.utils import debug_on
 # debug_on()
@@ -133,11 +136,27 @@ def get_solar_angles(scene, lons, lats):
     """
     suna = np.full(lons.shape, np.nan)
     sunz = np.full(lons.shape, np.nan)
-    acq_time =  scene["ir_105_time"]
+    acq_time =  scene["ir_105_time"].copy()
     _, suna = get_alt_az(acq_time, lons, lats)
     suna = np.rad2deg(suna)
     sunz = sun_zenith_angle(acq_time, lons, lats)
     return suna, sunz
+
+
+def fix_time(scene):
+    """Make datetime objects from time in seconds."""
+    if type(scene["ir_105_time"].values[0,0]) == np.float64:
+        epoch_to_2000 = dt.datetime(2000, 1, 1, tzinfo = dt.timezone.utc).timestamp()
+        scene["ir_105_time"] = scene["ir_105_time"] + epoch_to_2000
+        scene["ir_105_time"] = scene["ir_105_time"].astype('datetime64[s]')
+    ind = np.int16(scene["ir_105_time"].shape[0]/2)
+    a_time = dt64_to_datetime(scene["ir_105_time"].values[ind, ind])
+    if a_time > scene.end_time  or a_time < scene.start_time:
+        raise(ValueError)
+    # mask = np.isnan(scene["ir_105_time"].values)
+    # scene["ir_105_time"] = scene["ir_105_time"].fillna(0)
+    # scene["ir_105_time"] = dt.datetime.fromtimestamp(scene["ir_105_time"], tz = dt.timezone.utc)
+
 
 def process_one_scene(scene_files, out_path,
                       engine='h5netcdf',
@@ -153,6 +172,7 @@ def process_one_scene(scene_files, out_path,
         MY_BANDNAMES = BANDNAMES_PPS
     scn_in.load(MY_BANDNAMES + ["ir_105_time"] )
     scn_ = scn_in.resample(scn_in.coarsest_area(), datasets=MY_BANDNAMES + ["ir_105_time"], resampler='native')
+    fix_time(scn_)
     irch = scn_['ir_105']
     lons, lats = get_lonlats(scn_['ir_105'])
     suna, sunz = get_solar_angles(scn_, lons=lons, lats=lats)
