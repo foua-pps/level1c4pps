@@ -168,13 +168,15 @@ def process_one_scene(scene_files, out_path, use_iband_res=False, reader='viirs_
     update_angle_attributes(scn_, irch)
 
     filename = compose_filename(scn_, out_path, instrument='viirs', band=irch)
+    tmp_filename = filename.replace("Z.nc", "Z_temp.nc")
     scn_.save_datasets(writer='cf',
-                       filename=filename,
+                       filename=tmp_filename,
                        header_attrs=get_header_attrs(scn_, band=irch, sensor='viirs'),
                        engine=engine,
                        include_lonlats=False,
                        flatten_attrs=True,
                        encoding=get_encoding_viirs(scn_))
+    os.rename(tmp_filename, filename)
     print("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),
         time.time() - tic))

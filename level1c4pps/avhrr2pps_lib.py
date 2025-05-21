@@ -119,13 +119,15 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf', orbit_n=0):
     apply_sunz_correction(scn_, REFL_BANDS)
 
     filename = compose_filename(scn_, out_path, instrument='avhrr', band=irch)
+    tmp_filename = filename.replace("Z.nc", "Z_temp.nc")
     scn_.save_datasets(writer='cf',
-                       filename=filename,
+                       filename=tmp_filename,
                        header_attrs=get_header_attrs(scn_, band=irch, sensor='avhrr'),
                        engine=engine,
                        include_lonlats=False,
                        flatten_attrs=True,
                        encoding=get_encoding_avhrr(scn_))
+    os.rename(tmp_filename, filename)
     print("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename),
         time.time() - tic))
