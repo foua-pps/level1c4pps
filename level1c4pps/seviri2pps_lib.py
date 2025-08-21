@@ -226,29 +226,36 @@ def get_satellite_angles(dataset, lons, lats):
     sat_alt *= 0.001
 
     # Compute angles
-    #import pdb;pdb.set_trace()
-    sata = np.full(lons.shape, np.nan)
-    satel = np.full(lons.shape, np.nan)
 
-    for start_i in [0, 2000, 4000, 6000, 8000, 10000]:
-        try:
-            print("satart_i", start_i)
-            sata[start_i:start_i + 2000, :], satel[start_i:start_i + 2000, :] = get_observer_look(
-                sat_lon,
-                sat_lat,
-                sat_alt,
-                dataset.attrs['start_time'],
-                lons[start_i:start_i + 2000, :], lats[start_i:start_i + 2000, :], 0)
-        except ValueError:
-            sata[start_i:, :], satel[start_i:, :] = get_observer_look(
-                sat_lon,
-                sat_lat,
-                sat_alt,
-                dataset.attrs['start_time'],
-                lons[start_i:, :], lats[start_i:, :], 0)
-            break
+    if lons.shape[0] < 5000: 
+        sata, satel = get_observer_look(
+            sat_lon,
+            sat_lat,
+            sat_alt,
+            dataset.attrs['start_time'],
+            lons, lats, 0)
+    else:
+        sata = np.full(lons.shape, np.nan)
+        satel = np.full(lons.shape, np.nan)
+
+        for start_i in [0, 2000, 4000, 6000, 8000, 10000]:
+            try:
+                print("satart_i", start_i)
+                sata[start_i:start_i + 2000, :], satel[start_i:start_i + 2000, :] = get_observer_look(
+                    sat_lon,
+                    sat_lat,
+                    sat_alt,
+                    dataset.attrs['start_time'],
+                    lons[start_i:start_i + 2000, :], lats[start_i:start_i + 2000, :], 0)
+            except ValueError:
+                sata[start_i:, :], satel[start_i:, :] = get_observer_look(
+                    sat_lon,
+                    sat_lat,
+                    sat_alt,
+                    dataset.attrs['start_time'],
+                    lons[start_i:, :], lats[start_i:, :], 0)
+                break
     satz = 90 - satel
-
     return sata, satz
 
 
