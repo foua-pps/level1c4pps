@@ -128,8 +128,10 @@ def set_header_and_band_attrs(scene, orbit_n=00000):
 
 def process_one_scene(scene_files, out_path,
                       engine='h5netcdf',
-                      all_channels=False, pps_channels=False,
-                      orbit_n=0):
+                      all_channels=False,
+                      pps_channels=False,
+                      orbit_n=0,
+                      platform_name=None):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scn_ = Scene(reader='vii_l1b_nc', filenames=scene_files)
@@ -154,22 +156,14 @@ def process_one_scene(scene_files, out_path,
     # one ir channel
     irch = scn_['vii_10690']
 
-    # Set header and band attributes
     set_header_and_band_attrs(scn_, orbit_n=orbit_n)
-
-    # Rename longitude, latitude to lon, lat.
     rename_latitude_longitude(scn_)
-
-    # Adjust lons to valid range:
     adjust_lons_to_valid_range(scn_)
-
-    # Convert angles to PPS
     convert_angles(scn_, delete_azimuth=True)
     update_angle_attributes(scn_, irch)
-
-    # Apply sunz correction
     # apply_sunz_correction(scn_, REFL_BANDS)
-
+    if platform_name is not None:
+        scn_.attrs['platform'] = platform_name
     filename = compose_filename(scn_, out_path, instrument='metimage', band=irch)
     scn_.save_datasets(writer='cf',
                        filename=filename,
