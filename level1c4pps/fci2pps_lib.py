@@ -28,6 +28,7 @@ from level1c4pps import (get_encoding, compose_filename,
                          set_header_and_band_attrs_defaults,
                          convert_angles,
                          dt64_to_datetime,
+                         fix_timestamp_datatype,
                          adjust_lons_to_valid_range)
 from level1c4pps.seviri2pps_lib import (get_lonlats,
                                         # get_solar_angles,
@@ -193,6 +194,9 @@ def process_one_scene(scene_files, out_path,
     scn_["ir_105_time"].attrs.pop("_FillValue", None)
     # apply_sunz_correction(scn_, REFL_BANDS)
     filename = compose_filename(scn_, out_path, instrument='fci', band=irch)
+    encoding = get_encoding_fci(scn_)
+    fix_timestamp_datatype(scn_, encoding, "ir_105_time")
+
     scn_.save_datasets(writer='cf',
                        filename=filename,
                        header_attrs=get_header_attrs(scn_, band=irch, sensor='fci'),
@@ -200,7 +204,7 @@ def process_one_scene(scene_files, out_path,
                        include_lonlats=False,
                        flatten_attrs=True,
                        pretty=True,
-                       encoding=get_encoding_fci(scn_))
+                       encoding=encoding)
     print("Saved file {:s} after {:3.1f} seconds".format(
         os.path.basename(filename), time.time() - tic))
     return filename
