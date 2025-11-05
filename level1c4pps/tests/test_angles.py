@@ -3,17 +3,11 @@
 # Copyright (c) 2025 level1c4pps developers
 #
 # This file is part of level1c4pps
-# This program is free software: you can redistribute it and/or modify
+#
+# level1c4pps is free software: you can redistribute it and/or modify it
 # under the terms of the Apache-2.0 license.
-# it under the terms of the GNU General Public License as published by
-
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+#
+#
 """Unit tests for angle computations."""
 
 from level1c4pps import make_azidiff_angle, update_angle_attributes
