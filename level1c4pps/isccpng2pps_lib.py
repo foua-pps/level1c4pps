@@ -36,9 +36,9 @@ from level1c4pps import (get_encoding,
                          set_header_and_band_attrs_defaults,
                          convert_angles,
                          adjust_lons_to_valid_range)
-
 import logging
 from pyorbital.astronomy import get_alt_az, sun_zenith_angle
+
 
 logger = logging.getLogger('isccpng2pps')
 
@@ -246,14 +246,13 @@ def get_solar_angles(scene, lons, lats):
     return suna, sunz
 
 
-
 def fix_pixel_time(scene):
     """Fix the time pixel variable, original file does not contain units."""
     del scene["pixel_time"].coords["crs"]
     scene["pixel_time"].encoding['coordinates'] = "lon lat"
+    scene["pixel_time"] = scene["pixel_time"].interpolate_na(dim = "y", fill_value="extrapolate", use_coordinate=False)  # update NaTs
     scene["pixel_time"].data = scene["pixel_time"].data * np.timedelta64(1, 's') + scene['temp_11_00um'].attrs["start_time"]
 
-    
 def update_solar_angles(scene):
     """USe pixel time to calculate solar angles."""
     suna, sunz = get_solar_angles(scene, lons=scene["lon"], lats=scene["lat"])
