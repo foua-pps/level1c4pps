@@ -238,23 +238,19 @@ def get_satellite_angles(dataset, lons, lats):
         sata = np.full(lons.shape, np.nan)
         satel = np.full(lons.shape, np.nan)
 
-        for start_i in [0, 2000, 4000, 6000, 8000, 10000]:
-            try:
-                print("satart_i", start_i)
-                sata[start_i:start_i + 2000, :], satel[start_i:start_i + 2000, :] = get_observer_look(
-                    sat_lon,
-                    sat_lat,
-                    sat_alt,
-                    dataset.attrs['start_time'],
-                    lons[start_i:start_i + 2000, :], lats[start_i:start_i + 2000, :], 0)
-            except ValueError:
-                sata[start_i:, :], satel[start_i:, :] = get_observer_look(
-                    sat_lon,
-                    sat_lat,
-                    sat_alt,
-                    dataset.attrs['start_time'],
-                    lons[start_i:, :], lats[start_i:, :], 0)
-                break
+        chunks = list(range(0, lons.shape[0], 2000))
+        chunks.append(lons.shape[0])
+        for index in range(len(chunks)-1):
+            start_i = chunks[index]
+            end_i = chunks[index+1]
+            logger.info(f"Get angles for lines {start_i} to {end_i}")
+            sata[start_i:end_i, :], satel[start_i:end_i, :] = get_observer_look(
+                sat_lon,
+                sat_lat,
+                sat_alt,
+                dataset.attrs['start_time'],
+                lons[start_i:end_i, :], lats[start_i:end_i, :], 0)
+
     satz = 90 - satel
     return sata, satz
 
