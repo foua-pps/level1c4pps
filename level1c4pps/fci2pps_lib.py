@@ -22,6 +22,7 @@
 import os
 import time
 from satpy.scene import Scene
+import satpy
 from level1c4pps import (get_encoding, compose_filename,
                          rename_latitude_longitude,
                          update_angle_attributes, get_header_attrs,
@@ -157,11 +158,21 @@ def fix_time(scene):
     # mask = np.isnan(scene["ir_105_time"].values)
     # scene["ir_105_time"] = scene["ir_105_time"].fillna(0)
     # scene["ir_105_time"] = dt.datetime.fromtimestamp(scene["ir_105_time"], tz = dt.timezone.utc)
-
+    scene["ir_105_time"].attrs.pop("units", None)
+    
+def resample_data(scn_in, datasets, resmple_to_seviri_grid=False):
+    logger.info("Resampling to coarsest area")
+    scn_out = scn_in.resample(scn_in.coarsest_area(), datsets=datasets, resampler='native')
+    if resmple_to_seviri_grid:
+        logger.info(f"Resampling to msg grid")
+        scn_out = scn_out.resample("msg_seviri_fes_3km", datsets=datasets, resampler='nearest')
+    return scn_out
 
 def process_one_scene(scene_files, out_path,
                       engine='h5netcdf',
-                      all_channels=False, pps_channels=False,
+                      all_channels=False,
+                      pps_channels=False,
+                      resmple_to_seviri_grid = False,
                       orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
@@ -172,7 +183,7 @@ def process_one_scene(scene_files, out_path,
     if pps_channels:
         MY_BANDNAMES = BANDNAMES_PPS
     scn_in.load(MY_BANDNAMES + ["ir_105_time"] )
-    scn_ = scn_in.resample(scn_in.coarsest_area(), datasets=MY_BANDNAMES + ["ir_105_time"], resampler='native')
+    scn_ = resample_data(scn_in, MY_BANDNAMES + ["ir_105_time"], resmple_to_seviri_grid=resmple_to_seviri_grid)
     fix_time(scn_)
     irch = scn_['ir_105']
     lons, lats = get_lonlats(scn_['ir_105'])

@@ -44,9 +44,13 @@ if __name__ == "__main__":
     parser.add_argument('-on', '--orbit_number', type=int, nargs='?',
                         required=False, default=0,
                         help="Orbit number (default is 00000).")
+    parser.add_argument('-as_msg', '--resample_to_msg_grid', action='store_true',
+                        help="Resample to msg grid.")
     options = parser.parse_args()
     process_one_scene(options.files, options.out_dir,
                       engine=options.nc_engine,
                       all_channels=options.all_channels,
                       pps_channels=options.pps_channels,
-                      orbit_n=options.orbit_number)
+                      orbit_n=options.orbit_number,
+                      resmple_to_seviri_grid = options.resample_to_msg_grid,
+                      )
