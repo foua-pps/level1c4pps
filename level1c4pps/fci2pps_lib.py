@@ -22,27 +22,22 @@
 import os
 import time
 from satpy.scene import Scene
-import satpy
-from level1c4pps import (get_encoding, compose_filename,
-                         rename_latitude_longitude,
-                         update_angle_attributes, get_header_attrs,
+from level1c4pps import (get_encoding,
+                         compose_filename,
+                         get_header_attrs,
                          set_header_and_band_attrs_defaults,
-                         convert_angles,
                          dt64_to_datetime,
-                         fix_timestamp_datatype,
-                         adjust_lons_to_valid_range)
+                         fix_timestamp_datatype)
 from level1c4pps.seviri2pps_lib import (get_lonlats,
-                                        # get_solar_angles,
-                                        add_proj_satpos,
                                         add_ancillary_datasets,
                                         get_satellite_angles,
                                         make_azidiff_angle)
 import logging
 import numpy as np
 from pyorbital.astronomy import get_alt_az, sun_zenith_angle
-import hdf5plugin
+import hdf5plugin # testing that library for fci is available # noqa: F401
 import datetime as dt
-import pytz
+import pytz # testing that library for fci is available # noqa: F401
 
 # from satpy.utils import debug_on
 # debug_on()
@@ -164,7 +159,7 @@ def resample_data(scn_in, datasets, resmple_to_seviri_grid=False):
     logger.info("Resampling to coarsest area")
     scn_out = scn_in.resample(scn_in.coarsest_area(), datsets=datasets, resampler='native')
     if resmple_to_seviri_grid:
-        logger.info(f"Resampling to msg grid")
+        logger.info("Resampling to msg grid")
         scn_out = scn_out.resample("msg_seviri_fes_3km", datsets=datasets, resampler='nearest')
     return scn_out
 
@@ -200,10 +195,8 @@ def process_one_scene(scene_files, out_path,
                            irch_name = "ir_105",
                            save_azimuth_angles=False,
                            chunks=(464, 928))
-    # add_proj_satpos(scn_, irch_name="ir_105")
     set_header_and_band_attrs(scn_, orbit_n=orbit_n)
     scn_["ir_105_time"].attrs.pop("_FillValue", None)
-    # apply_sunz_correction(scn_, REFL_BANDS)
     filename = compose_filename(scn_, out_path, instrument='fci', band=irch)
     encoding = get_encoding_fci(scn_)
     fix_timestamp_datatype(scn_, encoding, "ir_105_time")
