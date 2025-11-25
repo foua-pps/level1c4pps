@@ -35,9 +35,9 @@ from level1c4pps.seviri2pps_lib import (get_lonlats,
 import logging
 import numpy as np
 from pyorbital.astronomy import get_alt_az, sun_zenith_angle
-import hdf5plugin # testing that library for fci is available # noqa: F401
+import hdf5plugin  # testing that library for fci is available # noqa: F401
 import datetime as dt
-import pytz # testing that library for fci is available # noqa: F401
+import pytz  # testing that library for fci is available # noqa: F401
 
 # from satpy.utils import debug_on
 # debug_on()
@@ -54,7 +54,7 @@ BANDNAMES_DEFAULT = ["vis_06",
                      "nir_16",
                      "ir_38",
                      "wv_73",
-            
+
                      "ir_105",
                      "ir_123",
                      "nir_22",
@@ -133,7 +133,7 @@ def get_solar_angles(scene, lons, lats):
     """
     suna = np.full(lons.shape, np.nan)
     sunz = np.full(lons.shape, np.nan)
-    acq_time =  scene["ir_105_time"].copy()
+    acq_time = scene["ir_105_time"].copy()
     _, suna = get_alt_az(acq_time, lons, lats)
     suna = np.rad2deg(suna)
     sunz = sun_zenith_angle(acq_time, lons, lats)
@@ -142,19 +142,17 @@ def get_solar_angles(scene, lons, lats):
 
 def fix_time(scene):
     """Make datetime objects from time in seconds."""
-    if type(scene["ir_105_time"].values[0,0]) == np.float64:
-        epoch_to_2000 = dt.datetime(2000, 1, 1, tzinfo = dt.timezone.utc).timestamp()
+    if type(scene["ir_105_time"].values[0, 0]) == np.float64:
+        epoch_to_2000 = dt.datetime(2000, 1, 1, tzinfo=dt.timezone.utc).timestamp()
         scene["ir_105_time"] = scene["ir_105_time"] + epoch_to_2000
         scene["ir_105_time"] = scene["ir_105_time"].astype('datetime64[s]')
     ind = np.int16(scene["ir_105_time"].shape[0]/2)
     a_time = dt64_to_datetime(scene["ir_105_time"].values[ind, ind])
-    if a_time > scene.end_time  or a_time < scene.start_time:
-        raise(ValueError)
-    # mask = np.isnan(scene["ir_105_time"].values)
-    # scene["ir_105_time"] = scene["ir_105_time"].fillna(0)
-    # scene["ir_105_time"] = dt.datetime.fromtimestamp(scene["ir_105_time"], tz = dt.timezone.utc)
+    if a_time > scene.end_time or a_time < scene.start_time:
+        raise ValueError
     scene["ir_105_time"].attrs.pop("units", None)
-    
+
+
 def resample_data(scn_in, datasets, resmple_to_seviri_grid=False):
     logger.info("Resampling to coarsest area")
     scn_out = scn_in.resample(scn_in.coarsest_area(), datsets=datasets, resampler='native')
@@ -163,11 +161,12 @@ def resample_data(scn_in, datasets, resmple_to_seviri_grid=False):
         scn_out = scn_out.resample("msg_seviri_fes_3km", datsets=datasets, resampler='nearest')
     return scn_out
 
+
 def process_one_scene(scene_files, out_path,
                       engine='h5netcdf',
                       all_channels=False,
                       pps_channels=False,
-                      resmple_to_seviri_grid = False,
+                      resmple_to_seviri_grid=False,
                       orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
@@ -177,7 +176,7 @@ def process_one_scene(scene_files, out_path,
         MY_BANDNAMES = BANDNAMES
     if pps_channels:
         MY_BANDNAMES = BANDNAMES_PPS
-    scn_in.load(MY_BANDNAMES + ["ir_105_time"] )
+    scn_in.load(MY_BANDNAMES + ["ir_105_time"])
     scn_ = resample_data(scn_in, MY_BANDNAMES + ["ir_105_time"], resmple_to_seviri_grid=resmple_to_seviri_grid)
     fix_time(scn_)
     irch = scn_['ir_105']
@@ -192,7 +191,7 @@ def process_one_scene(scene_files, out_path,
                            sunz=sunz, satz=satz,
                            azidiff=azidiff,
                            suna=suna, sata=sata,
-                           irch_name = "ir_105",
+                           irch_name="ir_105",
                            save_azimuth_angles=False,
                            chunks=(464, 928))
     set_header_and_band_attrs(scn_, orbit_n=orbit_n)

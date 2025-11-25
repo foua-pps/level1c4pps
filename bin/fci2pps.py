@@ -52,5 +52,5 @@ if __name__ == "__main__":
                       all_channels=options.all_channels,
                       pps_channels=options.pps_channels,
                       orbit_n=options.orbit_number,
-                      resmple_to_seviri_grid = options.resample_to_msg_grid,
+                      resmple_to_seviri_grid=options.resample_to_msg_grid,
                       )
