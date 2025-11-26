@@ -153,12 +153,25 @@ def fix_time(scene):
     scene["ir_105_time"].attrs.pop("units", None)
 
 
-def resample_data(scn_in, datasets, resmple_to_seviri_grid=False):
+def resample_data(scn_in, datasets, resample_grid="coarse"):
     logger.info("Resampling to coarsest area")
-    scn_out = scn_in.resample(scn_in.coarsest_area(), datsets=datasets, resampler='native')
-    if resmple_to_seviri_grid:
-        logger.info("Resampling to msg grid")
-        scn_out = scn_out.resample("msg_seviri_fes_3km", datsets=datasets, resampler='nearest')
+    if resample_grid in ["fine"]:
+        logger.info("Resampling to finest grid")
+        scn_out = scn_in.resample(scn_in.finest_area(), datsets=datasets, resampler='native')
+    elif resample_grid in ["coarse"]:
+        logger.info("Resampling to coarsest grid")
+        scn_out = scn_in.resample(scn_in.coarsest_area(), datsets=datasets, resampler='native')
+    elif "msg" in resample_grid:
+        import psutil
+        if psutil.virtual_memory()[0]/32e9 < 1:
+            logger.warning(
+                "Resampling to msg grid, via native resampling to coarsest grid to save RAM. "
+                "As we have less than 32G RAM.")
+            scn_out = scn_in.resample(scn_in.coarsest_area(), datsets=datasets, resampler='native')
+            scn_out = scn_out.resample(resample_grid, datsets=datasets, resampler='nearest')
+        else:
+            logger.info("Resampling to msg grid")
+            scn_out = scn_in.resample(resample_grid, datsets=datasets, resampler='nearest')
     return scn_out
 
 
@@ -166,7 +179,7 @@ def process_one_scene(scene_files, out_path,
                       engine='h5netcdf',
                       all_channels=False,
                       pps_channels=False,
-                      resmple_to_seviri_grid=False,
+                      resample_grid=False,
                       orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
@@ -177,7 +190,7 @@ def process_one_scene(scene_files, out_path,
     if pps_channels:
         MY_BANDNAMES = BANDNAMES_PPS
     scn_in.load(MY_BANDNAMES + ["ir_105_time"])
-    scn_ = resample_data(scn_in, MY_BANDNAMES + ["ir_105_time"], resmple_to_seviri_grid=resmple_to_seviri_grid)
+    scn_ = resample_data(scn_in, MY_BANDNAMES + ["ir_105_time"], resample_grid=resample_grid)
     fix_time(scn_)
     irch = scn_['ir_105']
     lons, lats = get_lonlats(scn_['ir_105'])

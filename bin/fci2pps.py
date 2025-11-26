@@ -22,6 +22,12 @@
 import argparse
 from level1c4pps.fci2pps_lib import process_one_scene
 
+msg_grids =["msg_seviri_fes_3km",
+            "msg_seviri_fes_1km",
+            "msg_seviri_rss_3km",
+            "msg_seviri_rss_1km",
+            "msg_seviri_iodc_3km",
+            "msg_seviri_iodc_1km",]
 
 if __name__ == "__main__":
     """ Create PPS-format level1c data
@@ -44,13 +50,13 @@ if __name__ == "__main__":
     parser.add_argument('-on', '--orbit_number', type=int, nargs='?',
                         required=False, default=0,
                         help="Orbit number (default is 00000).")
-    parser.add_argument('-as_msg', '--resample_to_msg_grid', action='store_true',
-                        help="Resample to msg grid.")
+    parser.add_argument('-re', '--resample_grid', choices=['fine', 'coarse'] + msg_grids,
+                        help="Resample to msg grid, for as SEVIRI use msg_seviri_fes_3km.", required=False, default="coarse")
     options = parser.parse_args()
     process_one_scene(options.files, options.out_dir,
                       engine=options.nc_engine,
                       all_channels=options.all_channels,
                       pps_channels=options.pps_channels,
                       orbit_n=options.orbit_number,
-                      resmple_to_seviri_grid=options.resample_to_msg_grid,
+                      resample_grid=options.resample_grid,
                       )
