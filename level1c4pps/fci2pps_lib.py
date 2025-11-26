@@ -47,10 +47,9 @@ from packaging.version import Version
 # Example:
 # 'W_XX-EUMETSAT-Darmstadt,IMG+SAT,MTI1+FCI-1C-RRAD-HRFI-FD--CHK-BODY--DIS-NC4E_C_EUMT_20250408093037_IDPFI_OPE_20250408092752_20250408092842_N_JLS_O_0057_0034.nc"
 
-
 logger = logging.getLogger('fci2pps')
 
-if Version(satpy.__version__) < Version('0.59.1'):
+if Version(satpy.__version__) <= Version('0.59.0'):
     if Version(satpy.__version__) > Version('0.56.0'):
         logger.warning("Native resampling craching for satpy 0.57 to 0.59.0.")
 
