@@ -21,6 +21,7 @@
 
 import os
 import time
+import satpy
 from satpy.scene import Scene
 from level1c4pps import (get_encoding,
                          compose_filename,
@@ -38,6 +39,7 @@ from pyorbital.astronomy import get_alt_az, sun_zenith_angle
 import hdf5plugin  # testing that library for fci is available # noqa: F401
 import datetime as dt
 import pytz  # testing that library for fci is available # noqa: F401
+from packaging.version import Version
 
 # from satpy.utils import debug_on
 # debug_on()
@@ -47,6 +49,11 @@ import pytz  # testing that library for fci is available # noqa: F401
 
 
 logger = logging.getLogger('fci2pps')
+
+if Version(satpy.__version__) < Version('0.59.1'):
+    if Version(satpy.__version__) > Version('0.56.0'):
+        logger.warning("Native resampling craching for satpy 0.57 to 0.59.0.")
+
 
 BANDNAMES_DEFAULT = ["vis_06",
                      "vis_08",
