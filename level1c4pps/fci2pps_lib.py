@@ -159,20 +159,28 @@ def fix_time(scene):
     scene["ir_105_time"].attrs.pop("units", None)
     scene["ir_105_time"].attrs.pop("_FillValue", None)
 
-def resample_data(scn_in, datasets, resample_grid="coarse"):
-    logger.info("Resampling to coarsest area")
-    if resample_grid in ["fine"]:
-        logger.info("Resampling to finest grid")
-        scn_out = scn_in.resample(scn_in.finest_area(), datsets=datasets, resampler='native')
-    elif resample_grid in ["coarse"]:
-        logger.info("Resampling to coarsest grid")
-        scn_out = scn_in.resample(scn_in.coarsest_area(), datsets=datasets, resampler='native')
-    elif "msg" in resample_grid:
+def resample_data(scn_in, datasets, resample_grid="coarse", resample_save_ram = False):
+    """Resample data to the same grid."""
+    if resample_grid not in ["coarse"]:
         import psutil
         if psutil.virtual_memory()[0]/32e9 < 1:
             logger.warning(
-                "Resampling to msg grid, via native resampling to coarsest grid to save RAM. "
-                "As we have less than 32G RAM.")
+                "The RAM memory might not be enough resample to fine resolution.\n"
+                "The RAM memory might not be enough to use nearset neighbour resampling directly to msg area.\n"
+                "Try to run with --resample_via_native_coarse")
+
+    if resample_grid in ["fine"]:
+        logger.info("Resampling to finest grid")
+        scn_out = scn_in.resample(scn_in.finest_area(), datsets=datasets, resampler="native")
+    elif resample_grid in ["1km"]:
+        logger.info("Resampling to 1km grid")
+        scn_out = scn_in.resample(scn_in["vis_08"].area, datsets=datasets, resampler="native")
+    elif resample_grid in ["coarse"]:
+            logger.info("Resampling to coarsest grid")
+            scn_out = scn_in.resample(scn_in.coarsest_area(), datsets=datasets, resampler="native")
+    elif "msg" in resample_grid:
+        if resample_save_ram:
+            logger.info("Resampling to msg grid, via coarsest channel area.")
             scn_out = scn_in.resample(scn_in.coarsest_area(), datsets=datasets, resampler='native')
             scn_out = scn_out.resample(resample_grid, datsets=datasets, resampler='nearest')
         else:
@@ -202,7 +210,8 @@ def process_one_scene(scene_files, out_path,
                       engine='h5netcdf',
                       all_channels=False,
                       pps_channels=False,
-                      resample_grid=False,
+                      resample_grid="coarse",
+                      resample_save_ram=False,
                       orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
@@ -213,7 +222,9 @@ def process_one_scene(scene_files, out_path,
     if pps_channels:
         MY_BANDNAMES = BANDNAMES_PPS
     scn_in.load(MY_BANDNAMES + ["ir_105_time"])
-    scn_ = resample_data(scn_in, MY_BANDNAMES + ["ir_105_time"], resample_grid=resample_grid)
+    scn_ = resample_data(scn_in, MY_BANDNAMES + ["ir_105_time"],
+                         resample_grid=resample_grid,
+                         resample_save_ram=resample_save_ram)
     fix_time(scn_)
     add_angles_and_latlon(scn_)
     irch = scn_['ir_105']

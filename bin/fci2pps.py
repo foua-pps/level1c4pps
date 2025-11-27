@@ -50,8 +50,11 @@ if __name__ == "__main__":
     parser.add_argument('-on', '--orbit_number', type=int, nargs='?',
                         required=False, default=0,
                         help="Orbit number (default is 00000).")
-    parser.add_argument('-re', '--resample_grid', choices=['fine', 'coarse'] + msg_grids,
-                        help="Resample to msg grid, for as SEVIRI use msg_seviri_fes_3km.", required=False, default="coarse")
+    parser.add_argument('-rg', '--resample_grid', choices=["fine", "1km", "coarse"] + msg_grids,
+                        help="Resample to grid, msg_seviri_fes_3km.", required=False, default="coarse")
+    parser.add_argument('--resample_via_native_coarse', action='store_true',
+                        help="Resample via coarsest area when resampling to msg grid to save RAM.", required=False)
+    
     options = parser.parse_args()
     process_one_scene(options.files, options.out_dir,
                       engine=options.nc_engine,
@@ -59,4 +62,5 @@ if __name__ == "__main__":
                       pps_channels=options.pps_channels,
                       orbit_n=options.orbit_number,
                       resample_grid=options.resample_grid,
+                      resample_save_ram=options.resample_via_native_coarse,
                       )
