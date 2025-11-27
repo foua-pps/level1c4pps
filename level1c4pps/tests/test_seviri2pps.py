@@ -33,6 +33,7 @@ from satpy import Scene
 import level1c4pps.seviri2pps_lib as seviri2pps
 import level1c4pps.calibration_coefs as calib
 from satpy.dataset.dataid import WavelengthRange
+from pyresample import SwathDefinition
 
 
 def get_fake_scene():
@@ -45,15 +46,25 @@ def get_fake_scene():
         attrs={'calibration': 'reflectance',
                'sun_earth_distance_correction_applied': True,
                'start_time': start_time,
-               'wavelength': WavelengthRange(0.56, 0.635, 0.71)}
+               'wavelength': WavelengthRange(0.56, 0.635, 0.71),
+               }
     )
-    scene['IR_108'] = xr.DataArray(
+    lons = xr.DataArray(
+        [[75, 76],
+         [77, 78]],
+        dims=('y', 'x'))
+    lats = xr.DataArray(
+        [[35, 36],
+         [37, 38]],
+        dims=('y', 'x'))
+    scene['IR_105'] = xr.DataArray(
         [[5, 6],
          [7, 8]],
         dims=('y', 'x'),
         attrs={'calibration': 'brightness_temperature',
                'start_time': start_time,
-               'wavelength': WavelengthRange(9.8, 10.8, 11.8)}
+               'wavelength': WavelengthRange(9.8, 10.8, 11.8),
+               'area': SwathDefinition(lons, lats)}
     )
     scene.attrs['sensor'] = {'seviri'}
     return scene
