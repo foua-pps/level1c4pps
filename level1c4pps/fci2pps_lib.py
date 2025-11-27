@@ -157,7 +157,7 @@ def fix_time(scene):
     if a_time > scene.end_time or a_time < scene.start_time:
         raise ValueError
     scene["ir_105_time"].attrs.pop("units", None)
-
+    scene["ir_105_time"].attrs.pop("_FillValue", None)
 
 def resample_data(scn_in, datasets, resample_grid="coarse"):
     logger.info("Resampling to coarsest area")
@@ -180,6 +180,23 @@ def resample_data(scn_in, datasets, resample_grid="coarse"):
             scn_out = scn_in.resample(resample_grid, datsets=datasets, resampler='nearest')
     return scn_out
 
+def add_angles_and_latlon(scene):
+    """Add the lon/lat and angles datasets."""
+    lons, lats = get_lonlats(scene['ir_105'])
+    suna, sunz = get_solar_angles(scene, lons=lons, lats=lats)
+    sata, satz = get_satellite_angles(scene['ir_105'], lons=lons, lats=lats)
+    azidiff = make_azidiff_angle(sata, suna)
+    sata = None
+    suna = None
+    add_ancillary_datasets(scene,
+                           lons=lons, lats=lats,
+                           sunz=sunz, satz=satz,
+                           azidiff=azidiff,
+                           suna=suna, sata=sata,
+                           irch_name="ir_105",
+                           save_azimuth_angles=False,
+                           chunks=(464, 928))
+
 
 def process_one_scene(scene_files, out_path,
                       engine='h5netcdf',
@@ -198,27 +215,12 @@ def process_one_scene(scene_files, out_path,
     scn_in.load(MY_BANDNAMES + ["ir_105_time"])
     scn_ = resample_data(scn_in, MY_BANDNAMES + ["ir_105_time"], resample_grid=resample_grid)
     fix_time(scn_)
+    add_angles_and_latlon(scn_)
     irch = scn_['ir_105']
-    lons, lats = get_lonlats(scn_['ir_105'])
-    suna, sunz = get_solar_angles(scn_, lons=lons, lats=lats)
-    sata, satz = get_satellite_angles(scn_['ir_105'], lons=lons, lats=lats)
-    azidiff = make_azidiff_angle(sata, suna)
-    sata = None
-    suna = None
-    add_ancillary_datasets(scn_,
-                           lons=lons, lats=lats,
-                           sunz=sunz, satz=satz,
-                           azidiff=azidiff,
-                           suna=suna, sata=sata,
-                           irch_name="ir_105",
-                           save_azimuth_angles=False,
-                           chunks=(464, 928))
     set_header_and_band_attrs(scn_, orbit_n=orbit_n)
-    scn_["ir_105_time"].attrs.pop("_FillValue", None)
     filename = compose_filename(scn_, out_path, instrument='fci', band=irch)
     encoding = get_encoding_fci(scn_)
     fix_timestamp_datatype(scn_, encoding, "ir_105_time")
-
     scn_.save_datasets(writer='cf',
                        filename=filename,
                        header_attrs=get_header_attrs(scn_, band=irch, sensor='fci'),
