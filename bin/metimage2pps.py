@@ -43,6 +43,7 @@ if __name__ == "__main__":
                         help="Engine for saving netcdf files netcdf4 or h5netcdf (default).")
     parser.add_argument('-pn', '--platform_name', type=str, nargs='?',
                         required=False, default=None,
+                        choices=["metopsga1", "metopd", "metopsga2", "metopf", "metopsga3", "metoph"],
                         help="Platformname to use for pps, metopsga1 or metopd.")
     parser.add_argument('-on', '--orbit_number', type=int, nargs='?',
                         required=False, default=0,
