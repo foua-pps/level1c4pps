@@ -22,14 +22,16 @@ import datetime as dt
 import numpy as np
 import pytest
 import unittest
-import level1c4pps.fci2pps_lib as fci2pps
-import xarray as xr
-from satpy.dataset.dataid import WavelengthRange
-from pyresample import SwathDefinition
+import sys
 try:
     from unittest import mock
 except ImportError:
     import mock
+sys.modules["hdf5plugin"] = mock.MagicMock()
+import level1c4pps.fci2pps_lib as fci2pps
+import xarray as xr
+from satpy.dataset.dataid import WavelengthRange
+from pyresample import SwathDefinition
 
 def get_fake_scene():
     from satpy import Scene
