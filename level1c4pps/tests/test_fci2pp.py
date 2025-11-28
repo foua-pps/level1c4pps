@@ -110,6 +110,8 @@ class TestFCI2PPS(unittest.TestCase):
         self.assertEqual(out3["ir_105"].shape[0], 3712)
         self.assertEqual(out1["ir_105"].shape[0], 2)
         self.assertEqual(out2["ir_105"].shape[0], 2)
+        with self.assertRaises(ValueError):
+            fci2pps.resample_data(scene, ["ir_105"], "bad_arg")
 
     def test_attrs(self):
         """Test setting of attributes."""
