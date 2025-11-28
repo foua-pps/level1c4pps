@@ -33,10 +33,9 @@ import xarray as xr
 from satpy.dataset.dataid import WavelengthRange
 from pyresample import SwathDefinition
 
-def get_fake_scene():
+def get_fake_scene(start_time=dt.datetime(2000, 1, 1, 0)):
     from satpy import Scene
     scene = Scene()
-    start_time = dt.datetime(2000, 1, 1, 0)
     end_time = dt.datetime(2000, 1, 1, 0, 1)
     lons = xr.DataArray(
         [[75.0, 76.0],
@@ -71,7 +70,7 @@ def get_fake_scene():
          [7.2, 8.0]],
         dims=('y', 'x'),
         attrs={}
-        
+
     )
     scene.attrs['sensor'] = {'fci'}
     scene.attrs['platform_name'] = 'Meteosat-12'
@@ -86,15 +85,18 @@ class TestFci2PPS(unittest.TestCase):
         scene = get_fake_scene()
         fci2pps.fix_time(scene)
         self.assertEqual(scene['ir_105_time'][0, 0], np.datetime64('2000-01-01T00:00:05'))
+        scene = get_fake_scene(start_time=dt.datetime(2000, 1, 1, 0, 0, 59))
+        with self.assertRaises(ValueError):
+            fci2pps.fix_time(scene)
 
     @mock.patch('satpy.utils.get_satpos')
-    def test_ancillary_datasets(self, my_get_satpos):
+    def test_add_angles_and_latlon(self, my_get_satpos):
         """Test adding angles and lat/lon."""
         my_get_satpos.return_value = (-0.3, 0.0, 35786 * 1000)
         scene = get_fake_scene()
         fci2pps.add_angles_and_latlon(scene)
         np.testing.assert_allclose(scene["satzenith"].values[0,0], 86.6785348)
-        
+
     def test_resample(self):
         """Test resampling."""
         scene = get_fake_scene()
@@ -102,13 +104,19 @@ class TestFci2PPS(unittest.TestCase):
         out2 = fci2pps.resample_data(scene, ["ir_105"], "fine")
         out3 = fci2pps.resample_data(scene, ["ir_105"], "msg_seviri_fes_3km")
         self.assertEqual(out3["ir_105"].shape[0], 3712)
+        self.assertEqual(out1["ir_105"].shape[0], 2)
+        self.assertEqual(out2["ir_105"].shape[0], 2)
 
     def test_attrs(self):
         """Test setting of attributes."""
         scene = get_fake_scene()
         fci2pps.set_header_and_band_attrs(scene)
         self.assertEqual(scene["vis_06"].attrs["description"], "FCI VIS_06")
-        
+        self.assertEqual(scene["vis_06"].attrs["name"], "image1")
+        self.assertEqual(scene["vis_06"].attrs["sun_zenith_angle_correction_applied"], "True")
+        self.assertEqual(scene["vis_06"].attrs["valid_range"][1], 20000)
+
+
 def suite():
     """Create the test suite for test_fci2pps."""
     loader = unittest.TestLoader()

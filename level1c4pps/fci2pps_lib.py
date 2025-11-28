@@ -148,19 +148,17 @@ def fix_time(scene):
     ind = np.int16(scene["ir_105_time"].shape[0]/2)
     a_time = dt64_to_datetime(scene["ir_105_time"].values[ind, ind])
     if a_time > scene.end_time or a_time < scene.start_time:
-        raise ValueError
+        raise ValueError(f"There is someting wrong with the time variable, at {ind}, {ind}")
     scene["ir_105_time"].attrs.pop("units", None)
     scene["ir_105_time"].attrs.pop("_FillValue", None)
 
 def resample_data(scn_in, datasets, resample_grid="coarse", resample_save_ram = False):
     """Resample data to the same grid."""
     if resample_grid not in ["coarse"]:
-        import psutil
-        if psutil.virtual_memory()[0]/32e9 < 1:
-            logger.warning(
-                "The RAM memory might not be enough resample to fine resolution.\n"
-                "The RAM memory might not be enough to use nearset neighbour resampling directly to msg area.\n"
-                "Try to run with --resample_via_native_coarse")
+        logger.info(
+            "More than 16GB of RAM memory is needed to resample to fine resolution.\n"
+            "More than 16GB of RAM is needed to use nearset neighbour resampling directly to msg area.\n"
+            "Try to run with --resample_via_native_coarse, to remap to msg area with less RAM usage.")
 
     if resample_grid in ["fine"]:
         logger.info("Resampling to finest grid")
