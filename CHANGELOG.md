@@ -1,3 +1,15 @@
+## Version <0.2.38> (2025/11/26)
+
+
+### Pull Requests Merged
+
+* [PR 119](https://github.com/foua-pps/level1c4pps/pull/119) - Handle 2 channel isccpng, by [@ninahakansson](https://github.com/ninahakansson)
+* [PR 117](https://github.com/foua-pps/level1c4pps/pull/117) - Allow setting platform_name from commandline for METimage, by [@ninahakansson](https://github.com/ninahakansson)
+* [PR 116](https://github.com/foua-pps/level1c4pps/pull/116) - Bump pypa/gh-action-pypi-publish from 1.4.1 to 1.13.0 in /.github/workflows, by [@dependabot[bot]](https://github.com/apps/dependabot)
+* [PR 82](https://github.com/foua-pps/level1c4pps/pull/82) - Isccpg ng, by [@ninahakansson](https://github.com/ninahakansson)
+
+In this release 4 pull requests were closed.
+
 ## Version <0.2.37> (2025/03/28)
 
 ### Issues Closed
@@ -14,6 +26,7 @@ In this release 1 issue was closed.
 * [PR 105](https://github.com/foua-pps/level1c4pps/pull/105) - SEVIRI IR calibration, by [@ninahakansson](https://github.com/ninahakansson) ([98](https://github.com/foua-pps/level1c4pps/issues/98))
 
 In this release 4 pull requests were closed.
+
 ## Version <0.2.36> (2025/01/30)
 
 ### Issues Closed

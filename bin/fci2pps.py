@@ -1,28 +1,42 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# Copyright (c) 2025 level1c4pps developers
+# Copyright (c) 2019 level1c4pps developers
 #
 # This file is part of level1c4pps
 #
 # level1c4pps is free software: you can redistribute it and/or modify it
-# under the terms of the Apache-2.0 license.
+# under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
 #
+# level1c4pps is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
 #
+# You should have received a copy of the GNU General Public License
+# along with level1c4pps.  If not, see <http://www.gnu.org/licenses/>.
 
-"""Script to convert METIMAGE level-1 to PPS level-1c format using Pytroll/Satpy."""
+"""Script to convert FCI level-1 to PPS level-1c format using Pytroll/Satpy."""
 
 import argparse
-from level1c4pps.metimage2pps_lib import process_one_scene
+from level1c4pps.fci2pps_lib import process_one_scene
 
+msg_grids =["msg_seviri_fes_3km",
+            "msg_seviri_fes_1km",
+            "msg_seviri_rss_3km",
+            "msg_seviri_rss_1km",
+            "msg_seviri_iodc_3km",
+            "msg_seviri_iodc_1km",]
 
 if __name__ == "__main__":
     """ Create PPS-format level1c data
     From a list of MERSI-2 level-1 files create a NWCSAF/PPS formatet level1c file for pps.
     """
     parser = argparse.ArgumentParser(
-        description=('Script to produce a PPS-level1c file for a METIMAGE level-1 scene'))
+        description=('Script to produce a PPS-level1c file for a FCI level-1 scene'))
     parser.add_argument('files', metavar='fileN', type=str, nargs='+',
-                        help='List of METIMAGE files to process')
+                        help='List of FCI files to process')
     parser.add_argument('-o', '--out_dir', type=str, nargs='?',
                         required=False, default='.',
                         help="Output directory where to store the level1c file")
@@ -33,17 +47,20 @@ if __name__ == "__main__":
     parser.add_argument('-ne', '--nc_engine', type=str, nargs='?',
                         required=False, default='h5netcdf',
                         help="Engine for saving netcdf files netcdf4 or h5netcdf (default).")
-    parser.add_argument('-pn', '--platform_name', type=str, nargs='?',
-                        required=False, default=None,
-                        choices=["metopsga1", "metopd", "metopsga2", "metopf", "metopsga3", "metoph"],
-                        help="Platformname to use for pps, metopsga1 or metopd.")
     parser.add_argument('-on', '--orbit_number', type=int, nargs='?',
                         required=False, default=0,
                         help="Orbit number (default is 00000).")
+    parser.add_argument('-rg', '--resample_grid', choices=["fine", "1km", "coarse"] + msg_grids,
+                        help="Resample to grid.", required=False, default="coarse")
+    parser.add_argument('--resample_via_native_coarse', action='store_true',
+                        help="Resample via coarsest area when resampling to msg grid to save RAM.", required=False)
+    
     options = parser.parse_args()
     process_one_scene(options.files, options.out_dir,
                       engine=options.nc_engine,
                       all_channels=options.all_channels,
                       pps_channels=options.pps_channels,
                       orbit_n=options.orbit_number,
-                      platform_name=options.platform_name)
+                      resample_grid=options.resample_grid,
+                      resample_save_ram=options.resample_via_native_coarse,
+                      )

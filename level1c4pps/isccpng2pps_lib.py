@@ -196,6 +196,8 @@ def homogenize(scene):
     """Homogenize data to Meteosat-11."""
     sol_zen = scene["sunzenith"]
     for band in BANDNAMES:
+        if band not in scene:
+            continue
         for wmo_id in satellite_names:
             if wmo_id == 70:
                 continue  # Meteosat11
@@ -205,10 +207,13 @@ def homogenize(scene):
 
 def recalibrate_meteosat(scene):
     """Nominal calibration is applied, redo with meirnik calibration."""
-    from satpy.readers.seviri_base import MeirinkCoefficients
+    # from satpy.readers.seviri_base import MeirinkCoefficients
+    from satpy.readers.core.seviri import MeirinkCoefficients
     start_time = dt64_to_datetime(scene["refl_00_65um"].attrs["start_time"])
     for wmo_id in platform_id:
         for band in channel_name:
+            if band not in scene:
+                continue
             dwmo_id = scene["wmo_id"]
             old_gain = calibration_nominal[start_time.year][platform_id[wmo_id]][channel_name[band]]
             meirink = MeirinkCoefficients(platform_id[wmo_id], channel_name[band], start_time)

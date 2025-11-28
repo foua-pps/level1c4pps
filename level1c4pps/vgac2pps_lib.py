@@ -18,6 +18,7 @@ from level1c4pps import (get_encoding, compose_filename,
                          set_header_and_band_attrs_defaults,
                          rename_latitude_longitude,
                          dt64_to_datetime,
+                         fix_timestamp_datatype,
                          update_angle_attributes, get_header_attrs,
                          convert_angles)
 import pyspectral  # testing that pyspectral is available # noqa: F401
@@ -768,12 +769,6 @@ def split_scene_at_midnight(scene):
     return [scene]
 
 
-def fix_timestamp_datatype(scene, encoding):
-    """Fix time datatype."""
-    param = "scanline_timestamps"
-    if "milliseconds" in encoding[param]["units"]:
-        scene[param].data = scene[param].data.astype('datetime64[ms]')
-
 def fix_platform_name(scene, scene_files):
     """For some NOAA20/NOAA21 production the platform name in the global attribute is set to Suomi-NPP."""
     if "VGAC_VN20" in os.path.basename(scene_files[0]):
@@ -832,7 +827,7 @@ def process_one_scene(scene_files, out_path, engine="h5netcdf",
 
         filename = compose_filename(scn_, out_path, instrument=sensor, band=irch)
         encoding = get_encoding_viirs(scn_)
-        fix_timestamp_datatype(scn_, encoding)
+        fix_timestamp_datatype(scn_, encoding, "scanline_timestamps")
 
         scn_.save_datasets(writer="cf",
                            filename=filename,
