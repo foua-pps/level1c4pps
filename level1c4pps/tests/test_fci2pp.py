@@ -33,10 +33,11 @@ try:
 except ImportError:
     import mock
 sys.modules["hdf5plugin"] = mock.MagicMock()
-import level1c4pps.fci2pps_lib as fci2pps
+import level1c4pps.fci2pps_lib as fci2pps  # modify hdf5plugin first # noqa: E402
 
 
 def get_fake_scene(start_time=dt.datetime(2000, 1, 1, 0)):
+    """Create fake scene."""
     from satpy import Scene
     scene = Scene()
     end_time = dt.datetime(2000, 1, 1, 0, 1)
@@ -80,7 +81,7 @@ def get_fake_scene(start_time=dt.datetime(2000, 1, 1, 0)):
     return scene
 
 
-class TestFci2PPS(unittest.TestCase):
+class TestFCI2PPS(unittest.TestCase):
     """Test for FCI converter."""
 
     def test_fix_time(self):
@@ -98,7 +99,7 @@ class TestFci2PPS(unittest.TestCase):
         my_get_satpos.return_value = (-0.3, 0.0, 35786 * 1000)
         scene = get_fake_scene()
         fci2pps.add_angles_and_latlon(scene)
-        np.testing.assert_allclose(scene["satzenith"].values[0,0], 86.6785348)
+        np.testing.assert_allclose(scene["satzenith"].values[0, 0], 86.6785348)
 
     def test_resample(self):
         """Test resampling."""

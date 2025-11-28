@@ -141,18 +141,18 @@ def get_solar_angles(scene, lons, lats):
 
 def fix_time(scene):
     """Make datetime objects from time in seconds."""
-    if type(scene["ir_105_time"].values[0, 0]) == np.float64:
+    if type(scene["ir_105_time"].values[0, 0]) is np.float64:
         epoch_to_2000 = dt.datetime(2000, 1, 1, tzinfo=dt.timezone.utc).timestamp()
-        scene["ir_105_time"] = scene["ir_105_time"] + epoch_to_2000
-        scene["ir_105_time"] = scene["ir_105_time"].astype('datetime64[s]')
-    ind = np.int16(scene["ir_105_time"].shape[0]/2)
+        scene["ir_105_time"] = (scene["ir_105_time"] + epoch_to_2000).astype('datetime64[s]')
+    ind = int(scene["ir_105_time"].shape[0]/2)
     a_time = dt64_to_datetime(scene["ir_105_time"].values[ind, ind])
     if a_time > scene.end_time or a_time < scene.start_time:
         raise ValueError(f"There is someting wrong with the time variable, at {ind}, {ind}")
     scene["ir_105_time"].attrs.pop("units", None)
     scene["ir_105_time"].attrs.pop("_FillValue", None)
 
-def resample_data(scn_in, datasets, resample_grid="coarse", resample_save_ram = False):
+
+def resample_data(scn_in, datasets, resample_grid="coarse", resample_save_ram=False):
     """Resample data to the same grid."""
     if resample_grid not in ["coarse"]:
         logger.info(
@@ -167,8 +167,8 @@ def resample_data(scn_in, datasets, resample_grid="coarse", resample_save_ram = 
         logger.info("Resampling to 1km grid")
         scn_out = scn_in.resample(scn_in["vis_08"].area, datsets=datasets, resampler="native")
     elif resample_grid in ["coarse"]:
-            logger.info("Resampling to coarsest grid")
-            scn_out = scn_in.resample(scn_in.coarsest_area(), datsets=datasets, resampler="native")
+        logger.info("Resampling to coarsest grid")
+        scn_out = scn_in.resample(scn_in.coarsest_area(), datsets=datasets, resampler="native")
     elif "msg" in resample_grid:
         if resample_save_ram:
             logger.info("Resampling to msg grid, via coarsest channel area.")
@@ -178,6 +178,7 @@ def resample_data(scn_in, datasets, resample_grid="coarse", resample_save_ram = 
             logger.info("Resampling to msg grid")
             scn_out = scn_in.resample(resample_grid, datsets=datasets, resampler='nearest')
     return scn_out
+
 
 def add_angles_and_latlon(scene):
     """Add the lon/lat and angles datasets."""
