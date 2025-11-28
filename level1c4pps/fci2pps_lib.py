@@ -19,27 +19,25 @@
 
 """Functions to convert FCI level-1 data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
 
+import datetime as dt
+import logging
 import os
 import time
+
+import hdf5plugin  # testing that library for fci is available # noqa: F401
+import numpy as np
+import pytz  # testing that library for fci is available # noqa: F401
 import satpy
+from packaging.version import Version
+from pyorbital.astronomy import get_alt_az, sun_zenith_angle
 from satpy.scene import Scene
-from level1c4pps import (get_encoding,
-                         compose_filename,
-                         get_header_attrs,
-                         set_header_and_band_attrs_defaults,
-                         dt64_to_datetime,
-                         fix_timestamp_datatype)
-from level1c4pps.seviri2pps_lib import (get_lonlats,
-                                        add_ancillary_datasets,
+
+from level1c4pps import (compose_filename, dt64_to_datetime,
+                         fix_timestamp_datatype, get_encoding,
+                         get_header_attrs, set_header_and_band_attrs_defaults)
+from level1c4pps.seviri2pps_lib import (add_ancillary_datasets, get_lonlats,
                                         get_satellite_angles,
                                         make_azidiff_angle)
-import logging
-import numpy as np
-from pyorbital.astronomy import get_alt_az, sun_zenith_angle
-import hdf5plugin  # testing that library for fci is available # noqa: F401
-import datetime as dt
-import pytz  # testing that library for fci is available # noqa: F401
-from packaging.version import Version
 
 # Example:
 # 'W_XX-EUMETSAT-Darmstadt,IMG+SAT,MTI1+FCI-1C-RRAD-HRFI-FD--CHK-BODY--DIS-NC4E_C_EUMT_20250408093037_IDPFI_OPE_20250408092752_20250408092842_N_JLS_O_0057_0034.nc"
