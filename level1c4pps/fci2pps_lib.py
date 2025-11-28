@@ -41,9 +41,6 @@ import datetime as dt
 import pytz  # testing that library for fci is available # noqa: F401
 from packaging.version import Version
 
-# from satpy.utils import debug_on
-# debug_on()
-
 # Example:
 # 'W_XX-EUMETSAT-Darmstadt,IMG+SAT,MTI1+FCI-1C-RRAD-HRFI-FD--CHK-BODY--DIS-NC4E_C_EUMT_20250408093037_IDPFI_OPE_20250408092752_20250408092842_N_JLS_O_0057_0034.nc"
 
@@ -58,26 +55,25 @@ BANDNAMES_DEFAULT = ["vis_06",
                      "vis_08",
                      "nir_13",
                      "nir_16",
+                     "nir_22",
                      "ir_38",
+                     "wv_63",
                      "wv_73",
-
                      "ir_105",
                      "ir_123",
-                     "nir_22",
-                     "wv_63",
                      "ir_133"]
 
 BANDNAMES_PPS = ["vis_06",
                  "vis_08",
                  "nir_13",
                  "nir_16",
-                 #"nir_22",
+                 "nir_22",
                  "ir_38",
                  "ir_87",
                  "ir_105",
                  "ir_123"]
 
-REFL_BANDS = ["vis_06", "vis_08", "nir_13", "nir_16", "vis_443",
+REFL_BANDS = ["vis_06", "vis_08", "nir_13", "nir_16",
               "vis_05", "vis_04", "vis_09",
               "nir_22"]
 
@@ -88,15 +84,15 @@ PPS_TAGNAMES = {"vis_06": "ch_r06",
                 "vis_08": "ch_r09",
                 "nir_13": "ch_r13",
                 "nir_16": "ch_r16",
+                "nir_22": "ch_r22",
                 "ir_38": "ch_tb37",
                 "ir_87": "ch_tb85",
                 "ir_105": "ch_tb11",
                 "ir_123": "ch_tb12",
-                "nir_22": "ch_r22",
                 # Not used yet:
                 "wv_63": "ch_tb67",
-                "ir_133": "ch_tb133",
                 "wv_73": "ch_tb73",
+                "ir_133": "ch_tb133",
                 "vis_05": "ch_rxx",
                 "vis_04": "ch_rxx",
                 "vis_09": "ch_rxx"}
@@ -114,17 +110,16 @@ def get_encoding_fci(scene):
 
 def set_header_and_band_attrs(scene, orbit_n=00000):
     """Set and delete some attributes."""
-    nimg = 0  # name of first dataset is image0
     # Set some header attributes:
     irch = scene['ir_105']
     scene.attrs['source'] = "fci2pps.py"
-    nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch, orbit_n=orbit_n)
+    set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch, orbit_n=orbit_n)
     for band in REFL_BANDS:
         if band not in scene:
             continue
-        print("Is this correct???????????????")
-        scene[band].attrs['sun_zenith_angle_correction_applied'] = 'True'
-    return nimg
+        if scene[band].attrs['sun_zenith_angle_correction_applied'] == "False":
+            logger.warning(f"Setting sun_zenith_angle_correction_applied to True for band {band}")
+            scene[band].attrs['sun_zenith_angle_correction_applied'] = 'True'
 
 
 def get_solar_angles(scene, lons, lats):

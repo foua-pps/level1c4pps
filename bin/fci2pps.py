@@ -51,7 +51,7 @@ if __name__ == "__main__":
                         required=False, default=0,
                         help="Orbit number (default is 00000).")
     parser.add_argument('-rg', '--resample_grid', choices=["fine", "1km", "coarse"] + msg_grids,
-                        help="Resample to grid, msg_seviri_fes_3km.", required=False, default="coarse")
+                        help="Resample to grid.", required=False, default="coarse")
     parser.add_argument('--resample_via_native_coarse', action='store_true',
                         help="Resample via coarsest area when resampling to msg grid to save RAM.", required=False)
     
