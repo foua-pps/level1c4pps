@@ -19,19 +19,22 @@
 
 """Unit tests for the fci2pps_lib module."""
 import datetime as dt
+import sys
+import unittest
+
 import numpy as np
 import pytest
-import unittest
-import sys
+import xarray as xr
+from pyresample import SwathDefinition
+from satpy.dataset.dataid import WavelengthRange
+
 try:
     from unittest import mock
 except ImportError:
     import mock
 sys.modules["hdf5plugin"] = mock.MagicMock()
 import level1c4pps.fci2pps_lib as fci2pps
-import xarray as xr
-from satpy.dataset.dataid import WavelengthRange
-from pyresample import SwathDefinition
+
 
 def get_fake_scene(start_time=dt.datetime(2000, 1, 1, 0)):
     from satpy import Scene
