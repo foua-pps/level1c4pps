@@ -33,6 +33,8 @@ from datetime import datetime, timedelta, timezone
 from satpy.scene import Scene
 import satpy.utils
 from trollsift.parser import globify, Parser
+
+
 from pyorbital.astronomy import get_alt_az, sun_zenith_angle
 from pyorbital.orbital import get_observer_look
 from level1c4pps import dt64_to_datetime
@@ -224,14 +226,32 @@ def get_satellite_angles(dataset, lons, lats):
     sat_alt *= 0.001
 
     # Compute angles
-    sata, satel = get_observer_look(
-        sat_lon,
-        sat_lat,
-        sat_alt,
-        dataset.attrs['start_time'],
-        lons, lats, 0)
-    satz = 90 - satel
 
+    if lons.shape[0] < 5000: 
+        sata, satel = get_observer_look(
+            sat_lon,
+            sat_lat,
+            sat_alt,
+            dataset.attrs['start_time'],
+            lons, lats, 0)
+    else:
+        sata = np.full(lons.shape, np.nan)
+        satel = np.full(lons.shape, np.nan)
+
+        chunks = list(range(0, lons.shape[0], 2000))
+        chunks.append(lons.shape[0])
+        for index in range(len(chunks)-1):
+            start_i = chunks[index]
+            end_i = chunks[index+1]
+            logger.info(f"Get angles for lines {start_i} to {end_i}")
+            sata[start_i:end_i, :], satel[start_i:end_i, :] = get_observer_look(
+                sat_lon,
+                sat_lat,
+                sat_alt,
+                dataset.attrs['start_time'],
+                lons[start_i:end_i, :], lats[start_i:end_i, :], 0)
+
+    satz = 90 - satel
     return sata, satz
 
 
@@ -298,6 +318,7 @@ def get_mean_acq_time(scene):
     """Compute mean scanline acquisition time over all bands."""
     dtype = scene['IR_108'].coords['acq_time'].dtype
 
+
     # Convert timestamps to float to facilitate averaging. Caveat: NaT is
     # not converted to NaN, but to -9.22E18. So we have to set these elements
     # to NaN manually
@@ -335,7 +356,7 @@ def update_coords(scene):
 
 def add_ancillary_datasets(scene, lons, lats, sunz, satz, azidiff,
                            suna, sata,
-                           save_azimuth_angles=False,
+                           save_azimuth_angles=False, irch_name="IR_108",
                            chunks=(512, 3712)):
     """Add ancillary datasets to the scene.
 
@@ -348,15 +369,15 @@ def add_ancillary_datasets(scene, lons, lats, sunz, satz, azidiff,
         chunks: Chunksize
 
     """
-    start_time = scene['IR_108'].attrs['start_time']
-    end_time = scene['IR_108'].attrs['end_time']
-    angle_coords = scene['IR_108'].coords
+    start_time = scene[irch_name].attrs['start_time']
+    end_time = scene[irch_name].attrs['end_time']
+    angle_coords = scene[irch_name].coords
 
     # Latitude
     scene['lat'] = xr.DataArray(
         da.from_array(lats, chunks=chunks),
         dims=['y', 'x'],
-        coords={'y': scene['IR_108']['y'], 'x': scene['IR_108']['x']})
+        coords={'y': scene[irch_name]['y'], 'x': scene[irch_name]['x']})
     scene['lat'].attrs['long_name'] = 'latitude coordinate'
     scene['lat'].attrs['standard_name'] = 'latitude'
     scene['lat'].attrs['units'] = 'degrees_north'
@@ -367,7 +388,7 @@ def add_ancillary_datasets(scene, lons, lats, sunz, satz, azidiff,
     scene['lon'] = xr.DataArray(
         da.from_array(lons, chunks=chunks),
         dims=['y', 'x'],
-        coords={'y': scene['IR_108']['y'], 'x': scene['IR_108']['x']})
+        coords={'y': scene[irch_name]['y'], 'x': scene[irch_name]['x']})
     scene['lon'].attrs['long_name'] = 'longitude coordinate'
     scene['lon'].attrs['standard_name'] = 'longitude'
     scene['lon'].attrs['units'] = 'degrees_east'
@@ -402,12 +423,12 @@ def add_ancillary_datasets(scene, lons, lats, sunz, satz, azidiff,
             dims=['y', 'x'], coords=angle_coords)
 
     # Update the attributes
-    update_angle_attributes(scene, band=scene['IR_108'])
+    update_angle_attributes(scene, band=scene[irch_name])
 
 
-def add_proj_satpos(scene):
+def add_proj_satpos(scene, irch_name='IR_108'):
     """Add information on projection and satellite position."""
-    orb = scene['IR_108'].attrs['orbital_parameters']
+    orb = scene[irch_name].attrs['orbital_parameters']
 
     # Area extent
     try:

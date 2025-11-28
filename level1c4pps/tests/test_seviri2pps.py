@@ -175,26 +175,29 @@ class TestSeviri2PPS(unittest.TestCase):
             else:
                 return 'sata', 176
 
+        lons = np.array([90, 180])
+        lats = np.array([65, 65])
         get_observer_look.side_effect = get_observer_look_patched
         get_satpos.return_value = 'sat_lon', 'sat_lat', 12345678
         ds = mock.MagicMock(attrs={'start_time': 'start_time'})
-        sata, satz = seviri2pps.get_satellite_angles(ds, 'lons', 'lats')
+        sata, satz = seviri2pps.get_satellite_angles(ds, lons, lats)
         self.assertEqual(sata, 'sata')
         self.assertEqual(satz, -86)
         get_observer_look.assert_called_with('sat_lon', 'sat_lat', 12345.678,
-                                             'start_time', 'lons', 'lats', 0)
+                                             'start_time', lons, lats, 0)
 
         # Height in km
         get_satpos.return_value = 'sat_lon', 'sat_lat', 36000
         self.assertRaises(seviri2pps.UnexpectedSatpyVersion,
-                          seviri2pps.get_satellite_angles, ds, 'lons', 'lats')
+                          seviri2pps.get_satellite_angles,
+                          ds, lons, lats)
 
         # pyorbital behaves unexpectedly
         get_satpos.return_value = 'sat_lon', 'sat_lat', 38001
         get_observer_look.reset_mock(side_effect=True)
         get_observer_look.return_value = None, 9999
         self.assertRaises(seviri2pps.UnexpectedSatpyVersion,
-                          seviri2pps.get_satellite_angles, ds, 'lons', 'lats')
+                          seviri2pps.get_satellite_angles, ds, lons, lats)
 
     def test_set_attrs(self):
         """Test setting scene attributes."""
