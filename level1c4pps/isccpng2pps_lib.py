@@ -8,9 +8,6 @@
 # under the terms of the Apache-2.0 license.
 #
 #
-# Author(s):
-
-#   Nina Hakansson <nina.hakansson@smhi.se>
 
 """Functions to convert ISCCP Next Generation level-1-G data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
 
