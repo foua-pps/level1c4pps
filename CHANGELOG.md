@@ -1,3 +1,13 @@
+## Version <0.2.39> (2025/12/01)
+
+
+### Pull Requests Merged
+
+* [PR 121](https://github.com/foua-pps/level1c4pps/pull/121) - METimage add choices to platform_name argument, by [@ninahakansson](https://github.com/ninahakansson)
+* [PR 111](https://github.com/foua-pps/level1c4pps/pull/111) - Add FCI, by [@ninahakansson](https://github.com/ninahakansson)
+
+In this release 2 pull requests were closed.
+
 ## Version <0.2.38> (2025/11/26)
 
 
