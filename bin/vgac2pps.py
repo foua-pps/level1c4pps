@@ -43,7 +43,7 @@ if __name__ == "__main__":
                         default=None,
                         help=("Save only the AVHRR (1,2, 3B, 4, 5) channels to level1c4pps file. "
                               "And apply SBAFs to the channels. "))
-    parser.add_argument('--noaa21_to_snpp', default=None,
+    parser.add_argument('--noaa21_to_snpp', default=None, required="-n19",
                         help=("Apply SBAFs to the channels, can be combined with -n19. "))
     parser.add_argument('-pps_ch', '--pps_channels', action='store_true',
                         help="Save only the necessary (for PPS) channels to level1c4pps file.")
