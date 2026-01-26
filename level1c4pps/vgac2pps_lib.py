@@ -92,7 +92,7 @@ PPS_TAGNAMES = {"M05": "ch_r06",
 # SBAF dictionary
 #
 # Spectral band adjustment factors for converting VGAC to AVHRR
-SBAF_N21 = {
+SBAF_N21_TO_SNPP = {
     "v1": {
         "tb11": {
             "viirs_channel": "M15",
@@ -108,7 +108,7 @@ SBAF_N21 = {
         }
     }
     }
-SBAF = {
+SBAF_VGAC_SNPP_TO_N19 = {
     
     "v2": {
         "r06": {
@@ -591,16 +591,23 @@ def convert_to_noaa19_neural_network(scene, sbaf_version):
     """Apply AVHRR SBAF to VGAC channels using NN approach."""
     from sbafs_ann.convert_vgac import convert_to_vgac_with_nn
     if sbaf_version in ["NN_v1", "NN_v2", "NN_v3", "NN_v4"]:
-        day_cfg_file = SBAF[sbaf_version]['cfg_file_day']
-        night_cfg_file = SBAF[sbaf_version]['cfg_file_night']
-        twilight_cfg_file = SBAF[sbaf_version]['cfg_file_twilight']
+        day_cfg_file = SBAF_VGAC_SNPP_TO_N19[sbaf_version]['cfg_file_day']
+        night_cfg_file = SBAF_VGAC_SNPP_TO_N19[sbaf_version]['cfg_file_night']
+        twilight_cfg_file = SBAF_VGAC_SNPP_TO_N19[sbaf_version]['cfg_file_twilight']
     else:
         logger.exception(f"Unrecognized NN version, {sbaf_version}")
     scene = convert_to_vgac_with_nn(scene, day_cfg_file, night_cfg_file, twilight_cfg_file)
 
     logger.info(f'Created NN version {sbaf_version}')
 
+def convert_to_noaa19_linear(scene, sbaf_version):
+    """Apply linear sbafs to simulate noaa19 data."""
+    convert_to_other_linear(scene, SBAF_VGAC_SNPP_TO_N19[sbaf_version])
 
+def convert_to_snpp_linear(scene, sbaf_version):
+    """Apply linear sbafs to simulate SNPP data from NOAA21."""
+    convert_to_other_linear(scene, SBAF_N21_TO_SNPP[sbaf_version])
+    
 def convert_to_other_linear(scene, SBAF):
     """Apply linear regression."""
     for avhhr_chan, scaling in SBAF.items():
@@ -624,7 +631,7 @@ def convert_to_noaa19_KNMI_v2(scene, sbaf_version):
     """Apply 1 channel linear regression SBAF for KNMI version 2."""
     # I need to save the t11 values before the SBAF adjustment as they are needed for the tb12 SBAF
     tb11_original = scene["M15"].values.copy()
-    for avhrr_chan, scaling in SBAF[sbaf_version].items():
+    for avhrr_chan, scaling in SBAF_VGAC_SNPP_TO_N19[sbaf_version].items():
         viirs_channel = scaling["viirs_channel"]
         offset = scaling["offset"]
         comment = scaling["comment"]
@@ -670,17 +677,17 @@ def convert_to_noaa19_KNMI_v2(scene, sbaf_version):
             logger.info(f"{avhrr_chan:<13}: ({comment})")
 
 
-def convert_to_noaa19(scene, sbaf_version):
+def convert_to_noaa19(scene, sbaf_version, noaa21_sbaf_version):
     """Apply AVHRR SBAF to VGAC channels."""
     logger.info(f"Using SBAF_{sbaf_version}")
-
-
+    if noaa21_sbaf_version is not None and scene.attrs["platform"] == "noaa21":
+        convert_to_snpp_linear(scene, noaa21_sbaf_version)
     if "NN" in sbaf_version:          
         convert_to_noaa19_neural_network(scene, sbaf_version)
     elif sbaf_version == "KNMI_v2":
         convert_to_noaa19_KNMI_v2(scene, sbaf_version)
     else:
-        convert_to_other_linear(scene, SBAF[sbaf_version])
+        convert_to_noaa19_linear(scene, sbaf_version)
 
     if "npp" in scene.attrs["platform"].lower():
         scene.attrs["platform"] = "vgacsnpp"
@@ -839,13 +846,10 @@ def process_one_scene(scene_files, out_path, engine="h5netcdf",
         rename_latitude_longitude(scn_)
         convert_angles(scn_, delete_azimuth=False)
         update_angle_attributes(scn_, irch)
-
-        if noaa21_sbaf_version is not None and scn_.attrs["platform"] == "noaa21":
-            convert_to_other_linear(scn_, SBAF_N21[noaa21_sbaf_version])            
         sensor = "viirs"
         if noaa19_sbaf_version is not None:
             sensor = "avhrr"
-            convert_to_noaa19(scn_, noaa19_sbaf_version)
+            convert_to_noaa19(scn_, noaa19_sbaf_version, noaa21_sbaf_version)
 
         filename = compose_filename(scn_, out_path, instrument=sensor, band=irch)
         encoding = get_encoding_viirs(scn_)

@@ -20,7 +20,8 @@
 """Script to convert VIIRS level-1 to PPS level-1c format using Pytroll/Satpy."""
 
 import argparse
-from level1c4pps.vgac2pps_lib import SBAF, process_one_scene
+import sys
+from level1c4pps.vgac2pps_lib import process_one_scene
 
 
 if __name__ == "__main__":
@@ -43,7 +44,7 @@ if __name__ == "__main__":
                         default=None,
                         help=("Save only the AVHRR (1,2, 3B, 4, 5) channels to level1c4pps file. "
                               "And apply SBAFs to the channels. "))
-    parser.add_argument('--noaa21_to_snpp', default=None, required="-n19",
+    parser.add_argument('--noaa21_to_snpp', default=None, required=("--as_noaa19" in sys.argv or "-n19" in sys.argv),
                         help=("Apply SBAFs to the channels, can be combined with -n19. "))
     parser.add_argument('-pps_ch', '--pps_channels', action='store_true',
                         help="Save only the necessary (for PPS) channels to level1c4pps file.")
