@@ -109,7 +109,7 @@ SBAF_N21_TO_SNPP = {
     }
     }
 SBAF_VGAC_SNPP_TO_N19 = {
-    
+
     "v2": {
         "r06": {
             "viirs_channel": "M05",
@@ -600,14 +600,17 @@ def convert_to_noaa19_neural_network(scene, sbaf_version):
 
     logger.info(f'Created NN version {sbaf_version}')
 
+
 def convert_to_noaa19_linear(scene, sbaf_version):
     """Apply linear sbafs to simulate noaa19 data."""
     convert_to_other_linear(scene, SBAF_VGAC_SNPP_TO_N19[sbaf_version])
 
+
 def convert_to_snpp_linear(scene, sbaf_version):
     """Apply linear sbafs to simulate SNPP data from NOAA21."""
     convert_to_other_linear(scene, SBAF_N21_TO_SNPP[sbaf_version])
-    
+
+
 def convert_to_other_linear(scene, SBAF):
     """Apply linear regression."""
     for avhhr_chan, scaling in SBAF.items():
@@ -682,7 +685,7 @@ def convert_to_noaa19(scene, sbaf_version, noaa21_sbaf_version):
     logger.info(f"Using SBAF_{sbaf_version}")
     if noaa21_sbaf_version is not None and scene.attrs["platform"] == "noaa21":
         convert_to_snpp_linear(scene, noaa21_sbaf_version)
-    if "NN" in sbaf_version:          
+    if "NN" in sbaf_version:
         convert_to_noaa19_neural_network(scene, sbaf_version)
     elif sbaf_version == "KNMI_v2":
         convert_to_noaa19_KNMI_v2(scene, sbaf_version)
@@ -806,6 +809,7 @@ def fix_platform_name(scene, scene_files):
         scene.attrs['platform'] = "JPSS-1"
     if "VGAC_VN21" in os.path.basename(scene_files[0]):
         scene.attrs['platform'] = "JPSS-2"
+
 
 def process_one_scene(scene_files, out_path, engine="h5netcdf",
                       all_channels=False, pps_channels=False, orbit_n=0,
