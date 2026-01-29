@@ -107,7 +107,41 @@ SBAF_N21_TO_SNPP = {
             "comment": "Adjust NOAA-21 to S-NPP, KGs suggestion 20251217",
         }
     }
+}
+
+SBAF_N19_TO_N19 = {
+    "NN_v4": {
+        "noaa20": {
+            "r06": {
+                "viirs_channel": "M05",
+                "slope": 1.025,
+                "offset": 0,
+                "comment": "Adjust NOAA-20 after NN_v4 KGs suggestion 20260129",
+            },
+            "r09": {
+                "viirs_channel": "M07",
+                "slope": 1.01,
+                "offset": 0,
+                "comment": "Adjust NOAA-20 after NN_v4, KGs suggestion 20260129",
+            }
+        },
+        "noaa21": {
+            "r06": {
+                "viirs_channel": "M05",
+                "slope": 1.025,
+                "offset": 0,
+                "comment": "Adjust NOAA-21 after NN_v4, KGs suggestion 20260129",
+            },
+            "r09": {
+                "viirs_channel": "M07",
+                "slope": 1.02,
+                "offset": 0,
+                "comment": "Adjust NOAA-21 after NN_v4, KGs suggestion 20260129",
+            }
+        }
     }
+    }
+
 SBAF_VGAC_SNPP_TO_N19 = {
 
     "v2": {
@@ -597,7 +631,10 @@ def convert_to_noaa19_neural_network(scene, sbaf_version):
     else:
         logger.exception(f"Unrecognized NN version, {sbaf_version}")
     scene = convert_to_vgac_with_nn(scene, day_cfg_file, night_cfg_file, twilight_cfg_file)
-
+    if sbaf_version in ["NN_v4"]:
+        # Postprocessing, extra SBAF for NOAA20 and NOAA21 needed due to differences compared to SNPP
+        if scene.attrs["platform"] in ["noaa20", "noaa21"]:
+            convert_to_other_linear(scene, SBAF_N19_TO_N19[sbaf_version][scene.attrs["platform"]])
     logger.info(f'Created NN version {sbaf_version}')
 
 
