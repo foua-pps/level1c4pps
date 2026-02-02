@@ -1,3 +1,13 @@
+## Version <0.2.40> (2026/02/02)
+
+
+### Pull Requests Merged
+
+* [PR 123](https://github.com/foua-pps/level1c4pps/pull/123) - Add postprocessing SBAF for NN_v4., by [@ninahakansson](https://github.com/ninahakansson)
+* [PR 122](https://github.com/foua-pps/level1c4pps/pull/122) - Add extra adjustment for noaa21, by [@ninahakansson](https://github.com/ninahakansson)
+
+In this release 2 pull requests were closed.
+
 ## Version <0.2.39> (2025/12/01)
 
 
