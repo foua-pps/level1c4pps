@@ -632,7 +632,6 @@ def convert_to_noaa19_neural_network(scene, sbaf_version):
         logger.exception(f"Unrecognized NN version, {sbaf_version}")
     scene = convert_to_vgac_with_nn(scene, day_cfg_file, night_cfg_file, twilight_cfg_file)
     if sbaf_version in ["NN_v4"]:
-        print(scene.attrs["platform"])
         # Postprocessing, extra SBAF for NOAA20 and NOAA21 needed due to differences compared to SNPP
         if scene.attrs["platform"] in ["noaa20", "noaa21"]:
             convert_to_other_linear(scene, SBAF_N19_TO_N19[sbaf_version][scene.attrs["platform"]])
