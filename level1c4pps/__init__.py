@@ -536,6 +536,7 @@ def apply_sunz_correction(scene, REFL_BANDS):
         if band not in scene:
             continue
         if scene[band].attrs['sun_zenith_angle_correction_applied'] == 'False':
+            logger.info(f"Apply sunz correction for {band}")
             scene[band].values = scene[band].values * scaler
             scene[band].attrs['sun_zenith_angle_correction_applied'] = 'True'
 
