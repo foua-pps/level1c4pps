@@ -48,7 +48,8 @@ logger = logging.getLogger('metimage2pps')
 if Version(satpy.__version__) <= Version('0.59.0'):
     logger.info("For METimage use satpy >= 0.60.")
     raise ValueError("For METimage satpy >= 0.60 is needed")
-
+else:
+    logger.info("Sunz correction not done by satpy reader for versions >= 0.60.")
 BANDNAMES_DEFAULT = ["vii_668",
                      "vii_865",
                      "vii_1375",
@@ -130,7 +131,7 @@ def set_header_and_band_attrs(scene, orbit_n=00000):
     for band in REFL_BANDS:
         if band not in scene:
             continue
-        logger.info("Sunz correction not done by satpy reader for versions >= 0.60.")
+        # Sunz correction not done by satpy reader for versions >= 0.60.
         scene[band].attrs['sun_zenith_angle_correction_applied'] = 'False'
     return nimg
 
@@ -164,7 +165,6 @@ def process_one_scene(scene_files, out_path,
 
     # one ir channel
     irch = scn_['vii_10690']
-
     set_header_and_band_attrs(scn_, orbit_n=orbit_n)
     rename_latitude_longitude(scn_)
     adjust_lons_to_valid_range(scn_)
