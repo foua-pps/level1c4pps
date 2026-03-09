@@ -1,3 +1,12 @@
+## Version <0.2.41> (2026/03/09)
+
+
+### Pull Requests Merged
+
+* [PR 124](https://github.com/foua-pps/level1c4pps/pull/124) - Adapt METimage to newer satpy, by [@ninahakansson](https://github.com/ninahakansson)
+
+In this release 1 pull request was closed.
+
 ## Version <0.2.40> (2026/02/02)
 
 
