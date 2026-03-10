@@ -555,12 +555,14 @@ def platform_name_to_use_in_filename(platform_name):
     new_name = fix_too_great_attributes(new_name)
     if new_name == 'sga1':
         new_name = 'metopsga1'
-    replace_dict = {'aqua': '2',
+    replace_dict = {'aqua': 'eos2',
+                    'eos-aqua': 'eos2',
                     'mtgi1': 'mtg1',
                     '-': '',
                     'jpss1': 'noaa20',
                     'jpss2': 'noaa21',
-                    'terra': '1',
+                    'terra': 'eos1',
+                    'terra': 'eos1',
                     'suomi': ''}
     for orig, new in replace_dict.items():
         new_name = new_name.replace(orig, new)
