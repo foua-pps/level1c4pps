@@ -36,6 +36,8 @@ class TestInit(unittest.TestCase):
                         "MTG-I1": "mtg1",
                         "jpss1": "noaa20",
                         "JPSS-2": "noaa21",
+                        "SGA1": "metopsga1",
+                        "SGA-1": "metopsga1",
                         "EOS-Terra": "eos1",
                         "Terra": "eos1",
                         "EOS-Aqua": "eos2",

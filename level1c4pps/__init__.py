@@ -553,9 +553,8 @@ def platform_name_to_use_in_filename(platform_name):
     """Get platform name for PPS filenames from platfrom attribute."""
     new_name = platform_name.lower()
     new_name = fix_too_great_attributes(new_name)
-    if new_name == 'sga1':
-        new_name = 'metopsga1'
     replace_dict = {'eosaqua': 'eos2',
+                    'sga1': 'metopsga1',
                     'aqua': 'eos2',
                     'mtgi1': 'mtg1',
                     'jpss1': 'noaa20',
