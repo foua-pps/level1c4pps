@@ -1,3 +1,14 @@
+## Version <0.2.42> (2026/04/01)
+
+
+### Pull Requests Merged
+
+* [PR 126](https://github.com/foua-pps/level1c4pps/pull/126) - Fix filenaming, remove "-" first, by [@ninahakansson](https://github.com/ninahakansson)
+* [PR 125](https://github.com/foua-pps/level1c4pps/pull/125) - updated platform name for aqua/terra to eos2/eos1, by [@ikaur17](https://github.com/ikaur17)
+
+In this release 2 pull requests were closed.
+
+
 ## Version <0.2.41> (2026/03/09)
 
 
