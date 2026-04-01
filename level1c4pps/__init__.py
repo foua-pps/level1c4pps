@@ -528,6 +528,7 @@ def apply_sunz_correction(scene, REFL_BANDS):
         if band not in scene:
             continue
         if scene[band].attrs['sun_zenith_angle_correction_applied'] == 'False':
+            logger.info(f"Apply sunz zenith angle correction for {band}")
             scene[band].values = scene[band].values * scaler
             scene[band].attrs['sun_zenith_angle_correction_applied'] = 'True'
 
@@ -544,17 +545,20 @@ def platform_name_to_use_in_filename(platform_name):
     """Get platform name for PPS filenames from platfrom attribute."""
     new_name = platform_name.lower()
     new_name = fix_too_great_attributes(new_name)
-    if new_name == 'sga1':
-        new_name = 'metopsga1'
-    replace_dict = {'aqua': '2',
+    replace_dict = {'eosaqua': 'eos2',
+                    'sga1': 'metopsga1',
+                    'aqua': 'eos2',
                     'mtgi1': 'mtg1',
-                    '-': '',
                     'jpss1': 'noaa20',
                     'jpss2': 'noaa21',
-                    'terra': '1',
-                    'suomi': ''}
+                    'eosterra': 'eos1',
+                    'terra': 'eos1',
+                    'suominpp': 'npp'}
+
+    new_name = new_name.replace("-", "")
     for orig, new in replace_dict.items():
-        new_name = new_name.replace(orig, new)
+        if new_name == orig:
+            new_name = new
     return new_name
 
 

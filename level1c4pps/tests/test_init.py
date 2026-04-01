@@ -20,6 +20,26 @@ import numpy as np
 class TestInit(unittest.TestCase):
     """Test functions in __init__.py."""
 
+    def test_platform_name_to_use_in_filename(self):
+        """Test platform name function."""
+        from level1c4pps import platform_name_to_use_in_filename
+        input_output = {"EOS-Aqua": "eos2",
+                        "Aqua": "eos2",
+                        "MTG-I1": "mtg1",
+                        "jpss1": "noaa20",
+                        "JPSS-2": "noaa21",
+                        "SGA1": "metopsga1",
+                        "SGA-1": "metopsga1",
+                        "EOS-Terra": "eos1",
+                        "Terra": "eos1",
+                        "EOS-Aqua": "eos2",
+                        "NOAA-20": "noaa20",
+                        "Suomi-NPP": "npp"}
+        for platform_name in input_output:
+            
+            out = platform_name_to_use_in_filename(platform_name)
+            self.assertTrue(out == input_output[platform_name])
+
     def test_get_band_encoding(self):
         """Test get encoding."""
         ds = xr.DataArray([], attrs={'name': 'dummy'})
