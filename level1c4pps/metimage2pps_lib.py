@@ -21,8 +21,10 @@
 
 import os
 import time
+import satpy
 from satpy.scene import Scene
-from level1c4pps import (get_encoding, compose_filename,
+from level1c4pps import (apply_sunz_correction,
+                         get_encoding, compose_filename,
                          rename_latitude_longitude,
                          update_angle_attributes, get_header_attrs,
                          set_header_and_band_attrs_defaults,
@@ -30,16 +32,24 @@ from level1c4pps import (get_encoding, compose_filename,
                          adjust_lons_to_valid_range)
 
 import logging
+from packaging.version import Version
+
 
 # from satpy.utils import debug_on
 # debug_on()
 
 # Example:
-# '/home/a001865/DATA_MISC/EPSSG_TEST/Testdata/W_xx-eumetsat-darmstadt,SAT,SGA1-VII-1B-RAD_C_EUMT_20191001043852_G_D_20070912095840_20070912100343_T_N____.nc'
+# W_xx-eumetsat-darmstadt,SAT,SGA1-VII-1B-RAD_C_EUMT_20191001043852_G_D_20070912095840_20070912100343_T_N____.nc'
+# W_XX-EUMETSAT-Darmstadt,SAT,SGA1-VII-1B-RAD_C_EUMT_20260211124622_G_V_20260211115100_20260211115158_C_N_T__.nc
 
 
 logger = logging.getLogger('metimage2pps')
 
+if Version(satpy.__version__) <= Version('0.59.0'):
+    logger.info("For METimage use satpy >= 0.60.")
+    raise ValueError("For METimage satpy >= 0.60 is needed")
+else:
+    logger.info("Sunz correction not done by satpy reader for versions >= 0.60.")
 BANDNAMES_DEFAULT = ["vii_668",
                      "vii_865",
                      "vii_1375",
@@ -75,8 +85,8 @@ REFL_BANDS = ["vii_668", "vii_865", "vii_1375", "vii_1630", "vii_443",
               "vii_555", "vii_752", "vii_763", "vii_914", "vii_1240",
               "vii_2250"]
 
-ANGLE_NAMES = ['observation_zenith', 'solar_zenith',
-               'observation_azimuth', 'solar_azimuth']
+ANGLE_NAMES = ['satellite_zenith_angle', 'solar_zenith_angle',
+               'satellite_azimuth_angle', 'solar_azimuth_angle']
 
 PPS_TAGNAMES = {"vii_668": "ch_r06",
                 "vii_865": "ch_r09",
@@ -121,15 +131,17 @@ def set_header_and_band_attrs(scene, orbit_n=00000):
     for band in REFL_BANDS:
         if band not in scene:
             continue
-        print("Is this correct, it was in testdata3.")
-        scene[band].attrs['sun_zenith_angle_correction_applied'] = 'True'
+        # Sunz correction not done by satpy reader for versions >= 0.60.
+        scene[band].attrs['sun_zenith_angle_correction_applied'] = 'False'
     return nimg
 
 
 def process_one_scene(scene_files, out_path,
                       engine='h5netcdf',
-                      all_channels=False, pps_channels=False,
-                      orbit_n=0):
+                      all_channels=False,
+                      pps_channels=False,
+                      orbit_n=0,
+                      platform_name=None):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scn_ = Scene(reader='vii_l1b_nc', filenames=scene_files)
@@ -153,23 +165,14 @@ def process_one_scene(scene_files, out_path,
 
     # one ir channel
     irch = scn_['vii_10690']
-
-    # Set header and band attributes
     set_header_and_band_attrs(scn_, orbit_n=orbit_n)
-
-    # Rename longitude, latitude to lon, lat.
     rename_latitude_longitude(scn_)
-
-    # Adjust lons to valid range:
     adjust_lons_to_valid_range(scn_)
-
-    # Convert angles to PPS
     convert_angles(scn_, delete_azimuth=True)
     update_angle_attributes(scn_, irch)
-
-    # Apply sunz correction
-    # apply_sunz_correction(scn_, REFL_BANDS)
-
+    apply_sunz_correction(scn_, REFL_BANDS)
+    if platform_name is not None:
+        scn_.attrs['platform'] = platform_name
     filename = compose_filename(scn_, out_path, instrument='metimage', band=irch)
     scn_.save_datasets(writer='cf',
                        filename=filename,

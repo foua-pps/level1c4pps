@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # Copyright (c) 2019 level1c4pps developers
 #
@@ -26,6 +25,7 @@ from level1c4pps import (get_encoding, compose_filename,
                          set_header_and_band_attrs_defaults,
                          rename_latitude_longitude,
                          dt64_to_datetime,
+                         fix_timestamp_datatype,
                          update_angle_attributes, get_header_attrs,
                          convert_angles)
 import pyspectral  # testing that pyspectral is available # noqa: F401
@@ -92,8 +92,58 @@ PPS_TAGNAMES = {"M05": "ch_r06",
 # SBAF dictionary
 #
 # Spectral band adjustment factors for converting VGAC to AVHRR
+SBAF_N21_TO_SNPP = {
+    "v1": {
+        "tb11": {
+            "viirs_channel": "M15",
+            "slope": 0.998,
+            "offset": +0.35,
+            "comment": "Adjust NOAA-21 to S-NPP, KGs suggestion 20251217",
+        },
+        "tb12": {
+            "viirs_channel": "M16",
+            "slope": 1.001,
+            "offset": -0.25,
+            "comment": "Adjust NOAA-21 to S-NPP, KGs suggestion 20251217",
+        }
+    }
+}
 
-SBAF = {
+SBAF_N19_TO_N19 = {
+    "NN_v4": {
+        "noaa20": {
+            "r06": {
+                "viirs_channel": "M05",
+                "slope": 1.025,
+                "offset": 0,
+                "comment": "Adjust NOAA-20 after NN_v4 KGs suggestion 20260129",
+            },
+            "r09": {
+                "viirs_channel": "M07",
+                "slope": 1.01,
+                "offset": 0,
+                "comment": "Adjust NOAA-20 after NN_v4, KGs suggestion 20260129",
+            }
+        },
+        "noaa21": {
+            "r06": {
+                "viirs_channel": "M05",
+                "slope": 1.025,
+                "offset": 0,
+                "comment": "Adjust NOAA-21 after NN_v4, KGs suggestion 20260129",
+            },
+            "r09": {
+                "viirs_channel": "M07",
+                "slope": 1.02,
+                "offset": 0,
+                "comment": "Adjust NOAA-21 after NN_v4, KGs suggestion 20260129",
+            }
+        }
+    }
+    }
+
+SBAF_VGAC_SNPP_TO_N19 = {
+
     "v2": {
         "r06": {
             "viirs_channel": "M05",
@@ -575,17 +625,30 @@ def convert_to_noaa19_neural_network(scene, sbaf_version):
     """Apply AVHRR SBAF to VGAC channels using NN approach."""
     from sbafs_ann.convert_vgac import convert_to_vgac_with_nn
     if sbaf_version in ["NN_v1", "NN_v2", "NN_v3", "NN_v4"]:
-        day_cfg_file = SBAF[sbaf_version]['cfg_file_day']
-        night_cfg_file = SBAF[sbaf_version]['cfg_file_night']
-        twilight_cfg_file = SBAF[sbaf_version]['cfg_file_twilight']
+        day_cfg_file = SBAF_VGAC_SNPP_TO_N19[sbaf_version]['cfg_file_day']
+        night_cfg_file = SBAF_VGAC_SNPP_TO_N19[sbaf_version]['cfg_file_night']
+        twilight_cfg_file = SBAF_VGAC_SNPP_TO_N19[sbaf_version]['cfg_file_twilight']
     else:
         logger.exception(f"Unrecognized NN version, {sbaf_version}")
     scene = convert_to_vgac_with_nn(scene, day_cfg_file, night_cfg_file, twilight_cfg_file)
-
+    if sbaf_version in ["NN_v4"]:
+        # Postprocessing, extra SBAF for NOAA20 and NOAA21 needed due to differences compared to SNPP
+        if scene.attrs["platform"] in ["noaa20", "noaa21"]:
+            convert_to_other_linear(scene, SBAF_N19_TO_N19[sbaf_version][scene.attrs["platform"]])
     logger.info(f'Created NN version {sbaf_version}')
 
 
-def convert_to_noaa19_linear(scene, SBAF):
+def convert_to_noaa19_linear(scene, sbaf_version):
+    """Apply linear sbafs to simulate noaa19 data."""
+    convert_to_other_linear(scene, SBAF_VGAC_SNPP_TO_N19[sbaf_version])
+
+
+def convert_to_snpp_linear(scene, sbaf_version):
+    """Apply linear sbafs to simulate SNPP data from NOAA21."""
+    convert_to_other_linear(scene, SBAF_N21_TO_SNPP[sbaf_version])
+
+
+def convert_to_other_linear(scene, SBAF):
     """Apply linear regression."""
     for avhhr_chan, scaling in SBAF.items():
         viirs_channel = scaling["viirs_channel"]
@@ -608,7 +671,7 @@ def convert_to_noaa19_KNMI_v2(scene, sbaf_version):
     """Apply 1 channel linear regression SBAF for KNMI version 2."""
     # I need to save the t11 values before the SBAF adjustment as they are needed for the tb12 SBAF
     tb11_original = scene["M15"].values.copy()
-    for avhrr_chan, scaling in SBAF[sbaf_version].items():
+    for avhrr_chan, scaling in SBAF_VGAC_SNPP_TO_N19[sbaf_version].items():
         viirs_channel = scaling["viirs_channel"]
         offset = scaling["offset"]
         comment = scaling["comment"]
@@ -654,16 +717,17 @@ def convert_to_noaa19_KNMI_v2(scene, sbaf_version):
             logger.info(f"{avhrr_chan:<13}: ({comment})")
 
 
-def convert_to_noaa19(scene, sbaf_version):
+def convert_to_noaa19(scene, sbaf_version, noaa21_sbaf_version):
     """Apply AVHRR SBAF to VGAC channels."""
     logger.info(f"Using SBAF_{sbaf_version}")
-
+    if noaa21_sbaf_version is not None and scene.attrs["platform"] == "noaa21":
+        convert_to_snpp_linear(scene, noaa21_sbaf_version)
     if "NN" in sbaf_version:
         convert_to_noaa19_neural_network(scene, sbaf_version)
     elif sbaf_version == "KNMI_v2":
         convert_to_noaa19_KNMI_v2(scene, sbaf_version)
     else:
-        convert_to_noaa19_linear(scene, SBAF[sbaf_version])
+        convert_to_noaa19_linear(scene, sbaf_version)
 
     if "npp" in scene.attrs["platform"].lower():
         scene.attrs["platform"] = "vgacsnpp"
@@ -776,12 +840,6 @@ def split_scene_at_midnight(scene):
     return [scene]
 
 
-def fix_timestamp_datatype(scene, encoding):
-    """Fix time datatype."""
-    param = "scanline_timestamps"
-    if "milliseconds" in encoding[param]["units"]:
-        scene[param].data = scene[param].data.astype('datetime64[ms]')
-
 def fix_platform_name(scene, scene_files):
     """For some NOAA20/NOAA21 production the platform name in the global attribute is set to Suomi-NPP."""
     if "VGAC_VN20" in os.path.basename(scene_files[0]):
@@ -789,9 +847,12 @@ def fix_platform_name(scene, scene_files):
     if "VGAC_VN21" in os.path.basename(scene_files[0]):
         scene.attrs['platform'] = "JPSS-2"
 
+
 def process_one_scene(scene_files, out_path, engine="h5netcdf",
                       all_channels=False, pps_channels=False, orbit_n=0,
-                      noaa19_sbaf_version=None, avhrr_channels=False,
+                      noaa19_sbaf_version=None,
+                      noaa21_sbaf_version=None,
+                      avhrr_channels=False,
                       split_files_at_midnight=True):
     """Make level 1c files in PPS-format."""
     tic = time.time()
@@ -820,27 +881,20 @@ def process_one_scene(scene_files, out_path, engine="h5netcdf",
         scenes = [scn_in]
     filenames = []
     for scn_ in scenes:
-        # one ir channel
+
         irch = scn_["M15"]
-
-        # Set header and band attributes
         set_header_and_band_attrs(scn_, orbit_n=orbit_n)
-
-        # Rename longitude, latitude to lon, lat.
         rename_latitude_longitude(scn_)
-
-        # Convert angles to PPS
         convert_angles(scn_, delete_azimuth=False)
         update_angle_attributes(scn_, irch)
-        # Adjust to noaa19 with sbafs from KG
         sensor = "viirs"
         if noaa19_sbaf_version is not None:
             sensor = "avhrr"
-            convert_to_noaa19(scn_, noaa19_sbaf_version)
+            convert_to_noaa19(scn_, noaa19_sbaf_version, noaa21_sbaf_version)
 
         filename = compose_filename(scn_, out_path, instrument=sensor, band=irch)
         encoding = get_encoding_viirs(scn_)
-        fix_timestamp_datatype(scn_, encoding)
+        fix_timestamp_datatype(scn_, encoding, "scanline_timestamps")
 
         scn_.save_datasets(writer="cf",
                            filename=filename,

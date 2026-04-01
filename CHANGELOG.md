@@ -1,3 +1,55 @@
+## Version <0.2.42> (2026/04/01)
+
+
+### Pull Requests Merged
+
+* [PR 126](https://github.com/foua-pps/level1c4pps/pull/126) - Fix filenaming, remove "-" first, by [@ninahakansson](https://github.com/ninahakansson)
+* [PR 125](https://github.com/foua-pps/level1c4pps/pull/125) - updated platform name for aqua/terra to eos2/eos1, by [@ikaur17](https://github.com/ikaur17)
+
+In this release 2 pull requests were closed.
+
+
+## Version <0.2.41> (2026/03/09)
+
+
+### Pull Requests Merged
+
+* [PR 124](https://github.com/foua-pps/level1c4pps/pull/124) - Adapt METimage to newer satpy, by [@ninahakansson](https://github.com/ninahakansson)
+
+In this release 1 pull request was closed.
+
+## Version <0.2.40> (2026/02/02)
+
+
+### Pull Requests Merged
+
+* [PR 123](https://github.com/foua-pps/level1c4pps/pull/123) - Add postprocessing SBAF for NN_v4., by [@ninahakansson](https://github.com/ninahakansson)
+* [PR 122](https://github.com/foua-pps/level1c4pps/pull/122) - Add extra adjustment for noaa21, by [@ninahakansson](https://github.com/ninahakansson)
+
+In this release 2 pull requests were closed.
+
+## Version <0.2.39> (2025/12/01)
+
+
+### Pull Requests Merged
+
+* [PR 121](https://github.com/foua-pps/level1c4pps/pull/121) - METimage add choices to platform_name argument, by [@ninahakansson](https://github.com/ninahakansson)
+* [PR 111](https://github.com/foua-pps/level1c4pps/pull/111) - Add FCI, by [@ninahakansson](https://github.com/ninahakansson)
+
+In this release 2 pull requests were closed.
+
+## Version <0.2.38> (2025/11/26)
+
+
+### Pull Requests Merged
+
+* [PR 119](https://github.com/foua-pps/level1c4pps/pull/119) - Handle 2 channel isccpng, by [@ninahakansson](https://github.com/ninahakansson)
+* [PR 117](https://github.com/foua-pps/level1c4pps/pull/117) - Allow setting platform_name from commandline for METimage, by [@ninahakansson](https://github.com/ninahakansson)
+* [PR 116](https://github.com/foua-pps/level1c4pps/pull/116) - Bump pypa/gh-action-pypi-publish from 1.4.1 to 1.13.0 in /.github/workflows, by [@dependabot[bot]](https://github.com/apps/dependabot)
+* [PR 82](https://github.com/foua-pps/level1c4pps/pull/82) - Isccpg ng, by [@ninahakansson](https://github.com/ninahakansson)
+
+In this release 4 pull requests were closed.
+
 ## Version <0.2.37> (2025/03/28)
 
 ### Issues Closed
@@ -14,6 +66,7 @@ In this release 1 issue was closed.
 * [PR 105](https://github.com/foua-pps/level1c4pps/pull/105) - SEVIRI IR calibration, by [@ninahakansson](https://github.com/ninahakansson) ([98](https://github.com/foua-pps/level1c4pps/issues/98))
 
 In this release 4 pull requests were closed.
+
 ## Version <0.2.36> (2025/01/30)
 
 ### Issues Closed
