@@ -562,11 +562,12 @@ def platform_name_to_use_in_filename(platform_name):
                     'jpss2': 'noaa21',
                     'eosterra': 'eos1',
                     'terra': 'eos1',
-                    'suomi': ''}
+                    'suominpp': 'npp'}
 
     new_name = new_name.replace("-", "")
     for orig, new in replace_dict.items():
-        new_name = new_name.replace(orig, new)
+        if new_name == orig:
+            new_name = new
     return new_name
 
 
