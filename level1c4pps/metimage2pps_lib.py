@@ -194,7 +194,7 @@ def process_one_scene(scene_files, out_path,
         destripe(scn_, "vii_6725", num=48)
         destripe(scn_, "vii_7325", num=48)
         destripe(scn_, "vii_13345", num=48)
-                
+
     apply_sunz_correction(scn_, REFL_BANDS)
     if platform_name is not None:
         scn_.attrs['platform'] = platform_name
