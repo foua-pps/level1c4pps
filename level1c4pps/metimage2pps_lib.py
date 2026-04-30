@@ -113,6 +113,21 @@ PPS_TAGNAMES = {"vii_668": "ch_r06",
 BANDNAMES = list(PPS_TAGNAMES.keys())
 
 
+def destripe(scene, band, num=24):
+    """Destripe IR bands."""
+    import numpy as np
+    logger.info(f"Destriping IR channel {band}.")
+    arr = scene[band].values
+    N_scans = int(np.floor(arr.shape[0] / num))
+    mean_scanline = np.nanmean(arr, axis=1)
+    mean_per_detector = np.nanmean(mean_scanline[0:N_scans * num].reshape(N_scans, num), axis=0)
+    noise_per_detector = mean_per_detector - np.nanmean(mean_per_detector)
+    noise_per_scanline = np.tile(noise_per_detector, N_scans + 1)[0:arr.shape[0]]
+    noise_array = np.tile(noise_per_scanline[:, np.newaxis], arr.shape[1])
+    scene[band].values -= noise_array
+    return noise_per_detector
+
+
 def get_encoding_metimage(scene):
     """Get netcdf encoding for all datasets."""
     return get_encoding(scene,
@@ -140,6 +155,7 @@ def process_one_scene(scene_files, out_path,
                       engine='h5netcdf',
                       all_channels=False,
                       pps_channels=False,
+                      destripe_ir_channels=False,
                       orbit_n=0,
                       platform_name=None):
     """Make level 1c files in PPS-format."""
@@ -170,6 +186,15 @@ def process_one_scene(scene_files, out_path,
     adjust_lons_to_valid_range(scn_)
     convert_angles(scn_, delete_azimuth=True)
     update_angle_attributes(scn_, irch)
+    if destripe_ir_channels:
+        destripe(scn_, "vii_10690", num=48)
+        destripe(scn_, "vii_12020", num=48)
+        destripe(scn_, "vii_3740", num=48)
+        destripe(scn_, "vii_8540", num=48)
+        destripe(scn_, "vii_6725", num=48)
+        destripe(scn_, "vii_7325", num=48)
+        destripe(scn_, "vii_13345", num=48)
+                
     apply_sunz_correction(scn_, REFL_BANDS)
     if platform_name is not None:
         scn_.attrs['platform'] = platform_name
