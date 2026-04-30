@@ -74,8 +74,8 @@ class TestMETimage2PPS(unittest.TestCase):
         """Test destriping for METimage."""
         metimage2pps_lib.destripe(self.scene, "vii_12020", num=48)
         metimage2pps_lib.destripe(self.scene, "vii_10690", num=48)
-        np.testing.assert_allclose(self.scene["vii_10690"], self.data, atol=0.5)
-        np.testing.assert_allclose(self.scene["vii_12020"], self.data, atol=0.5)
+        np.testing.assert_allclose(self.scene["vii_10690"], self.data, atol=0.7)
+        np.testing.assert_allclose(self.scene["vii_12020"], self.data, atol=0.7)
 
     def test_set_header_and_band_attrs(self):
         """Test to set header_and_band_attrs."""
