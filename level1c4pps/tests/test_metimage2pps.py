@@ -39,7 +39,7 @@ class TestMETimage2PPS(unittest.TestCase):
         scene = Scene()
         start_time = dt.datetime(2020, 1, 1, 12, 1)
         end_time = dt.datetime(2020, 1, 1, 12, 2)
-        data = 200 + 100 * np.random.random((816, 3144))
+        data = 270 + 5 * np.random.random((816, 3144))
         linear_48 = np.array(list(range(48)))
         linear_48 = linear_48 - np.mean(linear_48)
         scene["vii_668"] = xr.DataArray(
@@ -74,8 +74,8 @@ class TestMETimage2PPS(unittest.TestCase):
         """Test destriping for METimage."""
         metimage2pps_lib.destripe(self.scene, "vii_12020", num=48)
         metimage2pps_lib.destripe(self.scene, "vii_10690", num=48)
-        np.testing.assert_allclose(self.scene["vii_10690"], self.data, atol=0.7)
-        np.testing.assert_allclose(self.scene["vii_12020"], self.data, atol=0.7)
+        np.testing.assert_allclose(self.scene["vii_10690"], self.data, atol=0.1)
+        np.testing.assert_allclose(self.scene["vii_12020"], self.data, atol=0.1)
 
     def test_set_header_and_band_attrs(self):
         """Test to set header_and_band_attrs."""
