@@ -72,8 +72,8 @@ class TestMETimage2PPS(unittest.TestCase):
 
     def test_destripe(self):
         """Test destriping for METimage."""
-        metimage2pps_lib.destripe(self.scene, "vii_12020", num=48)
-        metimage2pps_lib.destripe(self.scene, "vii_10690", num=48)
+        metimage2pps_lib.destripe(self.scene, "vii_12020")
+        metimage2pps_lib.destripe(self.scene, "vii_10690")
         np.testing.assert_allclose(self.scene["vii_10690"], self.data, atol=0.1)
         np.testing.assert_allclose(self.scene["vii_12020"], self.data, atol=0.1)
 

@@ -19,6 +19,7 @@
 
 """Functions to convert EPS-SG MetImage level-1 data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
 
+import numpy as np
 import os
 import time
 import satpy
@@ -113,19 +114,22 @@ PPS_TAGNAMES = {"vii_668": "ch_r06",
 BANDNAMES = list(PPS_TAGNAMES.keys())
 
 
-def destripe(scene, band, num=24):
-    """Destripe IR bands."""
-    import numpy as np
+def destripe(scene, band):
+    """
+    Destripe data from given IR band using a detector mean filter.
+    Filtering over two times number of detectors seem to give best results.
+    """
+    n_detectors = 48  # Actually there are 24 detectors, but every second scan has higher offsets.
     logger.info(f"Destriping IR channel {band}.")
     arr = scene[band].values
-    N_scans = int(np.floor(arr.shape[0] / num))
+    n_scans = int(np.floor(arr.shape[0] / n_detectors))
     mean_scanline = np.nanmean(arr, axis=1)
-    mean_per_detector = np.nanmean(mean_scanline[0:N_scans * num].reshape(N_scans, num), axis=0)
-    noise_per_detector = mean_per_detector - np.nanmean(mean_per_detector)
-    noise_per_scanline = np.tile(noise_per_detector, N_scans + 1)[0:arr.shape[0]]
-    noise_array = np.tile(noise_per_scanline[:, np.newaxis], arr.shape[1])
-    scene[band].values -= noise_array
-    return noise_per_detector
+    mean_per_detector = np.nanmean(mean_scanline[0:n_scans * n_detectors].reshape(n_scans, n_detectors), axis=0)
+    offset_per_detector = mean_per_detector - np.nanmean(mean_per_detector)
+    offset_per_scanline = np.tile(offset_per_detector, n_scans + 1)[0:arr.shape[0]]
+    offset_array = np.tile(offset_per_scanline[:, np.newaxis], arr.shape[1])
+    scene[band].values -= offset_array
+    return offset_per_detector
 
 
 def get_encoding_metimage(scene):
@@ -187,13 +191,8 @@ def process_one_scene(scene_files, out_path,
     convert_angles(scn_, delete_azimuth=True)
     update_angle_attributes(scn_, irch)
     if destripe_ir_channels:
-        destripe(scn_, "vii_10690", num=48)
-        destripe(scn_, "vii_12020", num=48)
-        destripe(scn_, "vii_3740", num=48)
-        destripe(scn_, "vii_8540", num=48)
-        destripe(scn_, "vii_6725", num=48)
-        destripe(scn_, "vii_7325", num=48)
-        destripe(scn_, "vii_13345", num=48)
+        for channel in IR_CHANNELS:
+            destripe(scn_, channel)
 
     apply_sunz_correction(scn_, REFL_BANDS)
     if platform_name is not None:
