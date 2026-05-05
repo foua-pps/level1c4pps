@@ -51,6 +51,8 @@ if Version(satpy.__version__) <= Version('0.59.0'):
     raise ValueError("For METimage satpy >= 0.60 is needed")
 else:
     logger.info("Sunz correction not done by satpy reader for versions >= 0.60.")
+
+N_DETECTORS = 24
 BANDNAMES_DEFAULT = ["vii_668",
                      "vii_865",
                      "vii_1375",
@@ -114,22 +116,22 @@ PPS_TAGNAMES = {"vii_668": "ch_r06",
 BANDNAMES = list(PPS_TAGNAMES.keys())
 
 
-def destripe(scene, band):
+def destripe(scene, band, n_scans_per_block=2):
     """
     Destripe data from given IR band using a detector mean filter.
-    Filtering over two times number of detectors seem to give best results.
+    Filtering over two times number of detectors seem to give best results,
+    as every second scan has higher offsets.
     """
-    n_detectors = 48  # Actually there are 24 detectors, but every second scan has higher offsets.
     logger.info(f"Destriping IR channel {band}.")
     arr = scene[band].values
-    n_scans = int(np.floor(arr.shape[0] / n_detectors))
-    mean_scanline = np.nanmean(arr, axis=1)
-    mean_per_detector = np.nanmean(mean_scanline[0:n_scans * n_detectors].reshape(n_scans, n_detectors), axis=0)
-    offset_per_detector = mean_per_detector - np.nanmean(mean_per_detector)
-    offset_per_scanline = np.tile(offset_per_detector, n_scans + 1)[0:arr.shape[0]]
-    offset_array = np.tile(offset_per_scanline[:, np.newaxis], arr.shape[1])
-    scene[band].values -= offset_array
-    return offset_per_detector
+    n_rows = N_DETECTORS * n_scans_per_block
+    n_blocks = int(np.floor(arr.shape[0] / n_rows))
+    mean_row = np.nanmean(arr, axis=1)
+    mean_per_row_in_block = np.nanmean(mean_row[0:n_blocks * n_rows].reshape(n_blocks, n_rows), axis=0)
+    offset_per_row_in_block = mean_per_row_in_block - np.nanmean(mean_per_row_in_block)
+    offset_per_pixel = np.tile(offset_per_row_in_block, (arr.shape[1], n_blocks + 1)).T[:arr.shape[0]]
+    scene[band].values -= offset_per_pixel
+    return offset_per_row_in_block
 
 
 def get_encoding_metimage(scene):
