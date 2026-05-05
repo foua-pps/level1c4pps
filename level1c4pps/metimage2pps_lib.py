@@ -112,6 +112,8 @@ PPS_TAGNAMES = {"vii_668": "ch_r06",
                 "vii_1240": "ch_rxx",
                 "vii_3959": "ch_tbxx",
                 "vii_4050": "ch_tbxx"}
+IR_BANDS = ["vii_3740", "vii_8540", "vii_10690", "vii_12020",  "vii_6725",
+            "vii_13345",  "vii_7325", "vii_3959", "vii_4050"]
 
 BANDNAMES = list(PPS_TAGNAMES.keys())
 
@@ -193,8 +195,9 @@ def process_one_scene(scene_files, out_path,
     convert_angles(scn_, delete_azimuth=True)
     update_angle_attributes(scn_, irch)
     if destripe_ir_channels:
-        for channel in IR_CHANNELS:
-            destripe(scn_, channel)
+        for channel in IR_BANDS:
+            if channel in scn_:
+                destripe(scn_, channel)
 
     apply_sunz_correction(scn_, REFL_BANDS)
     if platform_name is not None:
