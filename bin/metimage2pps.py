@@ -38,6 +38,8 @@ if __name__ == "__main__":
                         help="Save all 20 channels to level1c4pps file.")
     parser.add_argument('-pps_ch', '--pps_channels', action='store_true',
                         help="Save only the necessary (for PPS) channels to level1c4pps file.")
+    parser.add_argument('-destripe', '--destripe_ir_channels', action='store_true',
+                        help="Destripe IR channels.")
     parser.add_argument('-ne', '--nc_engine', type=str, nargs='?',
                         required=False, default='h5netcdf',
                         help="Engine for saving netcdf files netcdf4 or h5netcdf (default).")
@@ -53,5 +55,6 @@ if __name__ == "__main__":
                       engine=options.nc_engine,
                       all_channels=options.all_channels,
                       pps_channels=options.pps_channels,
+                      destripe_ir_channels=options.destripe_ir_channels,
                       orbit_n=options.orbit_number,
                       platform_name=options.platform_name)

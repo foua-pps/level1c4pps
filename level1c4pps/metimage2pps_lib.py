@@ -19,6 +19,7 @@
 
 """Functions to convert EPS-SG MetImage level-1 data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
 
+import numpy as np
 import os
 import time
 import satpy
@@ -50,6 +51,8 @@ if Version(satpy.__version__) <= Version('0.59.0'):
     raise ValueError("For METimage satpy >= 0.60 is needed")
 else:
     logger.info("Sunz correction not done by satpy reader for versions >= 0.60.")
+
+N_DETECTORS = 24
 BANDNAMES_DEFAULT = ["vii_668",
                      "vii_865",
                      "vii_1375",
@@ -109,8 +112,28 @@ PPS_TAGNAMES = {"vii_668": "ch_r06",
                 "vii_1240": "ch_rxx",
                 "vii_3959": "ch_tbxx",
                 "vii_4050": "ch_tbxx"}
+IR_BANDS = ["vii_3740", "vii_8540", "vii_10690", "vii_12020",  "vii_6725",
+            "vii_13345",  "vii_7325", "vii_3959", "vii_4050"]
 
 BANDNAMES = list(PPS_TAGNAMES.keys())
+
+
+def destripe(scene, band, n_scans_per_block=2):
+    """
+    Destripe data from given IR band using a detector mean filter.
+    Filtering over two times number of detectors seem to give best results,
+    as every second scan has higher offsets.
+    """
+    logger.info(f"Destriping IR channel {band}.")
+    arr = scene[band].values
+    n_rows = N_DETECTORS * n_scans_per_block
+    n_blocks = int(np.floor(arr.shape[0] / n_rows))
+    mean_row = np.nanmean(arr, axis=1)
+    mean_per_row_in_block = np.nanmean(mean_row[0:n_blocks * n_rows].reshape(n_blocks, n_rows), axis=0)
+    offset_per_row_in_block = mean_per_row_in_block - np.nanmean(mean_per_row_in_block)
+    offset_per_pixel = np.tile(offset_per_row_in_block, (arr.shape[1], n_blocks + 1)).T[:arr.shape[0]]
+    scene[band].values -= offset_per_pixel
+    return offset_per_row_in_block
 
 
 def get_encoding_metimage(scene):
@@ -140,6 +163,7 @@ def process_one_scene(scene_files, out_path,
                       engine='h5netcdf',
                       all_channels=False,
                       pps_channels=False,
+                      destripe_ir_channels=False,
                       orbit_n=0,
                       platform_name=None):
     """Make level 1c files in PPS-format."""
@@ -170,6 +194,11 @@ def process_one_scene(scene_files, out_path,
     adjust_lons_to_valid_range(scn_)
     convert_angles(scn_, delete_azimuth=True)
     update_angle_attributes(scn_, irch)
+    if destripe_ir_channels:
+        for channel in IR_BANDS:
+            if channel in scn_:
+                destripe(scn_, channel)
+
     apply_sunz_correction(scn_, REFL_BANDS)
     if platform_name is not None:
         scn_.attrs['platform'] = platform_name
