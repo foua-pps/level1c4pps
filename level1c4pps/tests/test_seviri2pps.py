@@ -639,6 +639,16 @@ class TestCalibration:
             platform="MSG2",
             time=dt.datetime(2007, 6, 18, 0, 0),
             calib_ir_path="./level1c4pps/tests/")
+        np.testing.assert_almost_equal(coefs['IR_120']['gain'], 0.004567, decimal=6)
+        coefs = calib.get_calibration(
+            platform="MSG2",
+            time=dt.datetime(2007, 6, 18, 1, 1),
+            calib_ir_path="./level1c4pps/tests/")
+        np.testing.assert_almost_equal(coefs['IR_120']['gain'], 0.005567, decimal=6)
+        coefs = calib.get_calibration(
+            platform="MSG2",
+            time=dt.datetime(2005, 6, 18, 0, 0),
+            calib_ir_path="./level1c4pps/tests/")
         np.testing.assert_almost_equal(coefs['IR_120']['gain'], 0.003567, decimal=6)
 
     def test_calibration_is_smooth(self):
