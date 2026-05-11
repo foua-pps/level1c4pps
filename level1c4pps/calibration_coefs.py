@@ -55,7 +55,7 @@ class CalibrationData(Enum):
     REF_TIME = datetime.datetime(2000, 1, 1, 0, 0)
     TIME_COVERAGE = {
         "start": datetime.datetime(2004, 1, 1, 0, 0),
-        "end": datetime.datetime(2021, 1, 1, 0, 0)
+        "end": datetime.datetime(2061, 1, 1, 0, 0)
     }
     SATPY_CALIB_MODE = 'Nominal'
 

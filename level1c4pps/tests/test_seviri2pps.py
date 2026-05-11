@@ -663,7 +663,7 @@ class TestCalibration:
         "coverage_boundary,outside_coverage",
         [
             (dt.datetime(2004, 1, 1), dt.datetime(2003, 1, 1)),
-            (dt.datetime(2021, 1, 1), dt.datetime(2022, 1, 1)),
+            (dt.datetime(2061, 1, 1), dt.datetime(2062, 1, 1)),
         ]
     )
     def test_clip_at_time_coverage_bounds(self, coverage_boundary, outside_coverage):
