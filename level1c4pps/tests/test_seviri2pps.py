@@ -86,7 +86,7 @@ class TestSeviri2PPS(unittest.TestCase):
              [7, 8]],
             dims=('y', 'x')
         )
-        from satpy.readers.utils import remove_earthsun_distance_correction
+        from satpy.readers.core.utils import remove_earthsun_distance_correction  # satpy > 0.56
         res['VIS006'] = remove_earthsun_distance_correction(res['VIS006'])
         xr.testing.assert_allclose(res['VIS006'], vis006_exp)
         xr.testing.assert_equal(res['IR_108'], ir_108_exp)
