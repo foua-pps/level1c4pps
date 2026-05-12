@@ -55,7 +55,7 @@ class CalibrationData(Enum):
     REF_TIME = datetime.datetime(2000, 1, 1, 0, 0)
     TIME_COVERAGE = {
         "start": datetime.datetime(2004, 1, 1, 0, 0),
-        "end": datetime.datetime(2021, 1, 1, 0, 0)
+        "end": datetime.datetime(2061, 1, 1, 0, 0)
     }
     SATPY_CALIB_MODE = 'Nominal'
 
@@ -175,6 +175,8 @@ def get_ir_calibration_coeffs(ir_calib_path, platform="MSG2", channel="IR_039",
     """Get IR calibration from EUMETSAT, modified by CMSAF."""
     filename = os.path.join(ir_calib_path, f"TIR_calib_{platform}_{channel}.json")
     logger.info(f'Using IR calibration from {filename}')
+    gain = None
+    offset = None
     with open(filename, 'r') as fhand:
         data = json.load(fhand)
         for item in data:
@@ -183,6 +185,9 @@ def get_ir_calibration_coeffs(ir_calib_path, platform="MSG2", channel="IR_039",
             if date_i > time:
                 break
             gain, offset = item[1:]
+    if gain == None:
+        logger.info(f'No calibration for {time} using calibration from  {data[0][0]}')
+        gain, offset = data[0][1:]
     return {'gain': gain, 'offset': offset}
 
 

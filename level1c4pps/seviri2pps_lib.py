@@ -40,8 +40,6 @@ from pyorbital.orbital import get_observer_look
 from level1c4pps import dt64_to_datetime
 from level1c4pps.calibration_coefs import get_calibration, CalibrationData
 from level1c4pps import (make_azidiff_angle,
-                         convert_angles,
-                         apply_sunz_correction,
                          get_encoding,
                          compose_filename,
                          update_angle_attributes,
@@ -227,7 +225,7 @@ def get_satellite_angles(dataset, lons, lats):
 
     # Compute angles
 
-    if lons.shape[0] < 5000: 
+    if lons.shape[0] < 5000:
         sata, satel = get_observer_look(
             sat_lon,
             sat_lat,
@@ -290,6 +288,7 @@ def set_attrs(scene):
                      'platform_name', 'sensor', 'georef_offset_corrected']:
             scene[band].attrs.pop(attr, None)
 
+
 def interpolate_nats(acq_times, filename_starttime):
     """Interpolate NaTs."""
     # out_times.interpolate_na(dim = "y")  => can't cast array data from dtype('<M8[ns]') to dtype('float64')
@@ -299,14 +298,14 @@ def interpolate_nats(acq_times, filename_starttime):
     too_late = [ind for (ind, acq_time_i) in enumerate(acq_times.values) if not np.isnat(acq_time_i)
                 and dt64_to_datetime(acq_time_i) - filename_starttime > timedelta(seconds=60*15)]
     too_early = [ind for (ind, acq_time_i) in enumerate(acq_times.values) if not np.isnat(acq_time_i)
-                 and dt64_to_datetime(acq_time_i) - filename_starttime < timedelta(seconds=0) ]
+                 and dt64_to_datetime(acq_time_i) - filename_starttime < timedelta(seconds=0)]
     update[too_late] = True
     update[too_early] = True
     x_val = np.array(list(range(0, len(acq_times))))
     x_val_ok = x_val[~update]
     y_val_ok = acq_times.values[~update].astype('float64')
     index_to_update = [ind for ind in np.where(update)[0] if ind > 52 and ind < 3660]
-    
+
     if len(index_to_update) > 0:
         logger.info(f'Interpolating timestamp at index {index_to_update}')
         interp = np.interp(x_val, x_val_ok, y_val_ok)
@@ -317,7 +316,6 @@ def interpolate_nats(acq_times, filename_starttime):
 def get_mean_acq_time(scene):
     """Compute mean scanline acquisition time over all bands."""
     dtype = scene['IR_108'].coords['acq_time'].dtype
-
 
     # Convert timestamps to float to facilitate averaging. Caveat: NaT is
     # not converted to NaN, but to -9.22E18. So we have to set these elements

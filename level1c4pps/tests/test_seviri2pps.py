@@ -86,7 +86,7 @@ class TestSeviri2PPS(unittest.TestCase):
              [7, 8]],
             dims=('y', 'x')
         )
-        from satpy.readers.utils import remove_earthsun_distance_correction
+        from satpy.readers.core.utils import remove_earthsun_distance_correction  # satpy > 0.56
         res['VIS006'] = remove_earthsun_distance_correction(res['VIS006'])
         xr.testing.assert_allclose(res['VIS006'], vis006_exp)
         xr.testing.assert_equal(res['IR_108'], ir_108_exp)
@@ -245,10 +245,10 @@ class TestSeviri2PPS(unittest.TestCase):
             data=list(range(56)),
             dims=('y', ),
             coords={'acq_time': ('y', [None] * 52 + [dt.datetime(2009, 7, 1, 12, 0, 30),
-                                                      np.nan,
-                                                      dt.datetime(2008, 7, 1, 12, 1, 30),
-                                                      dt.datetime(2009, 7, 1, 12, 1, 30)])})
-        scene['VIS006']  = vis006
+                                                     np.nan,
+                                                     dt.datetime(2008, 7, 1, 12, 1, 30),
+                                                     dt.datetime(2009, 7, 1, 12, 1, 30)])})
+        scene['VIS006'] = vis006
         scene['IR_108'] = ir_108
         scene.attrs["filename_starttime"] = dt.datetime(2009, 7, 1, 12, 0, 30)
 
@@ -258,7 +258,7 @@ class TestSeviri2PPS(unittest.TestCase):
                             '2009-07-01 12:01:00',
                             '2009-07-01 12:01:15'], dtype='datetime64[s]')
         acq = seviri2pps.get_mean_acq_time(scene)
-        print (acq)
+        print(acq)
         np.testing.assert_array_equal(acq[-5:], acq_exp)
 
     @mock.patch('level1c4pps.seviri2pps_lib.get_mean_acq_time')
@@ -628,7 +628,7 @@ class TestCalibration:
     def test_get_calibration_ir_no_file(self):
         """Test get ir calibration with mising json file."""
         with pytest.raises(FileNotFoundError):
-            coefs = calib.get_calibration(
+            calib.get_calibration(
                 platform="MSG2",
                 time=dt.datetime(2007, 6, 5, 0, 0),
                 calib_ir_path=".")
@@ -638,6 +638,16 @@ class TestCalibration:
         coefs = calib.get_calibration(
             platform="MSG2",
             time=dt.datetime(2007, 6, 18, 0, 0),
+            calib_ir_path="./level1c4pps/tests/")
+        np.testing.assert_almost_equal(coefs['IR_120']['gain'], 0.004567, decimal=6)
+        coefs = calib.get_calibration(
+            platform="MSG2",
+            time=dt.datetime(2007, 6, 18, 1, 1),
+            calib_ir_path="./level1c4pps/tests/")
+        np.testing.assert_almost_equal(coefs['IR_120']['gain'], 0.005567, decimal=6)
+        coefs = calib.get_calibration(
+            platform="MSG2",
+            time=dt.datetime(2005, 6, 18, 0, 0),
             calib_ir_path="./level1c4pps/tests/")
         np.testing.assert_almost_equal(coefs['IR_120']['gain'], 0.003567, decimal=6)
 
@@ -653,7 +663,7 @@ class TestCalibration:
         "coverage_boundary,outside_coverage",
         [
             (dt.datetime(2004, 1, 1), dt.datetime(2003, 1, 1)),
-            (dt.datetime(2021, 1, 1), dt.datetime(2022, 1, 1)),
+            (dt.datetime(2061, 1, 1), dt.datetime(2062, 1, 1)),
         ]
     )
     def test_clip_at_time_coverage_bounds(self, coverage_boundary, outside_coverage):
