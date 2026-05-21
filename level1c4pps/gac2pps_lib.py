@@ -161,8 +161,5 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None, engine='h5netcd
                        include_lonlats=False,  # Included anyway as they are datasets in scn_
                        pretty=True,
                        encoding=encoding)
-
-    print("Saved file {:s} after {:3.1f} seconds".format(
-        os.path.basename(filename),
-        time.time() - tic))
+    logger.info(f"Saved file {os.path.basename(filename)} after {time.time() - tic:3.1f} seconds")
     return filename

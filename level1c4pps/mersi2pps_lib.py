@@ -99,7 +99,7 @@ def get_sensor(scene_file):
     for platform, sensor in SENSOR.items():
         if platform in scene_file:
             return sensor
-    logger.info("Failed to determine sensor associated to scene file: '%s'", scene_file)
+    logger.info(f"Failed to determine sensor associated to scene file: {scene_file}")
     return None
 
 
@@ -129,5 +129,5 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf', orbit_n=0):
         flatten_attrs=True,
         encoding=get_encoding(scene, band_names, PPS_BAND_NAME, chunks=None),
     )
-    print(f"Saved file {os.path.basename(filename)} after {time.time() - tic:3.1f} seconds")
+    logger.info(f"Saved file {os.path.basename(filename)} after {time.time() - tic:3.1f} seconds")
     return filename

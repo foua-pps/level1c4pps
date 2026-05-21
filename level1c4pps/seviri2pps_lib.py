@@ -671,9 +671,7 @@ def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf',
                        pretty=True,
                        flatten_attrs=True,
                        exclude_attrs=['raw_metadata'])
-    print("Saved file {:s} after {:3.1f} seconds".format(
-        os.path.basename(filename),
-        time.time() - tic))  # About 40 seconds
+    logger.info(f"Saved file {os.path.basename(filename)} after {time.time() - tic:3.1f} seconds")
     return filename
 
 
@@ -690,7 +688,7 @@ def process_all_scans_in_dname(dname, out_path,
     for uqdate in unique_dates:
         date_formated = uqdate.strftime("%Y%m%d%H%M")
         if ok_dates is not None and date_formated not in ok_dates.keys():
-            print("Skipping date {date}".format(date=date_formated))
+            logger.info(f"Skipping date {date_formated}")
             continue
         # Every hour only:
         # if uqdate.minute != 0:

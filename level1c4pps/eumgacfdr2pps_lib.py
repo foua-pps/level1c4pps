@@ -38,6 +38,8 @@ if Version(satpy.__version__) < Version('0.24.0'):
 # import xarray as xr
 # xr.set_options(keep_attrs=True)
 
+logger = logging.getLogger('eumgacfdr2pps')
+
 # AVHRR-GAC_FDR_1C_N06_19810330T005421Z_19810330T024632Z_R_O_20200101T000000Z_0100.nc
 
 BANDNAMES = ['reflectance_channel_1',
@@ -240,8 +242,5 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None,
                        include_lonlats=False,  # Included anyway as they are datasets in scn_
                        pretty=True,
                        encoding=encoding)
-
-    logger.info("Saved file {:s} after {:3.1f} seconds".format(
-        os.path.basename(filename),
-        time.time() - tic))
+    logger.info(f"Saved file {os.path.basename(filename)} after {time.time() - tic:3.1f} seconds")
     return filename

@@ -135,6 +135,5 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf',
                        include_lonlats=False,
                        flatten_attrs=True,
                        encoding=get_encoding_slstr(scn_))
-    print("Saved file {:s} after {:3.1f} seconds".format(
-        os.path.basename(filename),
-        time.time() - tic))
+    logger.info(f"Saved file {os.path.basename(filename)} after {time.time() - tic:3.1f} seconds")
+    return filename

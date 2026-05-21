@@ -234,6 +234,5 @@ def process_one_scene(scene_files, out_path,
                        flatten_attrs=True,
                        pretty=True,
                        encoding=encoding)
-    print("Saved file {:s} after {:3.1f} seconds".format(
-        os.path.basename(filename), time.time() - tic))
+    logger.info(f"Saved file {os.path.basename(filename)} after {time.time() - tic:3.1f} seconds")
     return filename
