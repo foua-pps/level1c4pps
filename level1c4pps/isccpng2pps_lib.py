@@ -244,28 +244,28 @@ def process_one_scene(scene_files, out_path,
                       orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
-    scn_ = Scene(reader='multiple_sensors_isccpng_l1g_nc', filenames=scene_files)
-    scn_.load(BANDNAMES + ANGLE_NAMES + ["wmo_id", "pixel_time", "lon", "lat"])
+    scene = Scene(reader='multiple_sensors_isccpng_l1g_nc', filenames=scene_files)
+    scene.load(BANDNAMES + ANGLE_NAMES + ["wmo_id", "pixel_time", "lon", "lat"])
 
     # one ir channel
-    irch = scn_['temp_11_00um']
+    irch = scene['temp_11_00um']
 
-    set_header_and_band_attrs(scn_, orbit_n=orbit_n)
-    fix_pixel_time(scn_)
-    # rename_latitude_longitude(scn_)
-    adjust_lons_to_valid_range(scn_)
-    convert_angles(scn_, delete_azimuth=True)
-    update_angle_attributes(scn_, irch)
-    recalibrate_meteosat(scn_)
-    homogenize(scn_)
-    apply_sunz_correction(scn_, REFL_BANDS)
+    set_header_and_band_attrs(scene, orbit_n=orbit_n)
+    fix_pixel_time(scene)
+    # rename_latitude_longitude(scene)
+    adjust_lons_to_valid_range(scene)
+    convert_angles(scene, delete_azimuth=True)
+    update_angle_attributes(scene, irch)
+    recalibrate_meteosat(scene)
+    homogenize(scene)
+    apply_sunz_correction(scene, REFL_BANDS)
 
-    filename = compose_filename(scn_, out_path, instrument='seviri', band=irch)
-    encoding = get_encoding_isccpng(scn_)
+    filename = compose_filename(scene, out_path, instrument='seviri', band=irch)
+    encoding = get_encoding_isccpng(scene)
 
-    scn_.save_datasets(writer='cf',
+    scene.save_datasets(writer='cf',
                        filename=filename,
-                       header_attrs=get_header_attrs(scn_, band=irch, sensor='seviri'),
+                       header_attrs=get_header_attrs(scene, band=irch, sensor='seviri'),
                        engine=engine,
                        include_lonlats=False,
                        flatten_attrs=True,

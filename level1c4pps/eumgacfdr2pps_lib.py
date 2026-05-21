@@ -188,11 +188,11 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None,
                      remove_broken=True, orbit_n=99999):
     """Make level 1c files in PPS-format."""
     tic = time.time()
-    scn_ = Scene(reader='avhrr_l1c_eum_gac_fdr_nc',
+    scene = Scene(reader='avhrr_l1c_eum_gac_fdr_nc',
                  filenames=[eumgacfdr_file])
 
-    scn_.load(BANDNAMES)
-    scn_.load(['latitude',
+    scene.load(BANDNAMES)
+    scene.load(['latitude',
                'longitude',
                'qual_flags',
                'equator_crossing_time',
@@ -202,31 +202,31 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None,
 
     # Only load these if we do not crop data
     if start_line is None and end_line is None:
-        scn_.load(['overlap_free_end',
+        scene.load(['overlap_free_end',
                    'overlap_free_start',
                    'midnight_line'])
     # Needs to be done before everything else to avoid problems with attributes.
     if remove_broken:
         logger.info("Setting low quality data (qual_flags) to nodata.")
-        remove_broken_data(scn_)
+        remove_broken_data(scene)
     # Crop after all renaming of variables are done
     # Problems to rename if cropping is done first.
-    set_exact_time_and_crop(scn_, start_line, end_line, time_key='acq_time')
-    irch = scn_['brightness_temperature_channel_4']  # Redefine, to get updated start/end_times
-    set_header_and_band_attrs(scn_, orbit_n=orbit_n)
-    rename_latitude_longitude(scn_)
-    convert_angles(scn_)
-    update_angle_attributes(scn_, irch)  # Standard name etc
+    set_exact_time_and_crop(scene, start_line, end_line, time_key='acq_time')
+    irch = scene['brightness_temperature_channel_4']  # Redefine, to get updated start/end_times
+    set_header_and_band_attrs(scene, orbit_n=orbit_n)
+    rename_latitude_longitude(scene)
+    convert_angles(scene)
+    update_angle_attributes(scene, irch)  # Standard name etc
     # Handle gac specific datasets qual_flags and scanline_timestamps
-    update_ancilliary_datasets(scn_)
-    filename = compose_filename(scn_, out_path, instrument='avhrr', band=irch)
-    encoding = get_encoding_gac(scn_)
-    scn_.save_datasets(writer='cf',
+    update_ancilliary_datasets(scene)
+    filename = compose_filename(scene, out_path, instrument='avhrr', band=irch)
+    encoding = get_encoding_gac(scene)
+    scene.save_datasets(writer='cf',
                        filename=filename,
-                       header_attrs=get_header_attrs(scn_, band=irch, sensor='avhrr'),
+                       header_attrs=get_header_attrs(scene, band=irch, sensor='avhrr'),
                        engine=engine,
                        flatten_attrs=True,
-                       include_lonlats=False,  # Included anyway as they are datasets in scn_
+                       include_lonlats=False,  # Included anyway as they are datasets in scene
                        pretty=True,
                        encoding=encoding)
     logger.info(f"Saved file {os.path.basename(filename)} after {time.time() - tic:3.1f} seconds")

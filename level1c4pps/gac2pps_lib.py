@@ -120,35 +120,35 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None, engine='h5netcd
         reader_kwargs['tle_dir'] = tle_dir
         reader_kwargs['tle_name'] = tle_name
 
-    scn_ = Scene(reader='avhrr_l1b_gaclac',
+    scene = Scene(reader='avhrr_l1b_gaclac',
                  filenames=[gac_file], reader_kwargs=reader_kwargs)
 
     # Loading all at once sometimes fails with newer satpy, so start with BANDNAMES ...
 
-    scn_.load(BANDNAMES)
-    scn_.load(['latitude',
+    scene.load(BANDNAMES)
+    scene.load(['latitude',
                'longitude',
                'qual_flags',
                'sensor_zenith_angle', 'solar_zenith_angle',
                'solar_azimuth_angle', 'sensor_azimuth_angle',
                'sun_sensor_azimuth_difference_angle'])
 
-    irch = scn_['4']
-    set_header_and_band_attrs(scn_, orbit_n=orbit_n)
-    rename_latitude_longitude(scn_)
-    convert_angles(scn_)
-    update_angle_attributes(scn_, irch)
+    irch = scene['4']
+    set_header_and_band_attrs(scene, orbit_n=orbit_n)
+    rename_latitude_longitude(scene)
+    convert_angles(scene)
+    update_angle_attributes(scene, irch)
     # Handle gac specific datasets qual_flags and scanline_timestamps
-    update_ancilliary_datasets(scn_)
-    filename = compose_filename(scn_, out_path, instrument='avhrr', band=irch)
-    encoding = get_encoding_gac(scn_)
+    update_ancilliary_datasets(scene)
+    filename = compose_filename(scene, out_path, instrument='avhrr', band=irch)
+    encoding = get_encoding_gac(scene)
     encoding['scanline_timestamps'].pop('units')
-    scn_.save_datasets(writer='cf',
+    scene.save_datasets(writer='cf',
                        filename=filename,
-                       header_attrs=get_header_attrs(scn_, band=irch, sensor='avhrr'),
+                       header_attrs=get_header_attrs(scene, band=irch, sensor='avhrr'),
                        engine=engine,
                        flatten_attrs=True,
-                       include_lonlats=False,  # Included anyway as they are datasets in scn_
+                       include_lonlats=False,  # Included anyway as they are datasets in scene
                        pretty=True,
                        encoding=encoding)
     logger.info(f"Saved file {os.path.basename(filename)} after {time.time() - tic:3.1f} seconds")

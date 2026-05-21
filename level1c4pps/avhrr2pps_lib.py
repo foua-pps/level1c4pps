@@ -95,28 +95,28 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf', orbit_n=0):
     else:
         avhrr_reader = 'avhrr_l1b_aapp'
         angles = ANGLE_NAMES_AAPP
-    scn_ = Scene(
+    scene = Scene(
         reader=avhrr_reader,
         filenames=scene_files)
-    scn_.load(BANDNAMES + ['latitude', 'longitude'] + angles)
+    scene.load(BANDNAMES + ['latitude', 'longitude'] + angles)
     # one ir channel
-    irch = scn_['4']
+    irch = scene['4']
 
     # Check if we have old hrpt format with data only every 20th line
-    check_broken_data(scn_)
+    check_broken_data(scene)
 
-    set_header_and_band_attrs(scn_, orbit_n=orbit_n)
-    rename_latitude_longitude(scn_)
-    convert_angles(scn_, delete_azimuth=True)
-    update_angle_attributes(scn_, irch)
-    apply_sunz_correction(scn_, REFL_BANDS)
-    filename = compose_filename(scn_, out_path, instrument='avhrr', band=irch)
-    scn_.save_datasets(writer='cf',
+    set_header_and_band_attrs(scene, orbit_n=orbit_n)
+    rename_latitude_longitude(scene)
+    convert_angles(scene, delete_azimuth=True)
+    update_angle_attributes(scene, irch)
+    apply_sunz_correction(scene, REFL_BANDS)
+    filename = compose_filename(scene, out_path, instrument='avhrr', band=irch)
+    scene.save_datasets(writer='cf',
                        filename=filename,
-                       header_attrs=get_header_attrs(scn_, band=irch, sensor='avhrr'),
+                       header_attrs=get_header_attrs(scene, band=irch, sensor='avhrr'),
                        engine=engine,
                        include_lonlats=False,
                        flatten_attrs=True,
-                       encoding=get_encoding_avhrr(scn_))
+                       encoding=get_encoding_avhrr(scene))
     logger.info(f"Saved file {os.path.basename(filename)} after {time.time() - tic:3.1f} seconds")
     return filename

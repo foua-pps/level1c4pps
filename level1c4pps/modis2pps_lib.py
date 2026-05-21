@@ -115,7 +115,7 @@ def set_header_and_band_attrs(scene, orbit_n=0):
 def process_one_scene(scene_files, out_path, engine='h5netcdf', all_channels=False, pps_channels=False, orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
-    scn_ = Scene(
+    scene = Scene(
         reader='modis_l1b',
         filenames=scene_files)
 
@@ -125,20 +125,20 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf', all_channels=Fal
     if pps_channels:
         MY_BANDNAMES = BANDNAMES_PPS
 
-    scn_.load(MY_BANDNAMES + ['latitude', 'longitude'] + ANGLE_NAMES, resolution=1000)
-    irch = scn_['31']
-    set_header_and_band_attrs(scn_, orbit_n=orbit_n)
-    rename_latitude_longitude(scn_)
-    convert_angles(scn_, delete_azimuth=True)
-    update_angle_attributes(scn_, irch)
-    apply_sunz_correction(scn_, REFL_BANDS)
-    filename = compose_filename(scn_, out_path, instrument='modis', band=irch)
-    scn_.save_datasets(writer='cf',
+    scene.load(MY_BANDNAMES + ['latitude', 'longitude'] + ANGLE_NAMES, resolution=1000)
+    irch = scene['31']
+    set_header_and_band_attrs(scene, orbit_n=orbit_n)
+    rename_latitude_longitude(scene)
+    convert_angles(scene, delete_azimuth=True)
+    update_angle_attributes(scene, irch)
+    apply_sunz_correction(scene, REFL_BANDS)
+    filename = compose_filename(scene, out_path, instrument='modis', band=irch)
+    scene.save_datasets(writer='cf',
                        filename=filename,
-                       header_attrs=get_header_attrs(scn_, band=irch, sensor='modis'),
+                       header_attrs=get_header_attrs(scene, band=irch, sensor='modis'),
                        engine=engine,
                        include_lonlats=False,
                        flatten_attrs=True,
-                       encoding=get_encoding_modis(scn_))
+                       encoding=get_encoding_modis(scene))
     logger.info(f"Saved file {os.path.basename(filename)} after {time.time() - tic:3.1f} seconds")
     return filename

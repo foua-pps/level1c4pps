@@ -856,7 +856,7 @@ def process_one_scene(scene_files, out_path, engine="h5netcdf",
                       split_files_at_midnight=True):
     """Make level 1c files in PPS-format."""
     tic = time.time()
-    scn_in = Scene(
+    scenein = Scene(
         reader="viirs_vgac_l1c_nc",
         filenames=scene_files)
 
@@ -871,34 +871,34 @@ def process_one_scene(scene_files, out_path, engine="h5netcdf",
     if avhrr_channels:
         MY_MBAND = MBAND_AVHRR
 
-    scn_in.load(MY_MBAND
+    scenein.load(MY_MBAND
                 + ANGLE_NAMES
                 + ["latitude", "longitude", "scanline_timestamps"])
-    fix_platform_name(scn_in, scene_files)
+    fix_platform_name(scenein, scene_files)
     if split_files_at_midnight:
-        scenes = split_scene_at_midnight(scn_in)
+        scenes = split_scene_at_midnight(scenein)
     else:
-        scenes = [scn_in]
+        scenes = [scenein]
     filenames = []
-    for scn_ in scenes:
+    for scene in scenes:
 
-        irch = scn_["M15"]
-        set_header_and_band_attrs(scn_, orbit_n=orbit_n)
-        rename_latitude_longitude(scn_)
-        convert_angles(scn_, delete_azimuth=False)
-        update_angle_attributes(scn_, irch)
+        irch = scene["M15"]
+        set_header_and_band_attrs(scene, orbit_n=orbit_n)
+        rename_latitude_longitude(scene)
+        convert_angles(scene, delete_azimuth=False)
+        update_angle_attributes(scene, irch)
         sensor = "viirs"
         if noaa19_sbaf_version is not None:
             sensor = "avhrr"
-            convert_to_noaa19(scn_, noaa19_sbaf_version, noaa21_sbaf_version)
+            convert_to_noaa19(scene, noaa19_sbaf_version, noaa21_sbaf_version)
 
-        filename = compose_filename(scn_, out_path, instrument=sensor, band=irch)
-        encoding = get_encoding_viirs(scn_)
-        fix_timestamp_datatype(scn_, encoding, "scanline_timestamps")
+        filename = compose_filename(scene, out_path, instrument=sensor, band=irch)
+        encoding = get_encoding_viirs(scene)
+        fix_timestamp_datatype(scene, encoding, "scanline_timestamps")
 
-        scn_.save_datasets(writer="cf",
+        scene.save_datasets(writer="cf",
                            filename=filename,
-                           header_attrs=get_header_attrs(scn_, band=irch, sensor=sensor,
+                           header_attrs=get_header_attrs(scene, band=irch, sensor=sensor,
                                                          sbaf_version=noaa19_sbaf_version),
                            engine=engine,
                            include_lonlats=False,

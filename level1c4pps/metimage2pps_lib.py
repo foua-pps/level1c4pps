@@ -168,7 +168,7 @@ def process_one_scene(scene_files, out_path,
                       platform_name=None):
     """Make level 1c files in PPS-format."""
     tic = time.time()
-    scn_ = Scene(reader='vii_l1b_nc', filenames=scene_files)
+    scene = Scene(reader='vii_l1b_nc', filenames=scene_files)
 
     MY_BANDNAMES = BANDNAMES_DEFAULT
     if all_channels:
@@ -176,36 +176,36 @@ def process_one_scene(scene_files, out_path,
     if pps_channels:
         MY_BANDNAMES = BANDNAMES_PPS
 
-    scn_.load(MY_BANDNAMES + ANGLE_NAMES + ['lat_pixels', 'lon_pixels'])
+    scene.load(MY_BANDNAMES + ANGLE_NAMES + ['lat_pixels', 'lon_pixels'])
 
     # Transpose data to get scanlines as row dimension
     for key in MY_BANDNAMES + ANGLE_NAMES + ['lat_pixels', 'lon_pixels']:
-        if scn_[key].dims[0] == 'x':
+        if scene[key].dims[0] == 'x':
             # first dim should be y
-            scn_[key] = scn_[key].transpose('y', 'x')
+            scene[key] = scene[key].transpose('y', 'x')
 
     # one ir channel
-    irch = scn_['vii_10690']
-    set_header_and_band_attrs(scn_, orbit_n=orbit_n)
-    rename_latitude_longitude(scn_)
-    adjust_lons_to_valid_range(scn_)
-    convert_angles(scn_, delete_azimuth=True)
-    update_angle_attributes(scn_, irch)
+    irch = scene['vii_10690']
+    set_header_and_band_attrs(scene, orbit_n=orbit_n)
+    rename_latitude_longitude(scene)
+    adjust_lons_to_valid_range(scene)
+    convert_angles(scene, delete_azimuth=True)
+    update_angle_attributes(scene, irch)
     if destripe_ir_channels:
         for channel in IR_BANDS:
-            if channel in scn_:
-                destripe(scn_, channel)
+            if channel in scene:
+                destripe(scene, channel)
 
-    apply_sunz_correction(scn_, REFL_BANDS)
+    apply_sunz_correction(scene, REFL_BANDS)
     if platform_name is not None:
-        scn_.attrs['platform'] = platform_name
-    filename = compose_filename(scn_, out_path, instrument='metimage', band=irch)
-    scn_.save_datasets(writer='cf',
+        scene.attrs['platform'] = platform_name
+    filename = compose_filename(scene, out_path, instrument='metimage', band=irch)
+    scene.save_datasets(writer='cf',
                        filename=filename,
-                       header_attrs=get_header_attrs(scn_, band=irch, sensor='metimage'),
+                       header_attrs=get_header_attrs(scene, band=irch, sensor='metimage'),
                        engine=engine,
                        include_lonlats=False,
                        flatten_attrs=True,
-                       encoding=get_encoding_metimage(scn_))
+                       encoding=get_encoding_metimage(scene))
     logger.info(f"Saved file {os.path.basename(filename)} after {time.time() - tic:3.1f} seconds")
     return filename

@@ -618,54 +618,54 @@ def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf',
             raise FileNotFoundError('No such file: {}'.format(fname))
 
     tic = time.time()
-    scn_ = load_and_calibrate(
+    scene = load_and_calibrate(
         tslot_files,
         rotate=rotate,
         clip_calib=clip_calib,
         path_to_external_ir_calibration=path_to_external_ir_calibration,
     )
-    if hasattr(scn_, 'start_time'):
-        scn_.attrs['start_time'] = scn_.start_time
-        scn_.attrs['end_time'] = scn_.end_time
+    if hasattr(scene, 'start_time'):
+        scene.attrs['start_time'] = scene.start_time
+        scene.attrs['end_time'] = scene.end_time
     # Find lat/lon data
-    lons, lats = get_lonlats(scn_['IR_108'])
+    lons, lats = get_lonlats(scene['IR_108'])
 
     # Compute angles
-    suna, sunz = get_solar_angles(scn_, lons=lons, lats=lats)
-    sata, satz = get_satellite_angles(scn_['IR_108'], lons=lons, lats=lats)
+    suna, sunz = get_solar_angles(scene, lons=lons, lats=lats)
+    sata, satz = get_satellite_angles(scene['IR_108'], lons=lons, lats=lats)
     azidiff = make_azidiff_angle(sata, suna)
 
     # Update coordinates
-    update_coords(scn_)
+    update_coords(scene)
 
     # Add ancillary datasets to the scene
-    add_ancillary_datasets(scn_,
+    add_ancillary_datasets(scene,
                            lons=lons, lats=lats,
                            sunz=sunz, satz=satz,
                            azidiff=azidiff,
                            suna=suna, sata=sata,
                            save_azimuth_angles=save_azimuth_angles)
-    add_proj_satpos(scn_)
+    add_proj_satpos(scene)
 
     # Set attributes. This changes SEVIRI band names to PPS band names.
-    set_attrs(scn_)
+    set_attrs(scene)
 
     # Write datasets to netcdf
-    ir108_for_filename = scn_['IR_108']
+    ir108_for_filename = scene['IR_108']
     if use_nominal_time_in_filename:
         ir108_for_filename = set_nominal_scan_time(ir108_for_filename)
 
     filename = compose_filename(
-        scene=scn_,
+        scene=scene,
         out_path=out_path,
         instrument='seviri',
         band=ir108_for_filename
     )
-    scn_.save_datasets(writer='cf',
+    scene.save_datasets(writer='cf',
                        filename=filename,
-                       header_attrs=get_header_attrs(scn_),
+                       header_attrs=get_header_attrs(scene),
                        engine=engine,
-                       encoding=get_encoding_seviri(scn_),
+                       encoding=get_encoding_seviri(scene),
                        unlimited_dims=['time'],
                        include_lonlats=False,
                        pretty=True,

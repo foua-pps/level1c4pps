@@ -123,7 +123,7 @@ def process_one_scene(scene_files, out_path, use_iband_res=False, reader='viirs_
                       all_channels=False, pps_channels=False, orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
-    scn_ = Scene(
+    scene = Scene(
         reader=reader,
         filenames=scene_files)
 
@@ -144,29 +144,29 @@ def process_one_scene(scene_files, out_path, use_iband_res=False, reader='viirs_
     MY_MBAND_TB = [band for band in MY_MBAND if band not in REFL_BANDS]
 
     if use_iband_res:
-        scn_.load(MY_IBAND_I + ANGLE_NAMES + ['i_latitude', 'i_longitude'], resolution=371)
-        scn_.load(MY_IBAND_M, resolution=742)
-        scn_ = scn_.resample(resampler='native')
+        scene.load(MY_IBAND_I + ANGLE_NAMES + ['i_latitude', 'i_longitude'], resolution=371)
+        scene.load(MY_IBAND_M, resolution=742)
+        scene = scene.resample(resampler='native')
     elif reader == "viirs_compact":
-        scn_.load(MY_MBAND_TB + ANGLE_NAMES + ['latitude_m', 'longitude_m'], resolution=742)
+        scene.load(MY_MBAND_TB + ANGLE_NAMES + ['latitude_m', 'longitude_m'], resolution=742)
         # Load reflective bands with sunz-correction (not the default for VIIRS compact).
-        scn_.load(MY_MBAND_REFL, modifiers=("sunz_corrected", ))
+        scene.load(MY_MBAND_REFL, modifiers=("sunz_corrected", ))
     else:
-        scn_.load(MY_MBAND + ANGLE_NAMES + ['m_latitude', 'm_longitude'], resolution=742)
+        scene.load(MY_MBAND + ANGLE_NAMES + ['m_latitude', 'm_longitude'], resolution=742)
 
-    irch = scn_['M15']
-    set_header_and_band_attrs(scn_, orbit_n=orbit_n)
-    rename_latitude_longitude(scn_)
-    convert_angles(scn_, delete_azimuth=True)
-    update_angle_attributes(scn_, irch)
-    filename = compose_filename(scn_, out_path, instrument='viirs', band=irch)
-    scn_.save_datasets(writer='cf',
+    irch = scene['M15']
+    set_header_and_band_attrs(scene, orbit_n=orbit_n)
+    rename_latitude_longitude(scene)
+    convert_angles(scene, delete_azimuth=True)
+    update_angle_attributes(scene, irch)
+    filename = compose_filename(scene, out_path, instrument='viirs', band=irch)
+    scene.save_datasets(writer='cf',
                        filename=filename,
-                       header_attrs=get_header_attrs(scn_, band=irch, sensor='viirs'),
+                       header_attrs=get_header_attrs(scene, band=irch, sensor='viirs'),
                        engine=engine,
                        include_lonlats=False,
                        flatten_attrs=True,
-                       encoding=get_encoding_viirs(scn_))
+                       encoding=get_encoding_viirs(scene))
     logger.info(f"Saved file {os.path.basename(filename)} after {time.time() - tic:3.1f} seconds")
     return filename
 

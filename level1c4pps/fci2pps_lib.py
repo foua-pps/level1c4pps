@@ -209,26 +209,26 @@ def process_one_scene(scene_files, out_path,
                       orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
-    scn_in = Scene(reader='fci_l1c_nc', filenames=scene_files)
+    scenein = Scene(reader='fci_l1c_nc', filenames=scene_files)
     MY_BANDNAMES = BANDNAMES_DEFAULT
     if all_channels:
         MY_BANDNAMES = BANDNAMES
     if pps_channels:
         MY_BANDNAMES = BANDNAMES_PPS
-    scn_in.load(MY_BANDNAMES + ["ir_105_time"])
-    scn_ = resample_data(scn_in, MY_BANDNAMES + ["ir_105_time"],
+    scenein.load(MY_BANDNAMES + ["ir_105_time"])
+    scene = resample_data(scenein, MY_BANDNAMES + ["ir_105_time"],
                          resample_grid=resample_grid,
                          resample_save_ram=resample_save_ram)
-    fix_time(scn_)
-    add_angles_and_latlon(scn_)
-    irch = scn_['ir_105']
-    set_header_and_band_attrs(scn_, orbit_n=orbit_n)
-    filename = compose_filename(scn_, out_path, instrument='fci', band=irch)
-    encoding = get_encoding_fci(scn_)
-    fix_timestamp_datatype(scn_, encoding, "ir_105_time")
-    scn_.save_datasets(writer='cf',
+    fix_time(scene)
+    add_angles_and_latlon(scene)
+    irch = scene['ir_105']
+    set_header_and_band_attrs(scene, orbit_n=orbit_n)
+    filename = compose_filename(scene, out_path, instrument='fci', band=irch)
+    encoding = get_encoding_fci(scene)
+    fix_timestamp_datatype(scene, encoding, "ir_105_time")
+    scene.save_datasets(writer='cf',
                        filename=filename,
-                       header_attrs=get_header_attrs(scn_, band=irch, sensor='fci'),
+                       header_attrs=get_header_attrs(scene, band=irch, sensor='fci'),
                        engine=engine,
                        include_lonlats=False,
                        flatten_attrs=True,

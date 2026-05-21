@@ -99,7 +99,7 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf',
                       all_channels=False, pps_channels=False, orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
-    scn_ = Scene(
+    scene = Scene(
         reader='slstr_l1b',
         filenames=scene_files)
 
@@ -109,23 +109,23 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf',
     if pps_channels:
         MY_BANDNAMES = BANDNAMES_PPS
 
-    scn_.load(MY_BANDNAMES + ['latitude', 'longitude'] + ANGLE_NAMES)
+    scene.load(MY_BANDNAMES + ['latitude', 'longitude'] + ANGLE_NAMES)
 
     # Everything should be on the same grid, to be saved as ppsleve1c
-    scn_ = scn_.resample(resampler="native")
+    scene = scene.resample(resampler="native")
 
-    irch = scn_['S8']
-    set_header_and_band_attrs(scn_, orbit_n=orbit_n)
-    rename_latitude_longitude(scn_)
-    convert_angles(scn_, delete_azimuth=True)
-    update_angle_attributes(scn_, irch)
-    filename = compose_filename(scn_, out_path, instrument='slstr', band=irch)
-    scn_.save_datasets(writer='cf',
+    irch = scene['S8']
+    set_header_and_band_attrs(scene, orbit_n=orbit_n)
+    rename_latitude_longitude(scene)
+    convert_angles(scene, delete_azimuth=True)
+    update_angle_attributes(scene, irch)
+    filename = compose_filename(scene, out_path, instrument='slstr', band=irch)
+    scene.save_datasets(writer='cf',
                        filename=filename,
-                       header_attrs=get_header_attrs(scn_, band=irch, sensor='slstr'),
+                       header_attrs=get_header_attrs(scene, band=irch, sensor='slstr'),
                        engine=engine,
                        include_lonlats=False,
                        flatten_attrs=True,
-                       encoding=get_encoding_slstr(scn_))
+                       encoding=get_encoding_slstr(scene))
     logger.info(f"Saved file {os.path.basename(filename)} after {time.time() - tic:3.1f} seconds")
     return filename
