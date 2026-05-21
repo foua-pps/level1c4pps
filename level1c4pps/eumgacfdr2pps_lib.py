@@ -205,33 +205,20 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None,
         scn_.load(['overlap_free_end',
                    'overlap_free_start',
                    'midnight_line'])
-
     # Needs to be done before everything else to avoid problems with attributes.
     if remove_broken:
         logger.info("Setting low quality data (qual_flags) to nodata.")
         remove_broken_data(scn_)
-
     # Crop after all renaming of variables are done
     # Problems to rename if cropping is done first.
     set_exact_time_and_crop(scn_, start_line, end_line, time_key='acq_time')
     irch = scn_['brightness_temperature_channel_4']  # Redefine, to get updated start/end_times
-
-    # One ir channel
-    irch = scn_['brightness_temperature_channel_4']
-
-    # Set header and band attributes
     set_header_and_band_attrs(scn_, orbit_n=orbit_n)
-
-    # Rename longitude, latitude to lon, lat.
     rename_latitude_longitude(scn_)
-
-    # Convert angles to PPS
     convert_angles(scn_)
     update_angle_attributes(scn_, irch)  # Standard name etc
-
     # Handle gac specific datasets qual_flags and scanline_timestamps
     update_ancilliary_datasets(scn_)
-
     filename = compose_filename(scn_, out_path, instrument='avhrr', band=irch)
     encoding = get_encoding_gac(scn_)
     scn_.save_datasets(writer='cf',

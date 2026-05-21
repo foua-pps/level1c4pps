@@ -114,19 +114,11 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf',
     # Everything should be on the same grid, to be saved as ppsleve1c
     scn_ = scn_.resample(resampler="native")
 
-    # one ir channel
     irch = scn_['S8']
-
-    # Set header and band attributes
     set_header_and_band_attrs(scn_, orbit_n=orbit_n)
-
-    # Rename longitude, latitude to lon, lat.
     rename_latitude_longitude(scn_)
-
-    # Convert angles to PPS
     convert_angles(scn_, delete_azimuth=True)
     update_angle_attributes(scn_, irch)
-
     filename = compose_filename(scn_, out_path, instrument='slstr', band=irch)
     scn_.save_datasets(writer='cf',
                        filename=filename,

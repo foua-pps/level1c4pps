@@ -154,19 +154,11 @@ def process_one_scene(scene_files, out_path, use_iband_res=False, reader='viirs_
     else:
         scn_.load(MY_MBAND + ANGLE_NAMES + ['m_latitude', 'm_longitude'], resolution=742)
 
-    # one ir channel
     irch = scn_['M15']
-
-    # Set header and band attributes
     set_header_and_band_attrs(scn_, orbit_n=orbit_n)
-
-    # Rename longitude, latitude to lon, lat.
     rename_latitude_longitude(scn_)
-
-    # Convert angles to PPS
     convert_angles(scn_, delete_azimuth=True)
     update_angle_attributes(scn_, irch)
-
     filename = compose_filename(scn_, out_path, instrument='viirs', band=irch)
     scn_.save_datasets(writer='cf',
                        filename=filename,

@@ -126,22 +126,12 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf', all_channels=Fal
         MY_BANDNAMES = BANDNAMES_PPS
 
     scn_.load(MY_BANDNAMES + ['latitude', 'longitude'] + ANGLE_NAMES, resolution=1000)
-    # one ir channel
     irch = scn_['31']
-
-    # Set header and band attributes
     set_header_and_band_attrs(scn_, orbit_n=orbit_n)
-
-    # Rename longitude, latitude to lon, lat.
     rename_latitude_longitude(scn_)
-
-    # Convert angles to PPS
     convert_angles(scn_, delete_azimuth=True)
     update_angle_attributes(scn_, irch)
-
-    # Apply sunz correction
     apply_sunz_correction(scn_, REFL_BANDS)
-
     filename = compose_filename(scn_, out_path, instrument='modis', band=irch)
     scn_.save_datasets(writer='cf',
                        filename=filename,

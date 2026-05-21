@@ -133,24 +133,14 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None, engine='h5netcd
                'solar_azimuth_angle', 'sensor_azimuth_angle',
                'sun_sensor_azimuth_difference_angle'])
 
-    # one ir channel
     irch = scn_['4']
-
-    # Set header and band attributes
     set_header_and_band_attrs(scn_, orbit_n=orbit_n)
-
-    # Rename longitude, latitude to lon, lat.
     rename_latitude_longitude(scn_)
-
-    # Convert angles to PPS
     convert_angles(scn_)
     update_angle_attributes(scn_, irch)
-
     # Handle gac specific datasets qual_flags and scanline_timestamps
     update_ancilliary_datasets(scn_)
-
     filename = compose_filename(scn_, out_path, instrument='avhrr', band=irch)
-
     encoding = get_encoding_gac(scn_)
     encoding['scanline_timestamps'].pop('units')
     scn_.save_datasets(writer='cf',
