@@ -23,7 +23,6 @@ import sys
 import unittest
 
 import numpy as np
-import pytest
 import xarray as xr
 from pyresample import SwathDefinition
 from satpy.dataset.dataid import WavelengthRange
@@ -118,4 +117,3 @@ class TestFCI2PPS(unittest.TestCase):
         self.assertEqual(scene["vis_06"].attrs["name"], "image1")
         self.assertEqual(scene["vis_06"].attrs["sun_zenith_angle_correction_applied"], "True")
         self.assertEqual(scene["vis_06"].attrs["valid_range"][1], 20000)
-

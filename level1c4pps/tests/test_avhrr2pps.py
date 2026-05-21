@@ -100,4 +100,3 @@ class TestAvhrr2PPS(unittest.TestCase):
         avhrr2pps.set_header_and_band_attrs(self.scene, orbit_n='12345')
         self.assertTrue(isinstance(self.scene.attrs['orbit_number'], int))
         self.assertEqual(self.scene.attrs['orbit_number'], 12345)
-

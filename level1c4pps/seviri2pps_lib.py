@@ -54,6 +54,7 @@ except NameError:
 
 logger = logging.getLogger("seviri2pps")
 
+
 class UnexpectedSatpyVersion(Exception):
     """Exception if unexpected satpy version."""
 

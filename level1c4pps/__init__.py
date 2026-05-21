@@ -444,7 +444,7 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
             # Assume factor applied if available as attribute.
             scene[band].attrs['sun_earth_distance_correction_applied'] = 'True'
             fix_sun_earth_distance_correction_factor(scene, band, irch.attrs['start_time'])
-        if 'wavelength' in  scene[band].attrs:   
+        if 'wavelength' in scene[band].attrs:
             scene[band].attrs['wavelength'] = scene[band].attrs['wavelength'][0:3]
         scene[band].attrs['sun_zenith_angle_correction_applied'] = 'False'
         if "sunz_corrected" in scene[band].attrs.get('modifiers', []):
@@ -464,7 +464,7 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
 
         # Add time coordinate. To make cfwriter aware that we want 3D data.
         scene[band].coords['time'] = irch.attrs['start_time']
-        
+
         # Remove some attributes and coordinates
         for attr in RENAME_VARS:
             if attr in scene[band].attrs:
@@ -615,6 +615,7 @@ def get_header_attrs(scene, band, sensor='avhrr', sbaf_version='NO_SBAF'):
     header_attrs['sbaf_version'] = sbaf_version
 
     return header_attrs
+
 
 def fix_timestamp_datatype(scene, encoding, param):
     """Fix time datatype."""

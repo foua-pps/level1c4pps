@@ -44,7 +44,6 @@ class TestInit(unittest.TestCase):
                         "NOAA-20": "noaa20",
                         "Suomi-NPP": "npp"}
         for platform_name in input_output:
-            
             out = platform_name_to_use_in_filename(platform_name)
             self.assertTrue(out == input_output[platform_name])
 

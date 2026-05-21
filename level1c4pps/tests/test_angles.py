@@ -24,7 +24,6 @@ import datetime as dt
 import numpy as np
 import xarray as xr
 from unittest import mock
-import sys
 import unittest
 
 SAT_AZ = np.ma.array([[48.0, 56.0, 64.0, 72.0],
@@ -102,4 +101,3 @@ class TestUpdateAnglesAttribute(unittest.TestCase):
         self.assertIn('time', angle_dict['satzenith'].coords.keys())
         self.assertIn('long_name', angle_dict['satzenith'].attrs.keys())
         self.assertIn('standard_name', angle_dict['satzenith'].attrs.keys())
-

@@ -178,7 +178,7 @@ def resample_data(scn_in, datasets, resample_grid="coarse", resample_save_ram=Fa
             logger.info("Resampling to msg grid")
             scn_out = scn_in.resample(resample_grid, datsets=datasets, resampler='nearest')
     else:
-        raise ValueError (f"No remapping method for grid {resample_grid}")
+        raise ValueError(f"No remapping method for grid {resample_grid}")
     return scn_out
 
 

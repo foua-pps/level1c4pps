@@ -82,4 +82,3 @@ class TestMETimage2PPS(unittest.TestCase):
         metimage2pps_lib.set_header_and_band_attrs(self.scene)
         self.assertTrue(isinstance(self.scene.attrs["orbit_number"], int))
         self.assertEqual(self.scene["vii_668"].attrs["sun_zenith_angle_correction_applied"], "False")
-

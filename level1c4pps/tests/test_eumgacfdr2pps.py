@@ -122,4 +122,3 @@ class TestEumgacfdr2PPS(unittest.TestCase):
 
         np.testing.assert_almost_equal(pps_nc.variables['image1'].sun_earth_distance_correction_factor,
                                        0.9975245, decimal=4)
-

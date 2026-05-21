@@ -106,4 +106,3 @@ class TestMersi2PPS(unittest.TestCase):
         ]:
             sensor = mersi2pps.get_sensor(filename)
             self.assertEqual(sensor, expect)
-

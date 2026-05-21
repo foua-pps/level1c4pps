@@ -711,4 +711,3 @@ class TestSEVIRIFilenameParser(unittest.TestCase):
         self.assertEqual(file_format, 'seviri_l1b_hrit')
         self.assertEqual(info['start_time'], dt.datetime(2014, 10, 5, 11, 15))
         self.assertEqual(info['platform_shortname'], 'MSG3')
-
