@@ -22,10 +22,7 @@
 import netCDF4
 import unittest
 from datetime import datetime, timezone
-try:
-    from unittest import mock
-except ImportError:
-    import mock
+from unittest import mock
 from satpy import Scene
 
 import level1c4pps.eumgacfdr2pps_lib as eumgacfdr2pps
@@ -126,11 +123,3 @@ class TestEumgacfdr2PPS(unittest.TestCase):
         np.testing.assert_almost_equal(pps_nc.variables['image1'].sun_earth_distance_correction_factor,
                                        0.9975245, decimal=4)
 
-
-def suite():
-    """Create the test suite for test_eumgacfdr2pps."""
-    loader = unittest.TestLoader()
-    mysuite = unittest.TestSuite()
-    mysuite.addTest(loader.loadTestsFromTestCase(TestEumgacfdr2PPS))
-
-    return mysuite

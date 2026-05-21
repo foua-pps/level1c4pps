@@ -21,10 +21,7 @@
 
 import datetime as dt
 import unittest
-try:
-    from unittest import mock
-except ImportError:
-    import mock
+from unittest import mock
 from satpy import Scene
 
 import level1c4pps.viirs2pps_lib as viirs2pps
@@ -91,11 +88,3 @@ class TestViirs2PPS(unittest.TestCase):
         self.assertTrue(isinstance(self.scene.attrs['orbit_number'], int))
         self.assertTrue(self.scene["M05"].attrs['sun_zenith_angle_correction_applied'])
 
-
-def suite():
-    """Create the test suite for test_viirs2pps."""
-    loader = unittest.TestLoader()
-    mysuite = unittest.TestSuite()
-    mysuite.addTest(loader.loadTestsFromTestCase(TestViirs2PPS))
-
-    return mysuite

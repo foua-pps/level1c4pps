@@ -28,10 +28,7 @@ import xarray as xr
 from pyresample import SwathDefinition
 from satpy.dataset.dataid import WavelengthRange
 
-try:
-    from unittest import mock
-except ImportError:
-    import mock
+from unittest import mock
 sys.modules["hdf5plugin"] = mock.MagicMock()
 import level1c4pps.fci2pps_lib as fci2pps  # modify hdf5plugin first # noqa: E402
 
@@ -122,10 +119,3 @@ class TestFCI2PPS(unittest.TestCase):
         self.assertEqual(scene["vis_06"].attrs["sun_zenith_angle_correction_applied"], "True")
         self.assertEqual(scene["vis_06"].attrs["valid_range"][1], 20000)
 
-
-def suite():
-    """Create the test suite for test_fci2pps."""
-    loader = unittest.TestLoader()
-    mysuite = unittest.TestSuite()
-    mysuite.addTest(loader.loadTestsFromTestCase(TestFCI2PPS))
-    return mysuite

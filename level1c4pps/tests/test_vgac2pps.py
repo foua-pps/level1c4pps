@@ -22,10 +22,7 @@
 import netCDF4
 import unittest
 from datetime import datetime, timezone
-try:
-    from unittest import mock
-except ImportError:
-    import mock
+from unittest import mock
 from satpy import Scene
 
 import level1c4pps.vgac2pps_lib as vgac2pps

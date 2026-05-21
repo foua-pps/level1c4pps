@@ -21,10 +21,7 @@
 
 import datetime as dt
 import unittest
-try:
-    from unittest import mock
-except ImportError:
-    import mock
+from unittest import mock
 from satpy import Scene
 
 import level1c4pps.slstr2pps_lib as slstr2pps
@@ -88,11 +85,3 @@ class TestSlstr2PPS(unittest.TestCase):
         self.assertTrue(isinstance(self.scene.attrs['orbit_number'], int))
         self.assertEqual(self.scene.attrs['orbit_number'], 12345)
 
-
-def suite():
-    """Create the test suite for test_slstr2pps."""
-    loader = unittest.TestLoader()
-    mysuite = unittest.TestSuite()
-    mysuite.addTest(loader.loadTestsFromTestCase(TestSlstr2PPS))
-
-    return mysuite

@@ -23,15 +23,9 @@ from level1c4pps import make_azidiff_angle, update_angle_attributes
 import datetime as dt
 import numpy as np
 import xarray as xr
-try:
-    from unittest import mock
-except ImportError:
-    import mock
+from unittest import mock
 import sys
-if sys.version_info < (2, 7):
-    import unittest2 as unittest
-else:
-    import unittest
+import unittest
 
 SAT_AZ = np.ma.array([[48.0, 56.0, 64.0, 72.0],
                       [80.0, 88.0, 96.0, 104.0],
@@ -109,11 +103,3 @@ class TestUpdateAnglesAttribute(unittest.TestCase):
         self.assertIn('long_name', angle_dict['satzenith'].attrs.keys())
         self.assertIn('standard_name', angle_dict['satzenith'].attrs.keys())
 
-
-def suite():
-    """Create the test suite for test_atm_correction_ir."""
-    loader = unittest.TestLoader()
-    mysuite = unittest.TestSuite()
-    mysuite.addTest(loader.loadTestsFromTestCase(TestAzimuthDifferenceAngles))
-    mysuite.addTest(loader.loadTestsFromTestCase(TestUpdateAnglesAttribute))
-    return mysuite

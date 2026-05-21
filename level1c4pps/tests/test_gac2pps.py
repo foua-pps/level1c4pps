@@ -23,10 +23,7 @@ import datetime as dt
 import netCDF4
 import unittest
 from datetime import datetime, timezone
-try:
-    from unittest import mock
-except ImportError:
-    import mock
+from unittest import mock
 from satpy import Scene
 
 import level1c4pps.gac2pps_lib as gac2pps
@@ -168,12 +165,3 @@ class TestGac2PPS(unittest.TestCase):
 
         np.testing.assert_almost_equal(pps_nc.variables['image1'].sun_earth_distance_correction_factor,
                                        0.9666, decimal=4)
-
-
-def suite():
-    """Create the test suite for test_gac2pps."""
-    loader = unittest.TestLoader()
-    mysuite = unittest.TestSuite()
-    mysuite.addTest(loader.loadTestsFromTestCase(TestGac2PPS))
-
-    return mysuite

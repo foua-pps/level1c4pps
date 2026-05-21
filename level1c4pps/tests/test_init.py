@@ -65,11 +65,3 @@ class TestInit(unittest.TestCase):
                                    out_lons, rtol=0.00001)
         np.testing.assert_allclose(centered_modulus(in_lons_np),
                                    out_lons_np, rtol=0.00001)
-
-
-def suite():
-    """Create the test suite for test_init."""
-    loader = unittest.TestLoader()
-    mysuite = unittest.TestSuite()
-    mysuite.addTest(loader.loadTestsFromTestCase(TestInit))
-    return mysuite

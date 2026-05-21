@@ -83,11 +83,3 @@ class TestMETimage2PPS(unittest.TestCase):
         self.assertTrue(isinstance(self.scene.attrs["orbit_number"], int))
         self.assertEqual(self.scene["vii_668"].attrs["sun_zenith_angle_correction_applied"], "False")
 
-
-def suite():
-    """Create the test suite for test_metimage2pps."""
-    loader = unittest.TestLoader()
-    mysuite = unittest.TestSuite()
-    mysuite.addTest(loader.loadTestsFromTestCase(TestMETimage2PPS))
-
-    return mysuite

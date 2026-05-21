@@ -21,10 +21,7 @@
 
 import datetime as dt
 import unittest
-try:
-    from unittest import mock
-except ImportError:
-    import mock
+from unittest import mock
 import numpy as np
 import xarray as xr
 from satpy import Scene
@@ -110,11 +107,3 @@ class TestMersi2PPS(unittest.TestCase):
             sensor = mersi2pps.get_sensor(filename)
             self.assertEqual(sensor, expect)
 
-
-def suite():
-    """Create the test suite for test_mersi22pps."""
-    loader = unittest.TestLoader()
-    mysuite = unittest.TestSuite()
-    mysuite.addTest(loader.loadTestsFromTestCase(TestMersi2PPS))
-
-    return mysuite

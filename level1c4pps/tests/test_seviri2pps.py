@@ -23,10 +23,7 @@ import datetime as dt
 import numpy as np
 import pytest
 import unittest
-try:
-    from unittest import mock
-except ImportError:
-    import mock
+from unittest import mock
 import xarray as xr
 from satpy import Scene
 
@@ -715,12 +712,3 @@ class TestSEVIRIFilenameParser(unittest.TestCase):
         self.assertEqual(info['start_time'], dt.datetime(2014, 10, 5, 11, 15))
         self.assertEqual(info['platform_shortname'], 'MSG3')
 
-
-def suite():
-    """Create the test suite for test_seviri2pps."""
-    loader = unittest.TestLoader()
-    mysuite = unittest.TestSuite()
-    mysuite.addTest(loader.loadTestsFromTestCase(TestSeviri2PPS))
-    mysuite.addTest(loader.loadTestsFromTestCase(TestCalibration))
-
-    return mysuite
