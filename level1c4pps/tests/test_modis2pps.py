@@ -23,7 +23,8 @@ import datetime as dt
 import unittest
 from unittest import mock
 from satpy import Scene
-
+import os
+import xarray as xr
 import level1c4pps.modis2pps_lib as modis2pps
 
 
@@ -32,25 +33,29 @@ class TestModis2PPS(unittest.TestCase):
 
     def setUp(self):
         """Create a test scene."""
-        modis2pps.BANDNAMES = ['1', '31']
-        vis006 = mock.MagicMock(attrs={'name': 'image0',
-                                       'wavelength': [1, 2, 3, 'um'],
-                                       'id_tag': 'ch_r06'})
-        ir_108 = mock.MagicMock(attrs={'name': 'image1',
-                                       'id_tag': 'ch_tb11',
-                                       'wavelength': [1, 2, 3, 'um'],
-                                       'start_time': dt.datetime(2009, 7, 1, 12, 1, 0),
-                                       'end_time': dt.datetime(2009, 7, 1, 12, 1, 0),
-                                       'platform_name': 'fy3d',
-                                       'orbit_number': 99999})
-        satzenith = mock.MagicMock(attrs={'name': 'satzenith',
-                                          'id_tag': 'satzenith'})
         self.scene = Scene()
-        scene_dict = {'1': vis006, '31': ir_108, 'satzenith': satzenith}
+        scene_dict = {}
+        for key in modis2pps.GEOLOCATION_NAMES + ['1', '31']:
+            scene_dict[key] = xr.DataArray([[1.0, 2.0],
+                                            [3.0, 4.0]],
+                                           dims=('y', 'x'),
+                                           attrs={'name': key,
+                                                  'id_tag': key})
+        scene_dict['1'].attrs = {'name': 'image0',
+                                   'wavelength': [1, 2, 3, 'um'],
+                                   'modifiers': ("sunz_correction", ),
+                                   'id_tag': 'ch_r06'}
+        scene_dict['31'].attrs = {'name': 'image1',
+                                   'id_tag': 'ch_tb11',
+                                   'platform': "Aqua",
+                                   'number_of_scans': 15,
+                                   'rows_per_scan': 16,
+                                   'wavelength': [1, 2, 3, 'um'],
+                                   'start_time': dt.datetime(2009, 7, 1, 12, 1, 0),
+                                   'end_time': dt.datetime(2009, 7, 1, 12, 1, 0),
+                                   'orbit_number': 99999}
         for key in scene_dict:
-            pps_name = scene_dict[key].attrs['name']
-            self.scene[key] = scene_dict[key]
-            self.scene[key].attrs['name'] = pps_name
+            self.scene[key] = scene_dict[key]        
         self.scene.attrs['sensor'] = ['modis']
 
  
@@ -75,3 +80,12 @@ class TestModis2PPS(unittest.TestCase):
         modis2pps.set_header_and_band_attrs(self.scene, orbit_n='12345')
         self.assertTrue(isinstance(self.scene.attrs['orbit_number'], int))
         self.assertEqual(self.scene.attrs['orbit_number'], 12345)
+
+    @mock.patch("level1c4pps.modis2pps_lib.load_data")
+    def test_process_one_scene(self, mock_load):
+        """Test to set process_one_scene."""
+        import level1c4pps.modis2pps_lib as modis2pps
+        mock_load.return_value = self.scene
+        filename = modis2pps.process_one_scene("dummy", out_path='./level1c4pps/tests/', orbit_n='12345')
+        self.assertEqual(os.path.basename(filename), "S_NWC_modis_eos2_12345_20090701T1201000Z_20090701T1201000Z.nc")
+

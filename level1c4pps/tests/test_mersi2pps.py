@@ -24,6 +24,7 @@ import unittest
 from unittest import mock
 import numpy as np
 import xarray as xr
+import os
 from satpy import Scene
 
 import level1c4pps.mersi2pps_lib as mersi2pps
@@ -34,26 +35,31 @@ class TestMersi2PPS(unittest.TestCase):
 
     def setUp(self):
         """Create a test scene."""
-        mersi2pps.BANDNAMES = ['3', '24']
-        vis006 = mock.MagicMock(attrs={'name': 'image0',
-                                       'wavelength': [1, 2, 3, 'um'],
-                                       'id_tag': 'ch_r06'})
-        ir_108 = mock.MagicMock(attrs={'name': 'image1',
-                                       'id_tag': 'ch_tb11',
-                                       'wavelength': [1, 2, 3, 'um'],
-                                       'start_time': dt.datetime(2009, 7, 1, 12, 1, 0),
-                                       'end_time': dt.datetime(2009, 7, 1, 12, 1, 0),
-                                       'platform_name': 'fy3d',
-                                       'orbit_number': 99999})
-        satzenith = mock.MagicMock(attrs={'name': 'satzenith',
-                                          'id_tag': 'satzenith'})
         self.scene = Scene()
-        scene_dict = {'3': vis006, '24': ir_108, 'satzenith': satzenith}
+        scene_dict = {}
+        for key in mersi2pps.GEOLOCATION_NAMES + ['3', '24']:
+            scene_dict[key] = xr.DataArray([[1.0, 2.0],
+                                            [3.0, 4.0]],
+                                           dims=('y', 'x'),
+                                           attrs={'name': key,
+                                                  'id_tag': key})
+        scene_dict['3'].attrs = {'name': 'image0',
+                                   'wavelength': [1, 2, 3, 'um'],
+                                   'modifiers': ("sunz_correction", ),
+                                   'id_tag': 'ch_r06'}
+        scene_dict['24'].attrs = {'name': 'image1',
+                                   'id_tag': 'ch_tb11',
+                                   'platform': "FY-3F",
+                                   'number_of_scans': 15,
+                                   'rows_per_scan': 16,
+                                   'wavelength': [1, 2, 3, 'um'],
+                                   'start_time': dt.datetime(2009, 7, 1, 12, 1, 0),
+                                   'end_time': dt.datetime(2009, 7, 1, 12, 1, 0),
+                                   'orbit_number': 99999}
         for key in scene_dict:
-            pps_name = scene_dict[key].attrs['name']
-            self.scene[key] = scene_dict[key]
-            self.scene[key].attrs['name'] = pps_name
-        self.scene.attrs['sensor'] = ['mersi2']
+            self.scene[key] = scene_dict[key]        
+        self.scene.attrs['sensor'] = ['mersi3']
+
 
     def test_compose_filename(self):
         """Test compose filename for MERSI-2."""
@@ -106,3 +112,12 @@ class TestMersi2PPS(unittest.TestCase):
         ]:
             sensor = mersi2pps.get_sensor(filename)
             self.assertEqual(sensor, expect)
+            
+    @mock.patch("level1c4pps.mersi2pps_lib.load_data")
+    def test_process_one_scene(self, mock_load):
+        """Test to set process_one_scene."""
+        import level1c4pps.mersi2pps_lib as mersi2pps
+        mock_load.return_value = self.scene
+        filename = mersi2pps.process_one_scene(["tf2019234102243.FY3F-X_MERSI_GEOQK_L1B.HDF"], out_path='./level1c4pps/tests/', orbit_n='12345')
+        self.assertEqual(os.path.basename(filename), "S_NWC_mersi3_fy3f_12345_20090701T1201000Z_20090701T1201000Z.nc")
+
