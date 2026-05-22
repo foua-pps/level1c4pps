@@ -35,6 +35,9 @@ from level1c4pps import (get_encoding,
                          update_angle_attributes, get_header_attrs,
                          set_header_and_band_attrs_defaults,
                          convert_angles,
+                         get_refl_bands,
+                         save_data,
+                         log_time,
                          adjust_lons_to_valid_range)
 
 import logging
@@ -243,7 +246,7 @@ def process_one_scene(scene_files, out_path,
     homogenize(scene)
     apply_sunz_correction(scene, refl_bands)
     filename = compose_filename(scene, out_path, instrument='seviri', band=irch)
-    get_header_attrs(scene, band=irch, sensor='seviri')
+    header_attrs = get_header_attrs(scene, band=irch, sensor='seviri')
     save_data(scene, filename, header_attrs, engine)
     log_time(filename, tic)
     return filename
