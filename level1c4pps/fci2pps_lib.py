@@ -38,9 +38,12 @@ from level1c4pps import (compose_filename,
                          get_encoding,
                          get_refl_bands,
                          get_band_names,
+                         save_data,
+                         log_time,
                          get_header_attrs,
                          set_header_and_band_attrs_defaults)
-from level1c4pps.seviri2pps_lib import (add_ancillary_datasets, get_lonlats,
+from level1c4pps.seviri2pps_lib import (add_ancillary_datasets,
+                                        get_lonlats,
                                         get_satellite_angles,
                                         make_azidiff_angle)
 
@@ -53,9 +56,6 @@ if Version(satpy.__version__) <= Version('0.59.0'):
     if Version(satpy.__version__) > Version('0.56.0'):
         logger.warning("Native resampling craching for satpy 0.57 to 0.59.0.")
 
-
-ANGLE_NAMES = ['observation_zenith', 'solar_zenith',
-               'observation_azimuth', 'solar_azimuth']
 
 PPS_TAGNAMES = {"vis_06": "ch_r06",
                 "vis_08": "ch_r09",
@@ -155,7 +155,8 @@ def resample_data(scn_in, datasets, resample_grid="coarse", resample_save_ram=Fa
 
 def add_angles_and_latlon(scene):
     """Add the lon/lat and angles datasets."""
-    lons, lats = get_lonlats(scene['ir_105'])
+    irch = scene['ir_105']
+    lons, lats = get_lonlats(irch)
     suna, sunz = get_solar_angles(scene, lons=lons, lats=lats)
     sata, satz = get_satellite_angles(scene['ir_105'], lons=lons, lats=lats)
     azidiff = make_azidiff_angle(sata, suna)
@@ -170,7 +171,11 @@ def add_angles_and_latlon(scene):
                            save_azimuth_angles=False,
                            chunks=(464, 928))
     
-def load_data(scene_files):
+def load_data(scene_files,
+              all_channels,
+              pps_channels,
+              resample_grid,
+              resample_save_ram):
     """Load data with satpy."""
     scenein = Scene(reader='fci_l1c_nc', filenames=scene_files)
     my_bands = get_band_names(PPS_TAGNAMES, all_channels, pps_channels)
@@ -189,7 +194,17 @@ def process_one_scene(scene_files, out_path,
                       orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
-    scene = load_data(scene_files)
+    #scene = load_data(scene_files,
+    #                  all_channels,
+    #                  pps_channels,
+    #                  resample_grid,
+    #                  resample_save_ram)
+    scenein = Scene(reader='fci_l1c_nc', filenames=scene_files)
+    my_bands = get_band_names(PPS_TAGNAMES, all_channels, pps_channels)
+    scenein.load(my_bands + ["ir_105_time"])
+    scene = resample_data(scenein, my_bands + ["ir_105_time"],
+                          resample_grid=resample_grid,
+                          resample_save_ram=resample_save_ram)
     fix_time(scene)
     add_angles_and_latlon(scene)
     irch = scene['ir_105']
@@ -197,6 +212,7 @@ def process_one_scene(scene_files, out_path,
     filename = compose_filename(scene, out_path, instrument='fci', band=irch)
     encoding = get_encoding(scene)
     fix_timestamp_datatype(scene, encoding, "ir_105_time")
-    save_data(scene, filename, header_attrs)
+    header_attrs=get_header_attrs(scene, band=irch, sensor='fci')
+    save_data(scene, filename, header_attrs, engine)
     log_time(filename, tic)
     return filename
