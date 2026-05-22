@@ -442,6 +442,7 @@ class TestSeviri2PPS(unittest.TestCase):
             'time': enc_exp_time,
             'acq_time': enc_exp_acq
         }
+        
         encoding = seviri2pps.get_encoding_seviri(scene)
         for key in encoding_exp:
             print(key)

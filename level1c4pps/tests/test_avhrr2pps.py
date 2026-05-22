@@ -21,8 +21,10 @@
 
 import datetime as dt
 import unittest
+import os
 from unittest import mock
 from satpy import Scene
+import xarray as xr
 
 import level1c4pps.avhrr2pps_lib as avhrr2pps
 
@@ -32,52 +34,30 @@ class TestAvhrr2PPS(unittest.TestCase):
 
     def setUp(self):
         """Create a test scene."""
-        avhrr2pps.BANDNAMES = ['1', '4']
-        vis006 = mock.MagicMock(attrs={'name': 'image0',
-                                       'wavelength': [1, 2, 3, 'um'],
-                                       'id_tag': 'ch_r06'})
-        ir_108 = mock.MagicMock(attrs={'name': 'image1',
-                                       'id_tag': 'ch_tb11',
-                                       'wavelength': [1, 2, 3, 'um'],
-                                       'start_time': dt.datetime(2009, 7, 1, 12, 1, 0),
-                                       'end_time': dt.datetime(2009, 7, 1, 12, 1, 0),
-                                       'platform_name': 'fy3d',
-                                       'orbit_number': 99999})
-        satzenith = mock.MagicMock(attrs={'name': 'satzenith',
-                                          'id_tag': 'satzenith'})
         self.scene = Scene()
-        scene_dict = {'1': vis006, '4': ir_108, 'satzenith': satzenith}
+        scene_dict = {}
+        for key in avhrr2pps.GEOLOCATION_NAMES_AAPP + ['1', '4']:
+            scene_dict[key] = xr.DataArray([[1.0, 2.0],
+                                            [3.0, 4.0]],
+                                           dims=('y', 'x'),
+                                           attrs={'name': key,
+                                                  'id_tag': key})
+        scene_dict['1'].attrs = {'name': 'image0',
+                                  'wavelength': [1, 2, 3, 'um'],
+                                  'id_tag': 'ch_r06'}
+        scene_dict['4'].attrs = {'name': 'image1',
+                                  'id_tag': 'ch_tb11',
+                                  'platform': "NOAA-19",
+                                  'wavelength': [1, 2, 3, 'um'],
+                                  'start_time': dt.datetime(2009, 7, 1, 12, 1, 0),
+                                  'end_time': dt.datetime(2009, 7, 1, 12, 1, 0),
+                                  'platform_name': '',
+                                  'orbit_number': 99999}
         for key in scene_dict:
-            pps_name = scene_dict[key].attrs['name']
-            self.scene[key] = scene_dict[key]
-            self.scene[key].attrs['name'] = pps_name
+            self.scene[key] = scene_dict[key]        
         self.scene.attrs['sensor'] = ['avhrr']
 
-    def test_get_encoding(self):
-        """Test encoding for AVHRR."""
-        enc_exp_angles = {'dtype': 'int16',
-                          'scale_factor': 0.01,
-                          'zlib': True,
-                          'complevel': 4,
-                          '_FillValue': -32767,
-                          'add_offset': 0.0}
-        encoding_exp = {
-            'image0': {'dtype': 'int16',
-                       'scale_factor': 0.01,
-                       'zlib': True,
-                       'complevel': 4,
-                       '_FillValue': -32767,
-                       'add_offset': 0.0},
-            'image1': {'dtype': 'int16',
-                       'scale_factor': 0.01,
-                       '_FillValue': -32767,
-                       'zlib': True,
-                       'complevel': 4,
-                       'add_offset': 273.15},
-            'satzenith': enc_exp_angles
-        }
-        encoding = avhrr2pps.get_encoding_avhrr(self.scene)
-        self.assertDictEqual(encoding, encoding_exp)
+
 
     def test_compose_filename(self):
         """Test compose filename for AVHRR."""
@@ -100,3 +80,11 @@ class TestAvhrr2PPS(unittest.TestCase):
         avhrr2pps.set_header_and_band_attrs(self.scene, orbit_n='12345')
         self.assertTrue(isinstance(self.scene.attrs['orbit_number'], int))
         self.assertEqual(self.scene.attrs['orbit_number'], 12345)
+        
+    @mock.patch("level1c4pps.avhrr2pps_lib.load_data")
+    def test_process_one_scene(self, mock_load):
+        """Test to set process_one_scene."""
+        import level1c4pps.avhrr2pps_lib as avhrr2pps
+        mock_load.return_value = self.scene
+        filename = avhrr2pps.process_one_scene("dummy", out_path='./level1c4pps/tests/', orbit_n='12345')
+        self.assertEqual(os.path.basename(filename), "S_NWC_avhrr_noaa19_12345_20090701T1201000Z_20090701T1201000Z.nc")

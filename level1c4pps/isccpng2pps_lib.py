@@ -42,22 +42,6 @@ import logging
 
 logger = logging.getLogger('isccpng2pps')
 
-BANDNAMES = ['refl_01_60um',
-             'refl_00_65um',
-             'refl_00_86um',
-             'temp_03_80um',
-             'temp_08_60um',
-             'temp_09_70um',
-             'temp_11_00um',
-             'temp_12_00um',
-             'temp_13_30um',
-             'temp_06_20um',
-             'temp_07_30um']
-
-
-REFL_BANDS = ['refl_01_60um',
-              'refl_00_65um',
-              'refl_00_86um']
 
 ANGLE_NAMES = ['solar_zenith_angle', 'satellite_zenith_angle',
                'solar_azimuth_angle', 'satellite_azimuth_angle']
@@ -74,7 +58,9 @@ PPS_TAGNAMES = {'refl_01_60um': "ch_r16",
                 'temp_06_20um': "ch_tbxx",
                 'temp_07_30um': "ch_tb73"}
 
-BANDNAMES = list(PPS_TAGNAMES.keys())
+
+refl_bands = get_refl_bands(PPS_TAGNAMES)
+bandnames = sorted(list(PPS_TAGNAMES.keys()))
 
 channel_name = {"refl_00_65um": "VIS006",
                 "refl_00_86um": "VIS008",
@@ -159,11 +145,6 @@ satellite_names = {270: "GOES-16",  # ABI
                    70: "Meteosat-11"}
 
 
-def get_encoding_isccpng(scene):
-    """Get netcdf encoding for all datasets."""
-    return get_encoding(scene, BANDNAMES, PPS_TAGNAMES, chunks=None)
-
-
 def set_header_and_band_attrs(scene, orbit_n=00000):
     """Set and delete some attributes."""
     nimg = 0  # name of first dataset is image0
@@ -172,8 +153,8 @@ def set_header_and_band_attrs(scene, orbit_n=00000):
     irch.attrs['instrument'] = "seviri"
     scene.attrs['source'] = "isccpng2pps.py"
     scene.attrs['platform_name'] = "meteosat11"
-    nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch, orbit_n=orbit_n)
-    for band in REFL_BANDS:
+    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGNAMES, irch, orbit_n=orbit_n)
+    for band in refl_bands:
         if band not in scene:
             continue
         scene[band].attrs['sun_zenith_angle_correction_applied'] = 'False'
@@ -203,7 +184,7 @@ def homogenize_channel(scene, wmo_id, illum, band, sol_zen):
 def homogenize(scene):
     """Homogenize data to Meteosat-11."""
     sol_zen = scene["sunzenith"]
-    for band in BANDNAMES:
+    for band in bandnames:
         if band not in scene:
             continue
         for wmo_id in satellite_names:
@@ -239,17 +220,19 @@ def fix_pixel_time(scene):
     scene["pixel_time"].data = scene["pixel_time"].data * np.timedelta64(1, 's') + scene['temp_11_00um'].attrs["start_time"]
 
 
+def load_data(scene_files):
+    """Load data."""
+    scene = Scene(reader='multiple_sensors_isccpng_l1g_nc', filenames=scene_files)
+    scene.load(bandnames + ANGLE_NAMES + ["wmo_id", "pixel_time", "lon", "lat"])
+    return scene
+
 def process_one_scene(scene_files, out_path,
                       engine='h5netcdf',
                       orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
-    scene = Scene(reader='multiple_sensors_isccpng_l1g_nc', filenames=scene_files)
-    scene.load(BANDNAMES + ANGLE_NAMES + ["wmo_id", "pixel_time", "lon", "lat"])
-
-    # one ir channel
+    scene = load_data(scene_files)
     irch = scene['temp_11_00um']
-
     set_header_and_band_attrs(scene, orbit_n=orbit_n)
     fix_pixel_time(scene)
     # rename_latitude_longitude(scene)
@@ -258,17 +241,9 @@ def process_one_scene(scene_files, out_path,
     update_angle_attributes(scene, irch)
     recalibrate_meteosat(scene)
     homogenize(scene)
-    apply_sunz_correction(scene, REFL_BANDS)
-
+    apply_sunz_correction(scene, refl_bands)
     filename = compose_filename(scene, out_path, instrument='seviri', band=irch)
-    encoding = get_encoding_isccpng(scene)
-
-    scene.save_datasets(writer='cf',
-                       filename=filename,
-                       header_attrs=get_header_attrs(scene, band=irch, sensor='seviri'),
-                       engine=engine,
-                       include_lonlats=False,
-                       flatten_attrs=True,
-                       encoding=encoding)
-    logger.info(f"Saved file {os.path.basename(filename)} after {time.time() - tic:3.1f} seconds")
+    get_header_attrs(scene, band=irch, sensor='seviri')
+    save_data(scene, filename, header_attrs, engine)
+    log_time(filename, tic)
     return filename

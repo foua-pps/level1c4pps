@@ -50,8 +50,7 @@ class TestInit(unittest.TestCase):
     def test_get_band_encoding(self):
         """Test get encoding."""
         ds = xr.DataArray([], attrs={'name': 'dummy'})
-        self.assertRaises(ValueError, level1c4pps.get_band_encoding, ds,
-                          None, None)
+        self.assertRaises(ValueError, level1c4pps.get_band_encoding, ds)
 
     def test_adjust_lons(self):
         """Test adjusted longitudes."""

@@ -21,8 +21,10 @@
 
 import datetime as dt
 import unittest
+import os
 from unittest import mock
 from satpy import Scene
+import xarray as xr
 
 import level1c4pps.viirs2pps_lib as viirs2pps
 
@@ -32,58 +34,42 @@ class TestViirs2PPS(unittest.TestCase):
 
     def setUp(self):
         """Create a test scene."""
-        viirs2pps.BANDNAMES = ['M05', 'M15']
-        vis006 = mock.MagicMock(attrs={'name': 'image0',
-                                       'modifiers': ("sunz_correction", ),
-                                       'wavelength': [1, 2, 3, 'um'],
-                                       'id_tag': 'ch_r06'})
-        ir_108 = mock.MagicMock(attrs={
-            'name': 'image1',
-            'id_tag': 'ch_tb11',
-            'rows_per_scan': 16,
-            'wavelength': [1, 2, 3, 'um'],
-            'start_time': dt.datetime(2009, 7, 1, 12, 1, 0),
-            'end_time': dt.datetime(2009, 7, 1, 12, 1, 0),
-            'platform_name': '',
-            'orbit_number': 99999})
-        satzenith = mock.MagicMock(attrs={'name': 'satzenith',
-                                          'id_tag': 'satzenith'})
         self.scene = Scene()
-        scene_dict = {'M05': vis006, 'M15': ir_108, 'satzenith': satzenith}
+        scene_dict = {}
+        for key in viirs2pps.ANGLE_NAMES + ['m_latitude', 'm_longitude'] + ['M05', 'M15']:
+            scene_dict[key] = xr.DataArray([[1.0, 2.0],
+                                            [3.0, 4.0]],
+                                           dims=('y', 'x'),
+                                           attrs={'name': key,
+                                                  'id_tag': key})
+        scene_dict['M05'].attrs = {'name': 'image0',
+                                   'wavelength': [1, 2, 3, 'um'],
+                                   'modifiers': ("sunz_correction", ),
+                                   'id_tag': 'ch_r06'}
+        scene_dict['M15'].attrs = {'name': 'image1',
+                                   'id_tag': 'ch_tb11',
+                                   'platform': "Suomi-NPP",
+                                   'number_of_scans': 15,
+                                   'rows_per_scan': 16,
+                                   'wavelength': [1, 2, 3, 'um'],
+                                   'start_time': dt.datetime(2009, 7, 1, 12, 1, 0),
+                                   'end_time': dt.datetime(2009, 7, 1, 12, 1, 0),
+                                   'orbit_number': 99999}
         for key in scene_dict:
-            pps_name = scene_dict[key].attrs['name']
-            self.scene[key] = scene_dict[key]
-            self.scene[key].attrs['name'] = pps_name
+            self.scene[key] = scene_dict[key]        
         self.scene.attrs['sensor'] = ['viirs']
-
-    def test_get_encoding(self):
-        """Test encoding for MERSI-2."""
-        enc_exp_angles = {'dtype': 'int16',
-                          'scale_factor': 0.01,
-                          'zlib': True,
-                          'complevel': 4,
-                          '_FillValue': -32767,
-                          'add_offset': 0.0}
-        encoding_exp = {
-            'image0': {'dtype': 'int16',
-                       'scale_factor': 0.01,
-                       'zlib': True,
-                       'complevel': 4,
-                       '_FillValue': -32767,
-                       'add_offset': 0.0},
-            'image1': {'dtype': 'int16',
-                       'scale_factor': 0.01,
-                       '_FillValue': -32767,
-                       'zlib': True,
-                       'complevel': 4,
-                       'add_offset': 273.15},
-            'satzenith': enc_exp_angles
-        }
-        encoding = viirs2pps.get_encoding_viirs(self.scene)
-        self.assertDictEqual(encoding, encoding_exp)
 
     def test_set_header_and_band_attrs(self):
         """Test to set header_and_band_attrs."""
         viirs2pps.set_header_and_band_attrs(self.scene)
         self.assertTrue(isinstance(self.scene.attrs['orbit_number'], int))
         self.assertTrue(self.scene["M05"].attrs['sun_zenith_angle_correction_applied'])
+
+    @mock.patch("level1c4pps.viirs2pps_lib.load_data")
+    def test_process_one_scene(self, mock_load):
+        """Test to set process_one_scene."""
+        import level1c4pps.viirs2pps_lib as viirs2pps
+        mock_load.return_value = self.scene
+        filename = viirs2pps.process_one_scene("dummy", out_path='./level1c4pps/tests/', orbit_n='12345')
+        self.assertEqual(os.path.basename(filename), "S_NWC_viirs_npp_12345_20090701T1201000Z_20090701T1201000Z.nc")
+

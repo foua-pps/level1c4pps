@@ -76,7 +76,6 @@ PPS_TAGNAMES = {'VIS006': 'ch_r06',
                 'WV_062': 'ch_tb67',
                 'WV_073': 'ch_tb73'}
 
-
 HRIT_FILE_PATTERN = ('{rate:1s}-000-{hrit_format:_<6s}-'
                      '{platform_shortname:_<12s}-{channel:_<8s}_-'
                      '{segment:_<9s}-{start_time:%Y%m%d%H%M}-__')
@@ -503,8 +502,6 @@ def get_encoding_seviri(scene):
     # Bands
     chunks = (1, 512, 3712)
     encoding = get_encoding(scene,
-                            bandnames=BANDNAMES,
-                            pps_tagnames=PPS_TAGNAMES,
                             chunks=chunks)
 
     # Time
@@ -661,17 +658,11 @@ def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf',
         instrument='seviri',
         band=ir108_for_filename
     )
-    scene.save_datasets(writer='cf',
-                       filename=filename,
-                       header_attrs=get_header_attrs(scene),
-                       engine=engine,
-                       encoding=get_encoding_seviri(scene),
-                       unlimited_dims=['time'],
-                       include_lonlats=False,
-                       pretty=True,
-                       flatten_attrs=True,
-                       exclude_attrs=['raw_metadata'])
-    logger.info(f"Saved file {os.path.basename(filename)} after {time.time() - tic:3.1f} seconds")
+    encoding = get_encoding_seviri(scene)
+    header_attrs = get_header_attrs(scene)
+    save_data(scene, filename, header_attrs, engine,
+              unlimited_dims=['time'], exclude_attrs=['raw_metadata'], enconding=encoding)
+    log_time(filename, tic)
     return filename
 
 

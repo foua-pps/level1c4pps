@@ -28,18 +28,20 @@ import numpy as np
 from datetime import datetime
 from satpy.scene import Scene
 import pygac  # testing that pygac is available # noqa: F401
-from level1c4pps import (get_encoding, compose_filename,
+from level1c4pps import (log_time,
+                         save_data,
+                         compose_filename,
                          set_header_and_band_attrs_defaults,
-                         rename_latitude_longitude, update_angle_attributes,
-                         get_header_attrs, convert_angles)
+                         rename_latitude_longitude,
+                         update_angle_attributes,
+                         get_header_attrs,
+                         get_refl_bands,
+                         convert_angles)
 import logging
 
 logger = logging.getLogger('gac2pps')
 
 
-BANDNAMES = ['1', '2', '3', '3a', '3b', '4', '5']
-
-REFL_BANDS = ['1', '2', '3a']
 
 PPS_TAGNAMES = {"1": "ch_r06",
                 "2": "ch_r09",
@@ -62,28 +64,16 @@ INSTRUMENTS = {'tirosn': 'avhrr',
                'noaa17': 'avhrr/3',
                'noaa18': 'avhrr/3',
                'noaa19': 'avhrr/3'}
-
-
-def get_encoding_gac(scene):
-    """Get netcdf encoding for all datasets."""
-    return get_encoding(scene,
-                        BANDNAMES,
-                        PPS_TAGNAMES,
-                        chunks=None)
+refl_bands = get_refl_bands(PPS_TAGNAMES)
+bandnames = sorted(list(PPS_TAGNAMES.keys()))
 
 
 def update_ancilliary_datasets(scene):
     """Rename, delete and add some datasets and attributes."""
     irch = scene['4']
-
-    # Create new data set scanline timestamps
-    first_jan_1970 = np.array([datetime(1970, 1, 1, 0, 0, 0)]).astype('datetime64[ns]')
-    scanline_timestamps = np.array(scene['qual_flags'].coords['acq_time'] -
-                                   first_jan_1970).astype(dtype='timedelta64[ms]').astype(np.float64)
-    scene['scanline_timestamps'] = xr.DataArray(da.from_array(scanline_timestamps, chunks=1024),
-                                                dims=['y'], coords={'y': scene['qual_flags']['y']})
-    scene['scanline_timestamps'].attrs['units'] = 'Milliseconds since 1970-01-01 00:00:00 UTC'
-
+    scene['scanline_timestamps'] = xr.DataArray(da.from_array(scene['qual_flags'].coords['acq_time']),
+                                               dims=['y'], coords={'y': scene['qual_flags']['y']})
+    scene['scanline_timestamps'].attrs['name'] = 'scanline_timestamps'
     # Update qual_flags attrs
     scene['qual_flags'].attrs['id_tag'] = 'qual_flags'
     scene['qual_flags'].attrs['long_name'] = 'pygac quality flags'
@@ -94,22 +84,22 @@ def update_ancilliary_datasets(scene):
 def set_header_and_band_attrs(scene, orbit_n=99999):
     """Set and delete some attributes."""
     irch = scene['4']
-    nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch, orbit_n=orbit_n)
+    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGNAMES, irch, orbit_n=orbit_n)
     scene.attrs['source'] = "gac2pps.py"
     scene.attrs['is_gac'] = 'True'
-    for band in BANDNAMES:
+    for band in bandnames:
         if band not in scene:
             continue
-        if band in REFL_BANDS:
+        if band in refl_bands:
             # For GAC data sun_earth_distance_correction is applied always!
             # The sun_earth_distance_correction_factor is not provided by pygac <= 1.2.1 / satpy <= 0.18.1
             scene[band].attrs['sun_earth_distance_correction_applied'] = 'True'
     return nimg
 
 
-def process_one_file(gac_file, out_path='.', reader_kwargs=None, engine='h5netcdf', orbit_n=99999):
-    """Make level 1c files in PPS-format."""
-    tic = time.time()
+
+def load_data(gac_file, reader_kwargs):
+    """Load data with satpy."""
     if reader_kwargs is None:
         reader_kwargs = {}
     if 'tle_dir' not in reader_kwargs:
@@ -119,20 +109,24 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None, engine='h5netcd
         tle_name = conf.get('tle', 'tlename', raw=True)
         reader_kwargs['tle_dir'] = tle_dir
         reader_kwargs['tle_name'] = tle_name
-
     scene = Scene(reader='avhrr_l1b_gaclac',
                  filenames=[gac_file], reader_kwargs=reader_kwargs)
-
     # Loading all at once sometimes fails with newer satpy, so start with BANDNAMES ...
 
-    scene.load(BANDNAMES)
+    scene.load(bandnames)
     scene.load(['latitude',
                'longitude',
                'qual_flags',
                'sensor_zenith_angle', 'solar_zenith_angle',
                'solar_azimuth_angle', 'sensor_azimuth_angle',
                'sun_sensor_azimuth_difference_angle'])
+    return scene
 
+
+def process_one_file(gac_file, out_path='.', reader_kwargs=None, engine='h5netcdf', orbit_n=99999):
+    """Make level 1c files in PPS-format."""
+    tic = time.time()
+    scene = load_data(gac_file, reader_kwargs)
     irch = scene['4']
     set_header_and_band_attrs(scene, orbit_n=orbit_n)
     rename_latitude_longitude(scene)
@@ -141,15 +135,7 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None, engine='h5netcd
     # Handle gac specific datasets qual_flags and scanline_timestamps
     update_ancilliary_datasets(scene)
     filename = compose_filename(scene, out_path, instrument='avhrr', band=irch)
-    encoding = get_encoding_gac(scene)
-    encoding['scanline_timestamps'].pop('units')
-    scene.save_datasets(writer='cf',
-                       filename=filename,
-                       header_attrs=get_header_attrs(scene, band=irch, sensor='avhrr'),
-                       engine=engine,
-                       flatten_attrs=True,
-                       include_lonlats=False,  # Included anyway as they are datasets in scene
-                       pretty=True,
-                       encoding=encoding)
-    logger.info(f"Saved file {os.path.basename(filename)} after {time.time() - tic:3.1f} seconds")
+    header_attrs = get_header_attrs(scene, band=irch, sensor='avhrr')
+    save_data(scene, filename, header_attrs, engine)
+    log_time(filename, tic)
     return filename

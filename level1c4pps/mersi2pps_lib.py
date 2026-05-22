@@ -27,9 +27,12 @@ import numpy as np
 from satpy.scene import Scene
 from level1c4pps import (
     ANGLE_ATTRIBUTES,
+    save_data,
+    log_time,
     compose_filename,
     convert_angles,
     get_encoding,
+    get_refl_bands,
     get_header_attrs,
     rename_latitude_longitude,
     set_header_and_band_attrs_defaults,
@@ -54,7 +57,7 @@ SATPY_READER = {  # satpy reader associated to sensor
     'mersi-2': 'mersi2_l1b',
     'mersi-3': 'mersi3_l1b',
 }
-PPS_BAND_NAME = {  # PPS band name associated to satpy band name
+PPS_TAGNAMES = {  # PPS band name associated to satpy band name
     '3': 'ch_r06',
     '4': 'ch_r09',
     '5': 'ch_r13',
@@ -73,7 +76,9 @@ GEOLOCATION_NAMES = [  # additional variables to load
     'solar_azimuth_angle',
     'solar_zenith_angle',
 ]
-REFL_BANDS = ['3', '4', '5', '6']
+
+refl_bands = get_refl_bands(PPS_TAGNAMES)
+
 ONE_IR_CHANNEL = '24'
 RESOLUTION = 1000  # [m]
 LOW_TB = 1  # [K] very cold brightness temperature
@@ -82,15 +87,15 @@ LOW_TB = 1  # [K] very cold brightness temperature
 def set_header_and_band_attrs(scene, band, orbit_n):
     """Set and delete some attributes."""
     set_header_and_band_attrs_defaults(
-        scene, list(PPS_BAND_NAME), PPS_BAND_NAME, REFL_BANDS, band, orbit_n=orbit_n,
+        scene, PPS_TAGNAMES, band, orbit_n=orbit_n,
     )
     scene.attrs['source'] = "mersi2pps.py"
 
 
 def remove_broken_data(scene):
     """Set bad data to nodata."""
-    for band in PPS_BAND_NAME:
-        if band not in REFL_BANDS and band in scene:
+    for band in PPS_TAGNAMES:
+        if band not in refl_bands and band in scene:
             scene[band].data = np.where(scene[band].data < LOW_TB, np.nan, scene[band].data)
 
 
@@ -102,15 +107,19 @@ def get_sensor(scene_file):
     logger.info(f"Failed to determine sensor associated to scene file: {scene_file}")
     return None
 
+def load_data(scene_files, sensor):
+    """Load data."""
+    reader = SATPY_READER[sensor]
+    scene = Scene(reader=reader, filenames=scene_files)
+    band_names = list(PPS_TAGNAMES)
+    scene.load(band_names + GEOLOCATION_NAMES, resolution=RESOLUTION)
+    return scene
 
 def process_one_scene(scene_files, out_path, engine='h5netcdf', orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     sensor = get_sensor(os.path.basename(scene_files[0]))
-    reader = SATPY_READER[sensor]
-    scene = Scene(reader=reader, filenames=scene_files)
-    band_names = list(PPS_BAND_NAME)
-    scene.load(band_names + GEOLOCATION_NAMES, resolution=RESOLUTION)
+    scene = load_data(scene_files, sensor)
     remove_broken_data(scene)
     band = scene[ONE_IR_CHANNEL]
     set_header_and_band_attrs(scene, band, orbit_n)
@@ -119,15 +128,8 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf', orbit_n=0):
     update_angle_attributes(scene, band)
     for angle in ['sunzenith', 'satzenith', 'azimuthdiff']:
         scene[angle].attrs['file_key'] = ANGLE_ATTRIBUTES['mersi_file_key'][angle]
+    header_attrs = get_header_attrs(scene, band=band, sensor=sensor)
     filename = compose_filename(scene, out_path, instrument=sensor.replace('-', ''), band=band)
-    scene.save_datasets(
-        writer='cf',
-        filename=filename,
-        header_attrs=get_header_attrs(scene, band=band, sensor=sensor),
-        engine=engine,
-        include_lonlats=False,
-        flatten_attrs=True,
-        encoding=get_encoding(scene, band_names, PPS_BAND_NAME, chunks=None),
-    )
-    logger.info(f"Saved file {os.path.basename(filename)} after {time.time() - tic:3.1f} seconds")
+    save_data(scene, filename, header_attrs, engine)
+    log_time(filename, tic)
     return filename

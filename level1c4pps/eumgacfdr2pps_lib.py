@@ -23,11 +23,15 @@ import os
 import time
 import satpy
 from satpy.scene import Scene
-from level1c4pps import (get_encoding, compose_filename,
+from level1c4pps import (log_time,
+                         save_data,
+                         compose_filename,
                          set_header_and_band_attrs_defaults,
                          rename_latitude_longitude, update_angle_attributes,
                          dt64_to_datetime,
+                         save_data,
                          logger,
+                         get_refl_bands,
                          get_header_attrs, convert_angles)
 from satpy.utils import debug_on
 from packaging.version import Version
@@ -37,28 +41,17 @@ if Version(satpy.__version__) < Version('0.24.0'):
     raise ImportError("'eumgac2pps' writer requires satpy 0.24.0 or greater")
 # import xarray as xr
 # xr.set_options(keep_attrs=True)
+import logging
 
 logger = logging.getLogger('eumgacfdr2pps')
 
 # AVHRR-GAC_FDR_1C_N06_19810330T005421Z_19810330T024632Z_R_O_20200101T000000Z_0100.nc
-
-BANDNAMES = ['reflectance_channel_1',
-             'reflectance_channel_2',
-             'reflectance_channel_3',
-             'reflectance_channel_3a',
-             'brightness_temperature_channel_3',
-             'brightness_temperature_channel_3b',
-             'brightness_temperature_channel_4',
-             'brightness_temperature_channel_5']
 
 ANGLENAMES = ['sensor_zenith_angle',
               'solar_zenith_angle',
               'solar_azimuth_angle',
               'sensor_azimuth_angle',
               'sun_sensor_azimuth_difference_angle']
-
-REFL_BANDS = ['reflectance_channel_1', 'reflectance_channel_2', 'reflectance_channel_3',
-              'reflectance_channel_3a']
 
 PPS_TAGNAMES = {"reflectance_channel_1": "ch_r06",
                 "reflectance_channel_2": "ch_r09",
@@ -69,19 +62,13 @@ PPS_TAGNAMES = {"reflectance_channel_1": "ch_r06",
                 "brightness_temperature_channel_4": "ch_tb11",
                 "brightness_temperature_channel_5": "ch_tb12"}
 
+refl_bands = get_refl_bands(PPS_TAGNAMES)
+bandnames = sorted(list(PPS_TAGNAMES.keys()))
 
 RENAME_AND_MOVE_TO_HEADER = {'id': 'euemtsat_gac_id',
                              'licence': 'eumetsat_licence',
                              'product_version': 'eumetsat_product_version',
                              'version_satpy': 'version_eumetsat_pygac_fdr_satpy'}
-
-
-def get_encoding_gac(scene):
-    """Get netcdf encoding for all datasets."""
-    return get_encoding(scene,
-                        BANDNAMES,
-                        PPS_TAGNAMES,
-                        chunks=None)
 
 
 def update_ancilliary_datasets(scene):
@@ -120,13 +107,13 @@ def set_header_and_band_attrs(scene, orbit_n=99999):
     for attr in RENAME_AND_MOVE_TO_HEADER:
         if attr in irch.attrs:
             scene.attrs[RENAME_AND_MOVE_TO_HEADER[attr]] = irch.attrs.pop(attr)
-    nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch, orbit_n=orbit_n)
+    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGNAMES, irch, orbit_n=orbit_n)
     scene.attrs['source'] = "eumgacfdr2pps.py"
     scene.attrs['is_gac'] = 'True'
-    for band in BANDNAMES:
+    for band in bandnames:
         if band not in scene:
             continue
-        if band in REFL_BANDS:
+        if band in refl_bands:
             scene[band].attrs['sun_earth_distance_correction_applied'] = 'True'
     return nimg
 
@@ -141,7 +128,7 @@ def set_exact_time_and_crop(scene, start_line, end_line, time_key='scanline_time
     end_time_dt64 = scene[time_key].values[end_line]
     start_time = dt64_to_datetime(start_time_dt64)
     end_time = dt64_to_datetime(end_time_dt64)
-    for ds in BANDNAMES + ['latitude', 'longitude', 'qual_flags', 'acq_time'] + ANGLENAMES:
+    for ds in bandnames + ['latitude', 'longitude', 'qual_flags', 'acq_time'] + ANGLENAMES:
         if ds in scene and 'y' in scene[ds].dims:
             if end_line != -1:
                 scene[ds] = scene[ds].isel(y=slice(start_line, end_line + 1))
@@ -163,7 +150,7 @@ def remove_broken_data(scene):
     bad_lines = np.sum(scene['qual_flags'].values[:, 1:], axis=1) > 0
     if bad_lines.any():
         remove = np.where(bad_lines, np.nan, 0)
-        for band in BANDNAMES:
+        for band in PPS_TAGNAMES:
             if band in scene:
                 scene[band].values = scene[band].values + remove[:, np.newaxis]
 
@@ -183,15 +170,12 @@ def remove_broken_data(scene):
     #        print(scene[band].attrs['name'])
 
 
-def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None,
-                     start_line=None, end_line=None, engine='h5netcdf',
-                     remove_broken=True, orbit_n=99999):
-    """Make level 1c files in PPS-format."""
-    tic = time.time()
+def load_data(eumgacfdr_file, start_line=None, end_line=None,):
+    """Load data."""
     scene = Scene(reader='avhrr_l1c_eum_gac_fdr_nc',
                  filenames=[eumgacfdr_file])
 
-    scene.load(BANDNAMES)
+    scene.load(bandnames)
     scene.load(['latitude',
                'longitude',
                'qual_flags',
@@ -199,12 +183,19 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None,
                'equator_crossing_longitude',
                'acq_time'] +
               ANGLENAMES)
-
     # Only load these if we do not crop data
     if start_line is None and end_line is None:
         scene.load(['overlap_free_end',
                    'overlap_free_start',
                    'midnight_line'])
+    return scene
+
+def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None,
+                     start_line=None, end_line=None, engine='h5netcdf',
+                     remove_broken=True, orbit_n=99999):
+    """Make level 1c files in PPS-format."""
+    tic = time.time()
+    scene = load_data(eumgacfdr_file, start_line=start_line, end_line=end_line)
     # Needs to be done before everything else to avoid problems with attributes.
     if remove_broken:
         logger.info("Setting low quality data (qual_flags) to nodata.")
@@ -219,15 +210,8 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None,
     update_angle_attributes(scene, irch)  # Standard name etc
     # Handle gac specific datasets qual_flags and scanline_timestamps
     update_ancilliary_datasets(scene)
+    header_attrs = get_header_attrs(scene, band=irch, sensor='avhrr')
     filename = compose_filename(scene, out_path, instrument='avhrr', band=irch)
-    encoding = get_encoding_gac(scene)
-    scene.save_datasets(writer='cf',
-                       filename=filename,
-                       header_attrs=get_header_attrs(scene, band=irch, sensor='avhrr'),
-                       engine=engine,
-                       flatten_attrs=True,
-                       include_lonlats=False,  # Included anyway as they are datasets in scene
-                       pretty=True,
-                       encoding=encoding)
-    logger.info(f"Saved file {os.path.basename(filename)} after {time.time() - tic:3.1f} seconds")
+    save_data(scene, filename, header_attrs, engine)
+    log_time(filename, tic)
     return filename

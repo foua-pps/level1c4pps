@@ -53,32 +53,7 @@ class TestModis2PPS(unittest.TestCase):
             self.scene[key].attrs['name'] = pps_name
         self.scene.attrs['sensor'] = ['modis']
 
-    def test_get_encoding(self):
-        """Test encoding for MODIS."""
-        enc_exp_angles = {'dtype': 'int16',
-                          'scale_factor': 0.01,
-                          'zlib': True,
-                          'complevel': 4,
-                          '_FillValue': -32767,
-                          'add_offset': 0.0}
-        encoding_exp = {
-            'image0': {'dtype': 'int16',
-                       'scale_factor': 0.01,
-                       'zlib': True,
-                       'complevel': 4,
-                       '_FillValue': -32767,
-                       'add_offset': 0.0},
-            'image1': {'dtype': 'int16',
-                       'scale_factor': 0.01,
-                       '_FillValue': -32767,
-                       'zlib': True,
-                       'complevel': 4,
-                       'add_offset': 273.15},
-            'satzenith': enc_exp_angles
-        }
-        encoding = modis2pps.get_encoding_modis(self.scene)
-        self.assertDictEqual(encoding, encoding_exp)
-
+ 
     def test_compose_filename(self):
         """Test compose filename for MODIS."""
         start_time = dt.datetime(2009, 7, 1, 12, 15)

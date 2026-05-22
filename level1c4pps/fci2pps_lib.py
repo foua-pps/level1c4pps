@@ -32,9 +32,14 @@ from packaging.version import Version
 from pyorbital.astronomy import get_alt_az, sun_zenith_angle
 from satpy.scene import Scene
 
-from level1c4pps import (compose_filename, dt64_to_datetime,
-                         fix_timestamp_datatype, get_encoding,
-                         get_header_attrs, set_header_and_band_attrs_defaults)
+from level1c4pps import (compose_filename,
+                         dt64_to_datetime,
+                         fix_timestamp_datatype,
+                         get_encoding,
+                         get_refl_bands,
+                         get_band_names,
+                         get_header_attrs,
+                         set_header_and_band_attrs_defaults)
 from level1c4pps.seviri2pps_lib import (add_ancillary_datasets, get_lonlats,
                                         get_satellite_angles,
                                         make_azidiff_angle)
@@ -48,32 +53,6 @@ if Version(satpy.__version__) <= Version('0.59.0'):
     if Version(satpy.__version__) > Version('0.56.0'):
         logger.warning("Native resampling craching for satpy 0.57 to 0.59.0.")
 
-
-BANDNAMES_DEFAULT = ["vis_06",
-                     "vis_08",
-                     "nir_13",
-                     "nir_16",
-                     "nir_22",
-                     "ir_38",
-                     "wv_63",
-                     "wv_73",
-                     "ir_105",
-                     "ir_123",
-                     "ir_133"]
-
-BANDNAMES_PPS = ["vis_06",
-                 "vis_08",
-                 "nir_13",
-                 "nir_16",
-                 "nir_22",
-                 "ir_38",
-                 "ir_87",
-                 "ir_105",
-                 "ir_123"]
-
-REFL_BANDS = ["vis_06", "vis_08", "nir_13", "nir_16",
-              "vis_05", "vis_04", "vis_09",
-              "nir_22"]
 
 ANGLE_NAMES = ['observation_zenith', 'solar_zenith',
                'observation_azimuth', 'solar_azimuth']
@@ -94,16 +73,8 @@ PPS_TAGNAMES = {"vis_06": "ch_r06",
                 "vis_05": "ch_rxx",
                 "vis_04": "ch_rxx",
                 "vis_09": "ch_rxx"}
+refl_bands = get_refl_bands(PPS_TAGNAMES)
 
-BANDNAMES = list(PPS_TAGNAMES.keys())
-
-
-def get_encoding_fci(scene):
-    """Get netcdf encoding for all datasets."""
-    return get_encoding(scene,
-                        BANDNAMES,
-                        PPS_TAGNAMES,
-                        chunks=None)
 
 
 def set_header_and_band_attrs(scene, orbit_n=00000):
@@ -111,8 +82,8 @@ def set_header_and_band_attrs(scene, orbit_n=00000):
     # Set some header attributes:
     irch = scene['ir_105']
     scene.attrs['source'] = "fci2pps.py"
-    set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch, orbit_n=orbit_n)
-    for band in REFL_BANDS:
+    set_header_and_band_attrs_defaults(scene, PPS_TAGNAMES, irch, orbit_n=orbit_n)
+    for band in refl_bands:
         if band not in scene:
             continue
         if scene[band].attrs['sun_zenith_angle_correction_applied'] == "False":
@@ -198,8 +169,17 @@ def add_angles_and_latlon(scene):
                            irch_name="ir_105",
                            save_azimuth_angles=False,
                            chunks=(464, 928))
-
-
+    
+def load_data(scene_files):
+    """Load data with satpy."""
+    scenein = Scene(reader='fci_l1c_nc', filenames=scene_files)
+    my_bands = get_band_names(PPS_TAGNAMES, all_channels, pps_channels)
+    scenein.load(my_bands + ["ir_105_time"])
+    scene = resample_data(scenein, my_bands + ["ir_105_time"],
+                          resample_grid=resample_grid,
+                          resample_save_ram=resample_save_ram)
+    return scene
+    
 def process_one_scene(scene_files, out_path,
                       engine='h5netcdf',
                       all_channels=False,
@@ -209,30 +189,14 @@ def process_one_scene(scene_files, out_path,
                       orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
-    scenein = Scene(reader='fci_l1c_nc', filenames=scene_files)
-    MY_BANDNAMES = BANDNAMES_DEFAULT
-    if all_channels:
-        MY_BANDNAMES = BANDNAMES
-    if pps_channels:
-        MY_BANDNAMES = BANDNAMES_PPS
-    scenein.load(MY_BANDNAMES + ["ir_105_time"])
-    scene = resample_data(scenein, MY_BANDNAMES + ["ir_105_time"],
-                         resample_grid=resample_grid,
-                         resample_save_ram=resample_save_ram)
+    scene = load_data(scene_files)
     fix_time(scene)
     add_angles_and_latlon(scene)
     irch = scene['ir_105']
     set_header_and_band_attrs(scene, orbit_n=orbit_n)
     filename = compose_filename(scene, out_path, instrument='fci', band=irch)
-    encoding = get_encoding_fci(scene)
+    encoding = get_encoding(scene)
     fix_timestamp_datatype(scene, encoding, "ir_105_time")
-    scene.save_datasets(writer='cf',
-                       filename=filename,
-                       header_attrs=get_header_attrs(scene, band=irch, sensor='fci'),
-                       engine=engine,
-                       include_lonlats=False,
-                       flatten_attrs=True,
-                       pretty=True,
-                       encoding=encoding)
-    logger.info(f"Saved file {os.path.basename(filename)} after {time.time() - tic:3.1f} seconds")
+    save_data(scene, filename, header_attrs)
+    log_time(filename, tic)
     return filename

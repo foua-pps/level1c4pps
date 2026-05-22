@@ -23,10 +23,15 @@ import os
 import time
 import satpy
 from satpy.scene import Scene
-from level1c4pps import (get_encoding, compose_filename,
+from level1c4pps import (save_data,
+                         log_time,
+                         compose_filename,
                          set_header_and_band_attrs_defaults,
                          rename_latitude_longitude,
-                         update_angle_attributes, get_header_attrs,
+                         update_angle_attributes,
+                         get_band_names,
+                          get_refl_bands,
+                         get_header_attrs,
                          convert_angles)
 import pyspectral  # testing that pyspectral is available # noqa: F401
 import logging
@@ -55,13 +60,6 @@ logger = logging.getLogger('slstr2pps')
 # 'solar_azimuth_angle_n', 'solar_azimuth_angle_o', 'solar_zenith_angle_n', 'solar_zenith_angle_o']
 
 
-BANDNAMES = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'F1', 'F2']
-
-REFL_BANDS = ['S1', 'S2', 'S3', 'S4', 'S5', 'S6']
-
-ANGLE_NAMES = ['satellite_azimuth_angle', 'satellite_zenith_angle',
-               'solar_azimuth_angle', 'solar_zenith_angle']
-
 PPS_TAGNAMES = {'S2': 'ch_r06',  # or S1
                 'S3': 'ch_r09',
                 'S4': 'ch_r13',
@@ -74,58 +72,48 @@ PPS_TAGNAMES = {'S2': 'ch_r06',  # or S1
                 'S1': 'ch_rxx',
                 'F1': 'ch_tbxx',
                 'F2': 'ch_tbxx'}
+refl_bands = get_refl_bands(PPS_TAGNAMES)
 
-BANDNAMES_PPS = ['S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9']
-BANDNAMES_DEFAULT = ['S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9']
-
-
-def get_encoding_slstr(scene):
-    """Get netcdf encoding for all datasets."""
-    return get_encoding(scene,
-                        BANDNAMES,
-                        PPS_TAGNAMES,
-                        chunks=None)
-
+GEOLOCATION_NAMES = [  # additional variables to load
+    'latitude',
+    'longitude',
+    'satellite_azimuth_angle',
+    'satellite_zenith_angle',
+    'solar_azimuth_angle',
+    'solar_zenith_angle',
+]
 
 def set_header_and_band_attrs(scene, orbit_n=0):
     """Set and delete some attributes."""
     irch = scene['S8']
-    nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch, orbit_n=orbit_n)
+    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGNAMES, irch, orbit_n=orbit_n)
     scene.attrs['source'] = "slstr2pps.py"
     return nimg
+
+
+def load_data(scene_files, all_channels=False, pps_channels=False):
+    """Load data with satpy."""
+    scene = Scene(
+        reader='slstr_l1b',
+        filenames=scene_files)
+    my_bands = get_band_names(PPS_TAGNAMES, all_channels, pps_channels)
+    scene.load(my_bands + GEOLOCATION_NAMES)
+    # Everything should be on the same grid, to be saved as ppsleve1c
+    scene = scene.resample(resampler="native")
 
 
 def process_one_scene(scene_files, out_path, engine='h5netcdf',
                       all_channels=False, pps_channels=False, orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
-    scene = Scene(
-        reader='slstr_l1b',
-        filenames=scene_files)
-
-    MY_BANDNAMES = BANDNAMES_DEFAULT
-    if all_channels:
-        MY_BANDNAMES = BANDNAMES
-    if pps_channels:
-        MY_BANDNAMES = BANDNAMES_PPS
-
-    scene.load(MY_BANDNAMES + ['latitude', 'longitude'] + ANGLE_NAMES)
-
-    # Everything should be on the same grid, to be saved as ppsleve1c
-    scene = scene.resample(resampler="native")
-
+    scene = load_data(scene_files, all_channels=all_channels, pps_channels=pps_channels)
     irch = scene['S8']
     set_header_and_band_attrs(scene, orbit_n=orbit_n)
     rename_latitude_longitude(scene)
     convert_angles(scene, delete_azimuth=True)
     update_angle_attributes(scene, irch)
+    header_attrs=get_header_attrs(scene, band=irch, sensor='slstr')
     filename = compose_filename(scene, out_path, instrument='slstr', band=irch)
-    scene.save_datasets(writer='cf',
-                       filename=filename,
-                       header_attrs=get_header_attrs(scene, band=irch, sensor='slstr'),
-                       engine=engine,
-                       include_lonlats=False,
-                       flatten_attrs=True,
-                       encoding=get_encoding_slstr(scene))
-    logger.info(f"Saved file {os.path.basename(filename)} after {time.time() - tic:3.1f} seconds")
+    save_data(scene, filename, header_attrs, engine)
+    log_time(filename, tic)
     return filename

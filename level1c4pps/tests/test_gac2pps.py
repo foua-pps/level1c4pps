@@ -56,29 +56,6 @@ class TestGac2PPS(unittest.TestCase):
             self.scene[key] = scene_dict[key]
             self.scene[key].attrs['name'] = pps_name
 
-    def test_get_encoding(self):
-        """Test the encoding for GAC."""
-        encoding_exp = {
-            'image0': {'dtype': 'int16',
-                       'scale_factor': 0.01,
-                       'zlib': True,
-                       'complevel': 4,
-                       '_FillValue': -32767,
-                       'add_offset': 0.0},
-            'image1': {'dtype': 'int16',
-                       'scale_factor': 0.01,
-                       '_FillValue': -32767,
-                       'zlib': True,
-                       'complevel': 4,
-                       'add_offset': 273.15},
-            'qual_flags': {'dtype': 'int16', 'zlib': True,
-                           'complevel': 4, '_FillValue': -32001.0},
-            'scanline_timestamps': {'dtype': 'int64', 'zlib': True,
-                                    'units': 'milliseconds since 1970-01-01',
-                                    'complevel': 4, '_FillValue': -1.0},
-        }
-        encoding = gac2pps.get_encoding_gac(self.scene)
-        self.assertDictEqual(encoding, encoding_exp)
 
     def test_compose_filename(self):
         """Test compose filename for GAC."""

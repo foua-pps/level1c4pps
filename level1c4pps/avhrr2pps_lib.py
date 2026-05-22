@@ -22,11 +22,15 @@
 import os
 import time
 from satpy.scene import Scene
-from level1c4pps import (get_encoding, compose_filename,
+from level1c4pps import (compose_filename,
+                         save_data,
+                         log_time,
                          rename_latitude_longitude,
                          set_header_and_band_attrs_defaults,
-                         update_angle_attributes, get_header_attrs,
+                         update_angle_attributes,
+                         get_header_attrs,
                          convert_angles,
+                         get_refl_bands,
                          apply_sunz_correction)
 
 import logging
@@ -36,14 +40,19 @@ import logging
 
 logger = logging.getLogger('avhrr2pps')
 
-BANDNAMES = ['1', '2', '3a', '3b', '4', '5']
-
-ANGLE_NAMES_EPS = ['satellite_zenith_angle', 'solar_zenith_angle',
-                   'satellite_azimuth_angle', 'solar_azimuth_angle']
-ANGLE_NAMES_AAPP = ['sensor_zenith_angle', 'solar_zenith_angle',
-                    'sun_sensor_azimuth_difference_angle']
-
-REFL_BANDS = ['1', '2', '3a']
+GEOLOCATION_NAMES_EPS = [  # additional variables to load
+    'satellite_zenith_angle',
+    'solar_zenith_angle',
+    'satellite_azimuth_angle',
+    'solar_azimuth_angle',
+    'latitude',
+    'longitude']
+GEOLOCATION_NAMES_AAPP = [  # additional variables to load
+    'sensor_zenith_angle',
+    'solar_zenith_angle',
+    'sun_sensor_azimuth_difference_angle',
+    'latitude',
+    'longitude']
 
 PPS_TAGNAMES = {'1': 'ch_r06',
                 '2': 'ch_r09',
@@ -52,19 +61,13 @@ PPS_TAGNAMES = {'1': 'ch_r06',
                 '4': 'ch_tb11',
                 '5': 'ch_tb12'}
 
-
-def get_encoding_avhrr(scene):
-    """Get netcdf encoding for all datasets."""
-    return get_encoding(scene,
-                        BANDNAMES,
-                        PPS_TAGNAMES,
-                        chunks=None)
-
+refl_bands = get_refl_bands(PPS_TAGNAMES)
+bandnames = sorted(list(PPS_TAGNAMES.keys()))
 
 def set_header_and_band_attrs(scene, orbit_n=0):
     """Set and delete some attributes."""
     irch = scene['4']
-    nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch, orbit_n=orbit_n)
+    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGNAMES, irch, orbit_n=orbit_n)
     scene.attrs['source'] = "avhrr2pps.py"
     return nimg
 
@@ -86,37 +89,35 @@ def check_broken_data(scene):
             'Stopping. File will not be written.')
 
 
-def process_one_scene(scene_files, out_path, engine='h5netcdf', orbit_n=0):
-    """Make level 1c files in PPS-format."""
-    tic = time.time()
+def load_data(scene_files):
+    """Load data with satpy."""
     if 'AVHR_xxx' in scene_files[0]:
         avhrr_reader = 'avhrr_l1b_eps'
-        angles = ANGLE_NAMES_EPS
+        angles = GEOLOCATION_NAMES_EPS
     else:
-        avhrr_reader = 'avhrr_l1b_aapp'
-        angles = ANGLE_NAMES_AAPP
+        angles = 'avhrr_l1b_aapp'
+        angles = GEOLOCATION_NAMES_AAPP
     scene = Scene(
         reader=avhrr_reader,
         filenames=scene_files)
-    scene.load(BANDNAMES + ['latitude', 'longitude'] + angles)
-    # one ir channel
-    irch = scene['4']
+    scene.load(bandnames + angles)
+    return scene
 
+
+def process_one_scene(scene_files, out_path, engine='h5netcdf', orbit_n=0):
+    """Make level 1c files in PPS-format."""
+    tic = time.time()
+    scene = load_data(scene_files)
+    irch = scene['4']
     # Check if we have old hrpt format with data only every 20th line
     check_broken_data(scene)
-
     set_header_and_band_attrs(scene, orbit_n=orbit_n)
     rename_latitude_longitude(scene)
     convert_angles(scene, delete_azimuth=True)
     update_angle_attributes(scene, irch)
-    apply_sunz_correction(scene, REFL_BANDS)
+    apply_sunz_correction(scene, refl_bands)
+    header_attrs = get_header_attrs(scene, band=irch, sensor='avhrr')
     filename = compose_filename(scene, out_path, instrument='avhrr', band=irch)
-    scene.save_datasets(writer='cf',
-                       filename=filename,
-                       header_attrs=get_header_attrs(scene, band=irch, sensor='avhrr'),
-                       engine=engine,
-                       include_lonlats=False,
-                       flatten_attrs=True,
-                       encoding=get_encoding_avhrr(scene))
-    logger.info(f"Saved file {os.path.basename(filename)} after {time.time() - tic:3.1f} seconds")
+    save_data(scene, filename, header_attrs, engine)
+    log_time(filename, tic)
     return filename

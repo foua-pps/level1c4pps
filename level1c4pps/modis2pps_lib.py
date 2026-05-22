@@ -27,6 +27,9 @@ from level1c4pps import (get_encoding, compose_filename,
                          rename_latitude_longitude,
                          update_angle_attributes, get_header_attrs,
                          convert_angles,
+                         save_data,
+                         get_refl_bands,
+                         get_band_names,
                          apply_sunz_correction)
 
 import logging
@@ -39,16 +42,6 @@ debug_on()
 
 
 logger = logging.getLogger('modis2pps')
-
-# Channels pps and not problematic (8.5 )
-BANDNAMES_PPS = ['1', '2', '6', '26', '20', '29', '31', '32']
-
-# Default channel selection
-BANDNAMES_DEFAULT = ['1', '2', '6', '7', '20', '26', '27', '28', '29', '31', '32', '33']
-
-
-REFL_BANDS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11',
-              '12', '13hi', '13lo', '14hi', '14lo', '15', '16', '17', '18', '19', '26']
 
 ANGLE_NAMES = ['satellite_zenith_angle', 'solar_zenith_angle',
                'satellite_azimuth_angle', 'solar_azimuth_angle']
@@ -93,52 +86,38 @@ PPS_TAGNAMES = {'1': 'ch_r06',
                 '35': 'ch_tbxx',
                 '36': 'ch_tbxx'}
 
-BANDNAMES = list(PPS_TAGNAMES.keys())
-
-
-def get_encoding_modis(scene):
-    """Get netcdf encoding for all datasets."""
-    return get_encoding(scene,
-                        BANDNAMES,
-                        PPS_TAGNAMES,
-                        chunks=None)
-
+refl_bands = get_refl_bands(PPS_TAGNAMES)
 
 def set_header_and_band_attrs(scene, orbit_n=0):
     """Set and delete some attributes."""
     irch = scene['31']
-    nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch, orbit_n=orbit_n)
+    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGNAMES, irch, orbit_n=orbit_n)
     scene.attrs['source'] = "modis2pps.py"
     return nimg
+
+
+def load_data(scene_files, all_channels=False, pps_channels=False):
+    """Load data."""
+    scene = Scene(
+        reader='modis_l1b',
+        filenames=scene_files)
+    my_bands = get_band_names(PPS_TAGNAMES, all_channels, pps_channels)
+    scene.load(my_bands + ['latitude', 'longitude'] + ANGLE_NAMES, resolution=1000)
+    return scene
 
 
 def process_one_scene(scene_files, out_path, engine='h5netcdf', all_channels=False, pps_channels=False, orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
-    scene = Scene(
-        reader='modis_l1b',
-        filenames=scene_files)
-
-    MY_BANDNAMES = BANDNAMES_DEFAULT
-    if all_channels:
-        MY_BANDNAMES = BANDNAMES
-    if pps_channels:
-        MY_BANDNAMES = BANDNAMES_PPS
-
-    scene.load(MY_BANDNAMES + ['latitude', 'longitude'] + ANGLE_NAMES, resolution=1000)
+    scene = load_data(scene_files, all_channels=all_channels, pps_channels=pps_channels)
     irch = scene['31']
     set_header_and_band_attrs(scene, orbit_n=orbit_n)
     rename_latitude_longitude(scene)
     convert_angles(scene, delete_azimuth=True)
     update_angle_attributes(scene, irch)
-    apply_sunz_correction(scene, REFL_BANDS)
+    apply_sunz_correction(scene, refl_bands)
+    header_attrs=get_header_attrs(scene, band=irch, sensor='modis')
     filename = compose_filename(scene, out_path, instrument='modis', band=irch)
-    scene.save_datasets(writer='cf',
-                       filename=filename,
-                       header_attrs=get_header_attrs(scene, band=irch, sensor='modis'),
-                       engine=engine,
-                       include_lonlats=False,
-                       flatten_attrs=True,
-                       encoding=get_encoding_modis(scene))
-    logger.info(f"Saved file {os.path.basename(filename)} after {time.time() - tic:3.1f} seconds")
+    save_data(scene, filename, header_attrs, engine)
+    log_time(filename, tic)
     return filename
