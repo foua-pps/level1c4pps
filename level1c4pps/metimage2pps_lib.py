@@ -29,6 +29,8 @@ from level1c4pps import (apply_sunz_correction,
                          rename_latitude_longitude,
                          get_refl_bands,
                          get_band_names,
+                         save_data,
+                         log_time,
                          update_angle_attributes, get_header_attrs,
                          set_header_and_band_attrs_defaults,
                          convert_angles,
@@ -56,8 +58,12 @@ else:
 
 N_DETECTORS = 24
 
-ANGLE_NAMES = ['satellite_zenith_angle', 'solar_zenith_angle',
-               'satellite_azimuth_angle', 'solar_azimuth_angle']
+GEOLOCATION_NAMES = ['satellite_zenith_angle',
+               'solar_zenith_angle',
+               'satellite_azimuth_angle',
+               'solar_azimuth_angle',
+               'lat_pixels',
+               'lon_pixels']
 
 PPS_TAGNAMES = {"vii_668": "ch_r06",
                 "vii_865": "ch_r09",
@@ -121,7 +127,7 @@ def load_data(scene_files, all_channels=False, pps_channels=False):
     """Load data."""
     scene = Scene(reader='vii_l1b_nc', filenames=scene_files)
     my_bands = get_band_names(PPS_TAGNAMES, all_channels, pps_channels)
-    scene.load(my_bands + ANGLE_NAMES + ['lat_pixels', 'lon_pixels'])
+    scene.load(my_bands + GEOLOCATION_NAMES)
     return scene
 
 def process_one_scene(scene_files, out_path,
@@ -134,12 +140,7 @@ def process_one_scene(scene_files, out_path,
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scene = load_data(scene_files, all_channels=all_channels, pps_channels=pps_channels)
-    # Transpose data to get scanlines as row dimension, only needed for testdata
-    for key in MY_BANDNAMES + ANGLE_NAMES + ['lat_pixels', 'lon_pixels']:
-        if scene[key].dims[0] == 'x':
-            # first dim should be y
-            scene[key] = scene[key].transpose('y', 'x')
-    # one ir channel
+     # one ir channel
     irch = scene['vii_10690']
     set_header_and_band_attrs(scene, orbit_n=orbit_n)
     rename_latitude_longitude(scene)
