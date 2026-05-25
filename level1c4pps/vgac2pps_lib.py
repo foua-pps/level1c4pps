@@ -672,10 +672,10 @@ def convert_to_noaa19_KNMI_v2(scene, sbaf_version):
                 # 70 < SZA < 85: BT = (1-f)*BT(day) + f*BT(night), f=(SZA-70)/15
 
                 f = (scene["sunzenith"].values - scaling["min_sunzenith"]) / 15
-                tb37_day_slope = scaling["tb37_day"]["slope"]
-                tb37_day_offset = scaling["tb37_day"]["offset"]
-                tb37_night_slope = scaling["tb37_night"]["slope"]
-                tb37_night_offset = scaling["tb37_night"]["offset"]
+                tb37_day_slope = SBAF_VGAC_SNPP_TO_N19[sbaf_version]["tb37_day"]["slope"]
+                tb37_day_offset = SBAF_VGAC_SNPP_TO_N19[sbaf_version]["tb37_day"]["offset"]
+                tb37_night_slope = SBAF_VGAC_SNPP_TO_N19[sbaf_version]["tb37_night"]["slope"]
+                tb37_night_offset = SBAF_VGAC_SNPP_TO_N19[sbaf_version]["tb37_night"]["offset"]
                 tb37_day = tb37_day_slope * scene[viirs_channel].values + tb37_day_offset
                 tb37_night = tb37_night_slope * scene[viirs_channel].values + tb37_night_offset
 
