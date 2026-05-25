@@ -117,7 +117,7 @@ SBAF_N19_TO_N19 = {
             }
         }
     }
-    }
+}
 
 SBAF_VGAC_SNPP_TO_N19 = {
 
@@ -816,6 +816,7 @@ def fix_platform_name(scene, scene_files):
     if "VGAC_VN21" in os.path.basename(scene_files[0]):
         scene.attrs['platform'] = "JPSS-2"
 
+
 def load_data(scene_files, all_channels, pps_channels, avhrr_channels, noaa19_sbaf_version):
     """Load data with satpy."""
     scene = Scene(
@@ -827,9 +828,10 @@ def load_data(scene_files, all_channels, pps_channels, avhrr_channels, noaa19_sb
     if avhrr_channels:
         my_mbands = MBAND_AVHRR
     scene.load(my_mbands
-                + ANGLE_NAMES
-                + ["latitude", "longitude", "scanline_timestamps"])
+               + ANGLE_NAMES
+               + ["latitude", "longitude", "scanline_timestamps"])
     return scene
+
 
 def process_one_scene(scene_files, out_path, engine="h5netcdf",
                       all_channels=False, pps_channels=False, orbit_n=0,
@@ -859,9 +861,9 @@ def process_one_scene(scene_files, out_path, engine="h5netcdf",
             convert_to_noaa19(scene, noaa19_sbaf_version, noaa21_sbaf_version)
         filename = compose_filename(scene, out_path, instrument=sensor, band=irch)
         encoding = get_encoding(scene)
-        fix_timestamp_datatype(scene, encoding, "scanline_timestamps")        
-        header_attrs=get_header_attrs(scene, band=irch, sensor=sensor,
-                                      sbaf_version=noaa19_sbaf_version)
+        fix_timestamp_datatype(scene, encoding, "scanline_timestamps")
+        header_attrs = get_header_attrs(scene, band=irch, sensor=sensor,
+                                        sbaf_version=noaa19_sbaf_version)
         save_data(scene, filename, header_attrs, engine)
         log_time(filename, tic)
         filenames.append(filename)

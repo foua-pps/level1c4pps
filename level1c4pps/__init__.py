@@ -636,10 +636,12 @@ def get_band_names(pps_tagnames_dict, all_channels=False, pps_channels=False):
         return [key for key in pps_tagnames_dict if pps_tagnames_dict[key] in ['ch_r06', 'ch_r09', 'ch_r13', 'ch_r16', 'ch_tb37', 'ch_tb85', 'ch_tb11', 'ch_tb12']]
     return [key for key in pps_tagnames_dict if "xx" not in pps_tagnames_dict[key]]
 
+
 def get_refl_bands(pps_tagnames_dict):
     """Get reflective bands."""
-    return [key for key in pps_tagnames_dict if "ch_r" in pps_tagnames_dict[key] ]
-                
+    return [key for key in pps_tagnames_dict if "ch_r" in pps_tagnames_dict[key]]
+
+
 def save_data(scene, filename, header_attrs, engine, unlimited_dims=None, exclude_attrs=None, encoding=None, chunks=None):
     """Save the level1cfile."""
     if encoding is None:
@@ -654,8 +656,7 @@ def save_data(scene, filename, header_attrs, engine, unlimited_dims=None, exclud
                         pretty=True,
                         encoding=encoding)
 
+
 def log_time(filename, tic):
     """Log time consumption."""
     logger.info(f"Saved file {os.path.basename(filename)} after {time.time() - tic:3.1f} seconds")
-
-        

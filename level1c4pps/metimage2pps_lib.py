@@ -59,11 +59,11 @@ else:
 N_DETECTORS = 24
 
 GEOLOCATION_NAMES = ['satellite_zenith_angle',
-               'solar_zenith_angle',
-               'satellite_azimuth_angle',
-               'solar_azimuth_angle',
-               'lat_pixels',
-               'lon_pixels']
+                     'solar_zenith_angle',
+                     'satellite_azimuth_angle',
+                     'solar_azimuth_angle',
+                     'lat_pixels',
+                     'lon_pixels']
 
 PPS_TAGNAMES = {"vii_668": "ch_r06",
                 "vii_865": "ch_r09",
@@ -89,7 +89,8 @@ PPS_TAGNAMES = {"vii_668": "ch_r06",
 IR_BANDS = ["vii_3740", "vii_8540", "vii_10690", "vii_12020",  "vii_6725",
             "vii_13345",  "vii_7325", "vii_3959", "vii_4050"]
 refl_bands = get_refl_bands(PPS_TAGNAMES)
-ONE_IR_CHANNEL =  "vii_10690"
+ONE_IR_CHANNEL = "vii_10690"
+
 
 def destripe(scene, band, n_scans_per_block=2):
     """
@@ -123,12 +124,14 @@ def set_header_and_band_attrs(scene, orbit_n=00000):
         scene[band].attrs['sun_zenith_angle_correction_applied'] = 'False'
     return nimg
 
+
 def load_data(scene_files, all_channels=False, pps_channels=False):
     """Load data."""
     scene = Scene(reader='vii_l1b_nc', filenames=scene_files)
     my_bands = get_band_names(PPS_TAGNAMES, all_channels, pps_channels)
     scene.load(my_bands + GEOLOCATION_NAMES)
     return scene
+
 
 def process_one_scene(scene_files, out_path,
                       engine='h5netcdf',
@@ -140,7 +143,7 @@ def process_one_scene(scene_files, out_path,
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scene = load_data(scene_files, all_channels=all_channels, pps_channels=pps_channels)
-     # one ir channel
+    # one ir channel
     irch = scene[ONE_IR_CHANNEL]
     set_header_and_band_attrs(scene, orbit_n=orbit_n)
     rename_latitude_longitude(scene)
@@ -155,7 +158,7 @@ def process_one_scene(scene_files, out_path,
     if platform_name is not None:
         scene.attrs['platform'] = platform_name
     filename = compose_filename(scene, out_path, instrument='metimage', band=irch)
-    header_attrs=get_header_attrs(scene, band=irch, sensor='metimage')
+    header_attrs = get_header_attrs(scene, band=irch, sensor='metimage')
     save_data(scene, filename, header_attrs, engine)
     log_time(filename, tic)
     return filename

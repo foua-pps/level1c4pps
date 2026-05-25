@@ -170,7 +170,8 @@ def add_angles_and_latlon(scene):
                            irch_name="ir_105",
                            save_azimuth_angles=False,
                            chunks=(464, 928))
-    
+
+
 def load_data(scene_files,
               all_channels,
               pps_channels,
@@ -184,7 +185,8 @@ def load_data(scene_files,
                           resample_grid=resample_grid,
                           resample_save_ram=resample_save_ram)
     return scene
-    
+
+
 def process_one_scene(scene_files, out_path,
                       engine='h5netcdf',
                       all_channels=False,
@@ -194,7 +196,7 @@ def process_one_scene(scene_files, out_path,
                       orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
-    #scene = load_data(scene_files,
+    # scene = load_data(scene_files,
     #                  all_channels,
     #                  pps_channels,
     #                  resample_grid,
@@ -212,7 +214,7 @@ def process_one_scene(scene_files, out_path,
     filename = compose_filename(scene, out_path, instrument='fci', band=irch)
     encoding = get_encoding(scene)
     fix_timestamp_datatype(scene, encoding, "ir_105_time")
-    header_attrs=get_header_attrs(scene, band=irch, sensor='fci')
+    header_attrs = get_header_attrs(scene, band=irch, sensor='fci')
     save_data(scene, filename, header_attrs, engine)
     log_time(filename, tic)
     return filename

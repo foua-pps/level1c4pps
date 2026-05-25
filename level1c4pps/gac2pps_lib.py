@@ -42,7 +42,6 @@ import logging
 logger = logging.getLogger('gac2pps')
 
 
-
 PPS_TAGNAMES = {"1": "ch_r06",
                 "2": "ch_r09",
                 "3a": "ch_r16",
@@ -68,11 +67,12 @@ refl_bands = get_refl_bands(PPS_TAGNAMES)
 bandnames = sorted(list(PPS_TAGNAMES.keys()))
 ONE_IR_CHANNEL = '4'
 
+
 def update_ancilliary_datasets(scene):
     """Rename, delete and add some datasets and attributes."""
     irch = scene[ONE_IR_CHANNEL]
     scene['scanline_timestamps'] = xr.DataArray(da.from_array(scene['qual_flags'].coords['acq_time']),
-                                               dims=['y'], coords={'y': scene['qual_flags']['y']})
+                                                dims=['y'], coords={'y': scene['qual_flags']['y']})
     scene['scanline_timestamps'].attrs['name'] = 'scanline_timestamps'
     # Update qual_flags attrs
     scene['qual_flags'].attrs['id_tag'] = 'qual_flags'
@@ -97,7 +97,6 @@ def set_header_and_band_attrs(scene, orbit_n=99999):
     return nimg
 
 
-
 def load_data(gac_file, reader_kwargs):
     """Load data with satpy."""
     if reader_kwargs is None:
@@ -110,16 +109,16 @@ def load_data(gac_file, reader_kwargs):
         reader_kwargs['tle_dir'] = tle_dir
         reader_kwargs['tle_name'] = tle_name
     scene = Scene(reader='avhrr_l1b_gaclac',
-                 filenames=[gac_file], reader_kwargs=reader_kwargs)
+                  filenames=[gac_file], reader_kwargs=reader_kwargs)
     # Loading all at once sometimes fails with newer satpy, so start with BANDNAMES ...
 
     scene.load(bandnames)
     scene.load(['latitude',
                'longitude',
-               'qual_flags',
-               'sensor_zenith_angle', 'solar_zenith_angle',
-               'solar_azimuth_angle', 'sensor_azimuth_angle',
-               'sun_sensor_azimuth_difference_angle'])
+                'qual_flags',
+                'sensor_zenith_angle', 'solar_zenith_angle',
+                'solar_azimuth_angle', 'sensor_azimuth_angle',
+                'sun_sensor_azimuth_difference_angle'])
     return scene
 
 

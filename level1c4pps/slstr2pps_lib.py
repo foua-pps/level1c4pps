@@ -30,7 +30,7 @@ from level1c4pps import (save_data,
                          rename_latitude_longitude,
                          update_angle_attributes,
                          get_band_names,
-                          get_refl_bands,
+                         get_refl_bands,
                          get_header_attrs,
                          convert_angles)
 import pyspectral  # testing that pyspectral is available # noqa: F401
@@ -85,6 +85,7 @@ GEOLOCATION_NAMES = [  # additional variables to load
 
 ONE_IR_CHANNEL = 'S8'
 
+
 def set_header_and_band_attrs(scene, orbit_n=0):
     """Set and delete some attributes."""
     irch = scene[ONE_IR_CHANNEL]
@@ -114,7 +115,7 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf',
     rename_latitude_longitude(scene)
     convert_angles(scene, delete_azimuth=True)
     update_angle_attributes(scene, irch)
-    header_attrs=get_header_attrs(scene, band=irch, sensor='slstr')
+    header_attrs = get_header_attrs(scene, band=irch, sensor='slstr')
     filename = compose_filename(scene, out_path, instrument='slstr', band=irch)
     save_data(scene, filename, header_attrs, engine)
     log_time(filename, tic)

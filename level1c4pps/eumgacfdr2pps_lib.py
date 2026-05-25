@@ -174,22 +174,23 @@ def remove_broken_data(scene):
 def load_data(eumgacfdr_file, start_line=None, end_line=None,):
     """Load data."""
     scene = Scene(reader='avhrr_l1c_eum_gac_fdr_nc',
-                 filenames=[eumgacfdr_file])
+                  filenames=[eumgacfdr_file])
 
     scene.load(bandnames)
     scene.load(['latitude',
                'longitude',
-               'qual_flags',
-               'equator_crossing_time',
-               'equator_crossing_longitude',
-               'acq_time'] +
-              ANGLENAMES)
+                'qual_flags',
+                'equator_crossing_time',
+                'equator_crossing_longitude',
+                'acq_time'] +
+               ANGLENAMES)
     # Only load these if we do not crop data
     if start_line is None and end_line is None:
         scene.load(['overlap_free_end',
                    'overlap_free_start',
-                   'midnight_line'])
+                    'midnight_line'])
     return scene
+
 
 def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None,
                      start_line=None, end_line=None, engine='h5netcdf',

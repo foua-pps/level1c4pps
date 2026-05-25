@@ -95,6 +95,7 @@ PPS_TAGNAMES = {'1': 'ch_r06',
 refl_bands = get_refl_bands(PPS_TAGNAMES)
 ONE_IR_CHANNEL = '31'
 
+
 def set_header_and_band_attrs(scene, orbit_n=0):
     """Set and delete some attributes."""
     irch = scene[ONE_IR_CHANNEL]
@@ -123,7 +124,7 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf', all_channels=Fal
     convert_angles(scene, delete_azimuth=True)
     update_angle_attributes(scene, irch)
     apply_sunz_correction(scene, refl_bands)
-    header_attrs=get_header_attrs(scene, band=irch, sensor='modis')
+    header_attrs = get_header_attrs(scene, band=irch, sensor='modis')
     filename = compose_filename(scene, out_path, instrument='modis', band=irch)
     save_data(scene, filename, header_attrs, engine)
     log_time(filename, tic)

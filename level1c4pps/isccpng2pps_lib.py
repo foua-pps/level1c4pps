@@ -73,7 +73,7 @@ channel_name = {"refl_00_65um": "VIS006",
 platform_id = {55: 321,
                70: 324}
 # Normally read from file (HRIT). We do not have access to nominal calibration
-# So we need to have that here. So far only 2021 
+# So we need to have that here. So far only 2021
 calibration_nominal = {2021: {321: {"VIS006": 24.974,
                                     "VIS008": 32.377,
                                     "IR_016": 23.710},
@@ -81,7 +81,7 @@ calibration_nominal = {2021: {321: {"VIS006": 24.974,
                                     "VIS008": 27.921,
                                     "IR_016": 23.112}
                               }}
-    
+
 coef_slope_chan = ['refl_00_65um', 'refl_00_86um', 'refl_01_60um',
                    'temp_03_80um', 'temp_06_20um', 'temp_07_30um', 'temp_08_60um',
                    'temp_09_70um', 'temp_11_00um', 'temp_12_00um', 'temp_13_30um']
@@ -221,7 +221,8 @@ def fix_pixel_time(scene):
     """Fix the time pixel variable, original file does not contain units."""
     del scene["pixel_time"].coords["crs"]
     scene["pixel_time"].encoding['coordinates'] = "lon lat"
-    scene["pixel_time"].data = scene["pixel_time"].data * np.timedelta64(1, 's') + scene[ONE_IR_CHANNEL].attrs["start_time"]
+    scene["pixel_time"].data = scene["pixel_time"].data * \
+        np.timedelta64(1, 's') + scene[ONE_IR_CHANNEL].attrs["start_time"]
 
 
 def load_data(scene_files):
@@ -229,6 +230,7 @@ def load_data(scene_files):
     scene = Scene(reader='multiple_sensors_isccpng_l1g_nc', filenames=scene_files)
     scene.load(bandnames + ANGLE_NAMES + ["wmo_id", "pixel_time", "lon", "lat"])
     return scene
+
 
 def process_one_scene(scene_files, out_path,
                       engine='h5netcdf',

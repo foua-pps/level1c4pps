@@ -107,6 +107,7 @@ def get_sensor(scene_file):
     logger.info(f"Failed to determine sensor associated to scene file: {scene_file}")
     return None
 
+
 def load_data(scene_files, sensor):
     """Load data."""
     reader = SATPY_READER[sensor]
@@ -114,6 +115,7 @@ def load_data(scene_files, sensor):
     band_names = list(PPS_TAGNAMES)
     scene.load(band_names + GEOLOCATION_NAMES, resolution=RESOLUTION)
     return scene
+
 
 def process_one_scene(scene_files, out_path, engine='h5netcdf', orbit_n=0):
     """Make level 1c files in PPS-format."""

@@ -67,6 +67,7 @@ PPS_TAGNAMES = {"M05": 'ch_r06',
 refl_bands = get_refl_bands(PPS_TAGNAMES)
 ONE_IR_CHANNEL = 'M15'
 
+
 def set_header_and_band_attrs(scene, orbit_n=0):
     """Set and delete some attributes."""
     irch = scene[ONE_IR_CHANNEL]
@@ -85,6 +86,7 @@ def set_header_and_band_attrs(scene, orbit_n=0):
         scene[band].attrs['sun_zenith_angle_correction_applied'] = 'True'
     return nimg
 
+
 def load_data(scene_files, all_channels=False, pps_channels=False, use_iband_res=False):
     """Load data."""
     scene = Scene(
@@ -93,10 +95,10 @@ def load_data(scene_files, all_channels=False, pps_channels=False, use_iband_res
     my_bands = get_band_names(PPS_TAGNAMES, all_channels, pps_channels)
     if use_iband_res:
         my_bands_i = [band for band in my_bands if "I" in band]
-        my_bands_i_tags = [PPS_TAGNAMES[band] for band in  my_bands_i]
+        my_bands_i_tags = [PPS_TAGNAMES[band] for band in my_bands_i]
         my_bands_m = [band for band in my_bands if "M" in band and PPS_TAGNAMES[band] not in my_bands_i_tags]
-    else:    
-        my_bands= [band for band in my_bands if "I" not in band]                 
+    else:
+        my_bands = [band for band in my_bands if "I" not in band]
 
     if use_iband_res:
         scene.load(my_ibands_i + ANGLE_NAMES + ['i_latitude', 'i_longitude'], resolution=371)
@@ -111,6 +113,7 @@ def load_data(scene_files, all_channels=False, pps_channels=False, use_iband_res
     else:
         scene.load(my_bands + ANGLE_NAMES + ['m_latitude', 'm_longitude'], resolution=742)
     return scene
+
 
 def process_one_scene(scene_files, out_path, use_iband_res=False, reader='viirs_sdr', engine='h5netcdf',
                       all_channels=False, pps_channels=False, orbit_n=0):
@@ -127,4 +130,3 @@ def process_one_scene(scene_files, out_path, use_iband_res=False, reader='viirs_
     save_data(scene, filename, header_attrs, engine)
     log_time(filename, tic)
     return filename
-
