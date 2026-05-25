@@ -47,7 +47,6 @@ class TestAvhrr2PPS(unittest.TestCase):
                                  'id_tag': 'ch_r06'}
         scene_dict['4'].attrs = {'name': 'image1',
                                  'id_tag': 'ch_tb11',
-                                 'platform': "NOAA-19",
                                  'wavelength': [1, 2, 3, 'um'],
                                  'start_time': dt.datetime(2009, 7, 1, 12, 1, 0),
                                  'end_time': dt.datetime(2009, 7, 1, 12, 1, 0),
@@ -57,6 +56,7 @@ class TestAvhrr2PPS(unittest.TestCase):
             self.scene[key] = scene_dict[key]
         self.scene.load = mock.MagicMock
         self.scene.attrs['sensor'] = ['avhrr']
+        self.scene.attrs['platform'] = "NOAA-19"
 
     def test_compose_filename(self):
         """Test compose filename for AVHRR."""
