@@ -34,13 +34,7 @@ from level1c4pps import (save_data,
                          convert_angles)
 import pyspectral  # testing that pyspectral is available # noqa: F401
 import logging
-from satpy.utils import debug_on
 from packaging.version import Version
-
-if Version(satpy.__version__) < Version('0.22.1'):
-    raise ImportError("'slstr2pps' requires satpy 0.22.1 or greater")
-
-debug_on()
 
 # Example:
 # S3A_SL_1_RBT____20200911T163815_20200911T164115_20200912T215136_0179_062_340_0360_LN2_O_NT_004.SEN3#
