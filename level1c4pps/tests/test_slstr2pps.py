@@ -57,13 +57,11 @@ class TestSlstr2PPS(unittest.TestCase):
             self.scene[key] = scene_dict[key]
         self.scene.attrs['sensor'] = ['slstr']
 
-
     def test_set_header_and_band_attrs(self):
         """Test to set header_and_band_attrs."""
         slstr2pps.set_header_and_band_attrs(self.scene, orbit_n='12345')
         self.assertTrue(isinstance(self.scene.attrs['orbit_number'], int))
         self.assertEqual(self.scene.attrs['orbit_number'], 12345)
-
 
     @mock.patch("level1c4pps.slstr2pps_lib.load_data")
     def test_process_one_scene(self, mock_load):
@@ -71,5 +69,5 @@ class TestSlstr2PPS(unittest.TestCase):
         import level1c4pps.slstr2pps_lib as slstr2pps
         mock_load.return_value = self.scene
         filename = slstr2pps.process_one_scene("dummy", out_path='./level1c4pps/tests/', orbit_n='12345')
-        self.assertEqual(os.path.basename(filename), "S_NWC_slstr_sentinel3a_12345_20090701T1201000Z_20090701T1201000Z.nc")
-
+        self.assertEqual(os.path.basename(filename),
+                         "S_NWC_slstr_sentinel3a_12345_20090701T1201000Z_20090701T1201000Z.nc")

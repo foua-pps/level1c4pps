@@ -43,21 +43,19 @@ class TestAvhrr2PPS(unittest.TestCase):
                                            attrs={'name': key,
                                                   'id_tag': key})
         scene_dict['1'].attrs = {'name': 'image0',
-                                  'wavelength': [1, 2, 3, 'um'],
-                                  'id_tag': 'ch_r06'}
+                                 'wavelength': [1, 2, 3, 'um'],
+                                 'id_tag': 'ch_r06'}
         scene_dict['4'].attrs = {'name': 'image1',
-                                  'id_tag': 'ch_tb11',
-                                  'platform': "NOAA-19",
-                                  'wavelength': [1, 2, 3, 'um'],
-                                  'start_time': dt.datetime(2009, 7, 1, 12, 1, 0),
-                                  'end_time': dt.datetime(2009, 7, 1, 12, 1, 0),
-                                  'platform_name': '',
-                                  'orbit_number': 99999}
+                                 'id_tag': 'ch_tb11',
+                                 'platform': "NOAA-19",
+                                 'wavelength': [1, 2, 3, 'um'],
+                                 'start_time': dt.datetime(2009, 7, 1, 12, 1, 0),
+                                 'end_time': dt.datetime(2009, 7, 1, 12, 1, 0),
+                                 'platform_name': '',
+                                 'orbit_number': 99999}
         for key in scene_dict:
-            self.scene[key] = scene_dict[key]        
+            self.scene[key] = scene_dict[key]
         self.scene.attrs['sensor'] = ['avhrr']
-
-
 
     def test_compose_filename(self):
         """Test compose filename for AVHRR."""
@@ -80,7 +78,7 @@ class TestAvhrr2PPS(unittest.TestCase):
         avhrr2pps.set_header_and_band_attrs(self.scene, orbit_n='12345')
         self.assertTrue(isinstance(self.scene.attrs['orbit_number'], int))
         self.assertEqual(self.scene.attrs['orbit_number'], 12345)
-        
+
     @mock.patch("level1c4pps.avhrr2pps_lib.load_data")
     def test_process_one_scene(self, mock_load):
         """Test to set process_one_scene."""

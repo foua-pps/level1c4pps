@@ -56,7 +56,6 @@ class TestGac2PPS(unittest.TestCase):
             self.scene[key] = scene_dict[key]
             self.scene[key].attrs['name'] = pps_name
 
-
     def test_compose_filename(self):
         """Test compose filename for GAC."""
         start_time = dt.datetime(2009, 7, 1, 12, 15)

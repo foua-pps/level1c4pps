@@ -42,23 +42,22 @@ class TestModis2PPS(unittest.TestCase):
                                            attrs={'name': key,
                                                   'id_tag': key})
         scene_dict['1'].attrs = {'name': 'image0',
-                                   'wavelength': [1, 2, 3, 'um'],
-                                   'modifiers': ("sunz_correction", ),
-                                   'id_tag': 'ch_r06'}
+                                 'wavelength': [1, 2, 3, 'um'],
+                                 'modifiers': ("sunz_correction", ),
+                                 'id_tag': 'ch_r06'}
         scene_dict['31'].attrs = {'name': 'image1',
-                                   'id_tag': 'ch_tb11',
-                                   'platform': "Aqua",
-                                   'number_of_scans': 15,
-                                   'rows_per_scan': 16,
-                                   'wavelength': [1, 2, 3, 'um'],
-                                   'start_time': dt.datetime(2009, 7, 1, 12, 1, 0),
-                                   'end_time': dt.datetime(2009, 7, 1, 12, 1, 0),
-                                   'orbit_number': 99999}
+                                  'id_tag': 'ch_tb11',
+                                  'platform': "Aqua",
+                                  'number_of_scans': 15,
+                                  'rows_per_scan': 16,
+                                  'wavelength': [1, 2, 3, 'um'],
+                                  'start_time': dt.datetime(2009, 7, 1, 12, 1, 0),
+                                  'end_time': dt.datetime(2009, 7, 1, 12, 1, 0),
+                                  'orbit_number': 99999}
         for key in scene_dict:
-            self.scene[key] = scene_dict[key]        
+            self.scene[key] = scene_dict[key]
         self.scene.attrs['sensor'] = ['modis']
 
- 
     def test_compose_filename(self):
         """Test compose filename for MODIS."""
         start_time = dt.datetime(2009, 7, 1, 12, 15)
@@ -88,4 +87,3 @@ class TestModis2PPS(unittest.TestCase):
         mock_load.return_value = self.scene
         filename = modis2pps.process_one_scene("dummy", out_path='./level1c4pps/tests/', orbit_n='12345')
         self.assertEqual(os.path.basename(filename), "S_NWC_modis_eos2_12345_20090701T1201000Z_20090701T1201000Z.nc")
-

@@ -56,7 +56,7 @@ class TestViirs2PPS(unittest.TestCase):
                                    'end_time': dt.datetime(2009, 7, 1, 12, 1, 0),
                                    'orbit_number': 99999}
         for key in scene_dict:
-            self.scene[key] = scene_dict[key]        
+            self.scene[key] = scene_dict[key]
         self.scene.attrs['sensor'] = ['viirs']
 
     def test_set_header_and_band_attrs(self):
@@ -72,4 +72,3 @@ class TestViirs2PPS(unittest.TestCase):
         mock_load.return_value = self.scene
         filename = viirs2pps.process_one_scene("dummy", out_path='./level1c4pps/tests/', orbit_n='12345')
         self.assertEqual(os.path.basename(filename), "S_NWC_viirs_npp_12345_20090701T1201000Z_20090701T1201000Z.nc")
-

@@ -44,22 +44,21 @@ class TestMersi2PPS(unittest.TestCase):
                                            attrs={'name': key,
                                                   'id_tag': key})
         scene_dict['3'].attrs = {'name': 'image0',
-                                   'wavelength': [1, 2, 3, 'um'],
-                                   'modifiers': ("sunz_correction", ),
-                                   'id_tag': 'ch_r06'}
+                                 'wavelength': [1, 2, 3, 'um'],
+                                 'modifiers': ("sunz_correction", ),
+                                 'id_tag': 'ch_r06'}
         scene_dict['24'].attrs = {'name': 'image1',
-                                   'id_tag': 'ch_tb11',
-                                   'platform': "FY-3F",
-                                   'number_of_scans': 15,
-                                   'rows_per_scan': 16,
-                                   'wavelength': [1, 2, 3, 'um'],
-                                   'start_time': dt.datetime(2009, 7, 1, 12, 1, 0),
-                                   'end_time': dt.datetime(2009, 7, 1, 12, 1, 0),
-                                   'orbit_number': 99999}
+                                  'id_tag': 'ch_tb11',
+                                  'platform': "FY-3F",
+                                  'number_of_scans': 15,
+                                  'rows_per_scan': 16,
+                                  'wavelength': [1, 2, 3, 'um'],
+                                  'start_time': dt.datetime(2009, 7, 1, 12, 1, 0),
+                                  'end_time': dt.datetime(2009, 7, 1, 12, 1, 0),
+                                  'orbit_number': 99999}
         for key in scene_dict:
-            self.scene[key] = scene_dict[key]        
+            self.scene[key] = scene_dict[key]
         self.scene.attrs['sensor'] = ['mersi3']
-
 
     def test_compose_filename(self):
         """Test compose filename for MERSI-2."""
@@ -112,12 +111,12 @@ class TestMersi2PPS(unittest.TestCase):
         ]:
             sensor = mersi2pps.get_sensor(filename)
             self.assertEqual(sensor, expect)
-            
+
     @mock.patch("level1c4pps.mersi2pps_lib.load_data")
     def test_process_one_scene(self, mock_load):
         """Test to set process_one_scene."""
         import level1c4pps.mersi2pps_lib as mersi2pps
         mock_load.return_value = self.scene
-        filename = mersi2pps.process_one_scene(["tf2019234102243.FY3F-X_MERSI_GEOQK_L1B.HDF"], out_path='./level1c4pps/tests/', orbit_n='12345')
+        filename = mersi2pps.process_one_scene(
+            ["tf2019234102243.FY3F-X_MERSI_GEOQK_L1B.HDF"], out_path='./level1c4pps/tests/', orbit_n='12345')
         self.assertEqual(os.path.basename(filename), "S_NWC_mersi3_fy3f_12345_20090701T1201000Z_20090701T1201000Z.nc")
-

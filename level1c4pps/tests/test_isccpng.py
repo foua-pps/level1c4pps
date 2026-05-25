@@ -46,21 +46,20 @@ class TestIsccpng2PPS(unittest.TestCase):
         scene_dict["refl_00_65um"].attrs = {'name': 'image0',
                                             'wavelength': [1, 2, 3, 'um'],
                                             'start_time': np.datetime64('2021-06-28T01:00:00.000000000+0100'),
-                                            'end_time': np.datetime64('2021-06-28T01:01:00.000000000+0100'), 
-                                 'id_tag': 'ch_r06'}
+                                            'end_time': np.datetime64('2021-06-28T01:01:00.000000000+0100'),
+                                            'id_tag': 'ch_r06'}
         scene_dict['temp_11_00um'].attrs = {'name': 'image1',
                                             'id_tag': 'ch_tb11',
                                             'wavelength': [1, 2, 3, 'um'],
                                             'start_time': np.datetime64('2021-06-28T01:00:00.000000000+0100'),
                                             'end_time': np.datetime64('2021-06-28T01:01:00.000000000+0100'),
-                                 'platform_name': '',
-                                 'orbit_number': 99999}
+                                            'platform_name': '',
+                                            'orbit_number': 99999}
         scene_dict["pixel_time"].coords["crs"] = ""
         for key in scene_dict:
-            self.scene[key] = scene_dict[key]        
+            self.scene[key] = scene_dict[key]
         self.scene.attrs['sensor'] = ['isccpng']
 
-        
     @mock.patch("level1c4pps.isccpng2pps_lib.load_data")
     def test_process_one_scene(self, mock_load):
         """Test to set process_one_scene."""

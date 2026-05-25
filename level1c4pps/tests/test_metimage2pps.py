@@ -93,4 +93,5 @@ class TestMETimage2PPS(unittest.TestCase):
         import level1c4pps.metimage2pps_lib as metimage2pps
         mock_load.return_value = self.scene
         filename = metimage2pps.process_one_scene("dummpy", out_path='./level1c4pps/tests/', destripe_ir_channels=True)
-        self.assertEqual(os.path.basename(filename), "S_NWC_metimage_metopd_00000_20200101T1201000Z_20200101T1202000Z.nc")
+        self.assertEqual(os.path.basename(filename),
+                         "S_NWC_metimage_metopd_00000_20200101T1201000Z_20200101T1202000Z.nc")
