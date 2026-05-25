@@ -59,7 +59,7 @@ class TestMETimage2PPS(unittest.TestCase):
             data + np.tile(linear_48[:, np.newaxis], (17, 3144)),
             dims=("y", "x"),
             attrs={"calibration": "brightness_temperature",
-                   "platform_name": "metopd",
+                   "platform_name": "metopsga1",
                    "instrument": "metimage",
                    "start_time": start_time,
                    "end_time": end_time,
@@ -93,6 +93,6 @@ class TestMETimage2PPS(unittest.TestCase):
         """Test to set process_one_scene."""
         import level1c4pps.metimage2pps_lib as metimage2pps
         mock_load.return_value = self.scene
-        filename = metimage2pps.process_one_scene("dummpy", out_path='./level1c4pps/tests/', destripe_ir_channels=True)
+        filename = metimage2pps.process_one_scene("dummpy", out_path='./level1c4pps/tests/', destripe_ir_channels=True, platform_name="metopd")
         self.assertEqual(os.path.basename(filename),
                          "S_NWC_metimage_metopd_00000_20200101T1201000Z_20200101T1202000Z.nc")

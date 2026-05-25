@@ -39,27 +39,34 @@ def get_fake_scene(start_time=dt.datetime(2000, 1, 1, 0)):
     scene = Scene()
     end_time = dt.datetime(2000, 1, 1, 0, 1)
     lons = xr.DataArray(
-        [[75.0, 76.0],
-         [77.0, 78.0]],
+        74 + np.ones((6000, 6000)),
         dims=('y', 'x'))
     lats = xr.DataArray(
-        [[35.0, 36.0],
-         [37.0, 38.0]],
+        34 + np.ones((6000, 6000)),
         dims=('y', 'x'))
     scene['vis_06'] = xr.DataArray(
-        [[1.0, 2.0],
-         [3.0, 4.0]],
+        np.ones((6000, 6000)),
         dims=('y', 'x'),
         attrs={'calibration': 'reflectance',
                'sun_earth_distance_correction_applied': True,
                'start_time': start_time,
                'end_time': end_time,
-               'wavelength': WavelengthRange(0.56, 0.635, 0.71)}
+               'wavelength': WavelengthRange(0.56, 0.635, 0.71),
+               'area': SwathDefinition(lons, lats)}
+    )
+    scene['vis_09'] = xr.DataArray(
+        np.ones((3000, 3000)),
+        dims=('y', 'x'),
+        attrs={'calibration': 'reflectance',
+               'sun_earth_distance_correction_applied': True,
+               'start_time': start_time,
+               'end_time': end_time,
+               'wavelength': WavelengthRange(0.56, 0.635, 0.71),
+               'area': SwathDefinition(lons[::2, ::2], lats[::2, ::2])}
     )
     for key in ['ir_105_time']:
         scene[key] = xr.DataArray(
-            [[5.0, 6.0],
-             [7.2, 8.0]],
+            np.ones((6000, 6000)),
             dims=('y', 'x'),
             attrs={"name": key}
         )
@@ -68,8 +75,7 @@ def get_fake_scene(start_time=dt.datetime(2000, 1, 1, 0)):
     scene.attrs["end_time"] = end_time
     scene.attrs["start_time"] = start_time
     scene['ir_105'] = xr.DataArray(
-        [[5.0, 6.0],
-         [7.0, 8.0]],
+        4.0 * np.ones((6000,6000)),
         dims=('y', 'x'),
         attrs={'calibration': 'brightness_temperature',
                'start_time': start_time,
@@ -78,8 +84,7 @@ def get_fake_scene(start_time=dt.datetime(2000, 1, 1, 0)):
                'area': SwathDefinition(lons, lats)}
     )
     scene['ir_105_time'] = xr.DataArray(
-        [[5.0, 6.0],
-         [7.2, 8.0]],
+        4.0 + np.ones((6000,6000)),
         dims=('y', 'x'),
         attrs={}
     )
@@ -116,8 +121,8 @@ class TestFCI2PPS(unittest.TestCase):
         out2 = fci2pps.resample_data(scene, ["ir_105"], "fine")
         out3 = fci2pps.resample_data(scene, ["ir_105"], "msg_seviri_fes_3km")
         self.assertEqual(out3["ir_105"].shape[0], 3712)
-        self.assertEqual(out1["ir_105"].shape[0], 2)
-        self.assertEqual(out2["ir_105"].shape[0], 2)
+        self.assertEqual(out1["ir_105"].shape[0], 3000)
+        self.assertEqual(out2["ir_105"].shape[0], 6000)
         with self.assertRaises(ValueError):
             fci2pps.resample_data(scene, ["ir_105"], "bad_arg")
 
@@ -136,6 +141,7 @@ class TestFCI2PPS(unittest.TestCase):
         """Test to set process_one_scene."""
         import level1c4pps.fci2pps_lib as fci2pps
         scene = get_fake_scene()
+        del scene["vis_09"]
         mock_scene.return_value = scene
         scene.resample_data = mock.MagicMock(return_value=scene)
         filename = fci2pps.process_one_scene("dummy", out_path='./level1c4pps/tests/')
