@@ -137,6 +137,7 @@ class TestFCI2PPS(unittest.TestCase):
         import level1c4pps.fci2pps_lib as fci2pps
         scene = get_fake_scene()
         mock_scene.return_value = scene
-        scene.resample_data = mock.MagicMock(return_value = scene)
+        scene.resample_data = mock.MagicMock(return_value=scene)
         filename = fci2pps.process_one_scene("dummy", out_path='./level1c4pps/tests/')
-        self.assertEqual(os.path.basename(filename), "S_NWC_fci_meteosat12_00000_20000101T0000000Z_20000101T0001000Z.nc")
+        self.assertEqual(os.path.basename(filename),
+                         "S_NWC_fci_meteosat12_00000_20000101T0000000Z_20000101T0001000Z.nc")

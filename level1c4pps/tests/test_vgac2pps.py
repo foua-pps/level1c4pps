@@ -166,7 +166,7 @@ class TestVgac2PPS(unittest.TestCase):
         np.testing.assert_equal(pps_nc.__dict__["platform"], "vgac20")
         self.assertTrue(np.abs(pps_nc.variables['image1'][0, 0, 400] -
                         pps_nc_viirs.variables['image1'][0, 0, 400]) > 0.01)
-        
+
     @unittest.skipIf(no_sbaf_module, "Install sbafs_ann to test NN-SBAFS.")
     def test_process_one_scene_n19_nn(self):
         """Test process one scene for one example file."""
