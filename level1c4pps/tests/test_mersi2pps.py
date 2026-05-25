@@ -58,6 +58,7 @@ class TestMersi2PPS(unittest.TestCase):
                                   'orbit_number': 99999}
         for key in scene_dict:
             self.scene[key] = scene_dict[key]
+        self.scene.load = mock.MagicMock
         self.scene.attrs['sensor'] = ['mersi3']
 
     def test_compose_filename(self):
@@ -112,7 +113,7 @@ class TestMersi2PPS(unittest.TestCase):
             sensor = mersi2pps.get_sensor(filename)
             self.assertEqual(sensor, expect)
 
-    @mock.patch("level1c4pps.mersi2pps_lib.load_data")
+    @mock.patch("level1c4pps.mersi2pps_lib.Scene")
     def test_process_one_scene(self, mock_load):
         """Test to set process_one_scene."""
         import level1c4pps.mersi2pps_lib as mersi2pps

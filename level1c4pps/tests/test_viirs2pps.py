@@ -57,6 +57,7 @@ class TestViirs2PPS(unittest.TestCase):
                                    'orbit_number': 99999}
         for key in scene_dict:
             self.scene[key] = scene_dict[key]
+        self.scene.load = mock.MagicMock
         self.scene.attrs['sensor'] = ['viirs']
 
     def test_set_header_and_band_attrs(self):
@@ -65,7 +66,7 @@ class TestViirs2PPS(unittest.TestCase):
         self.assertTrue(isinstance(self.scene.attrs['orbit_number'], int))
         self.assertTrue(self.scene["M05"].attrs['sun_zenith_angle_correction_applied'])
 
-    @mock.patch("level1c4pps.viirs2pps_lib.load_data")
+    @mock.patch("level1c4pps.viirs2pps_lib.Scene")
     def test_process_one_scene(self, mock_load):
         """Test to set process_one_scene."""
         import level1c4pps.viirs2pps_lib as viirs2pps

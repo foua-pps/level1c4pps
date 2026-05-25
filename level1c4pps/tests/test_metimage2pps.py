@@ -72,6 +72,7 @@ class TestMETimage2PPS(unittest.TestCase):
                    "start_time": start_time,
                    "wavelength": WavelengthRange(9.8, 10.8, 11.8)}
         )
+        self.scene.load = mock.MagicMock
         self.data = data
 
     def test_destripe(self):
@@ -87,7 +88,7 @@ class TestMETimage2PPS(unittest.TestCase):
         self.assertTrue(isinstance(self.scene.attrs["orbit_number"], int))
         self.assertEqual(self.scene["vii_668"].attrs["sun_zenith_angle_correction_applied"], "False")
 
-    @mock.patch("level1c4pps.metimage2pps_lib.load_data")
+    @mock.patch("level1c4pps.metimage2pps_lib.Scene")
     def test_process_one_scene(self, mock_load):
         """Test to set process_one_scene."""
         import level1c4pps.metimage2pps_lib as metimage2pps

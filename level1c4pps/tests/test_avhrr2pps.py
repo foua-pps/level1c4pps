@@ -55,6 +55,7 @@ class TestAvhrr2PPS(unittest.TestCase):
                                  'orbit_number': 99999}
         for key in scene_dict:
             self.scene[key] = scene_dict[key]
+        self.scene.load = mock.MagicMock
         self.scene.attrs['sensor'] = ['avhrr']
 
     def test_compose_filename(self):
@@ -79,7 +80,7 @@ class TestAvhrr2PPS(unittest.TestCase):
         self.assertTrue(isinstance(self.scene.attrs['orbit_number'], int))
         self.assertEqual(self.scene.attrs['orbit_number'], 12345)
 
-    @mock.patch("level1c4pps.avhrr2pps_lib.load_data")
+    @mock.patch("level1c4pps.avhrr2pps_lib.Scene")
     def test_process_one_scene(self, mock_load):
         """Test to set process_one_scene."""
         import level1c4pps.avhrr2pps_lib as avhrr2pps
