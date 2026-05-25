@@ -30,12 +30,8 @@ from level1c4pps import (log_time,
                          dt64_to_datetime,
                          get_refl_bands,
                          get_header_attrs, convert_angles)
-from satpy.utils import debug_on
 from packaging.version import Version
 
-if Version(satpy.__version__) < Version('0.24.0'):
-    debug_on()
-    raise ImportError("'eumgac2pps' writer requires satpy 0.24.0 or greater")
 # import xarray as xr
 # xr.set_options(keep_attrs=True)
 import logging
