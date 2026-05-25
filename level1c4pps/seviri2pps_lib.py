@@ -238,9 +238,9 @@ def get_satellite_angles(dataset, lons, lats):
 
         chunks = list(range(0, lons.shape[0], 2000))
         chunks.append(lons.shape[0])
-        for index in range(len(chunks)-1):
+        for index in range(len(chunks) - 1):
             start_i = chunks[index]
-            end_i = chunks[index+1]
+            end_i = chunks[index + 1]
             logger.info(f"Get angles for lines {start_i} to {end_i}")
             sata[start_i:end_i, :], satel[start_i:end_i, :] = get_observer_look(
                 sat_lon,
@@ -296,7 +296,7 @@ def interpolate_nats(acq_times, filename_starttime):
     update = np.isnat(acq_times.values)
 
     too_late = [ind for (ind, acq_time_i) in enumerate(acq_times.values) if not np.isnat(acq_time_i)
-                and dt64_to_datetime(acq_time_i) - filename_starttime > timedelta(seconds=60*15)]
+                and dt64_to_datetime(acq_time_i) - filename_starttime > timedelta(seconds=60 * 15)]
     too_early = [ind for (ind, acq_time_i) in enumerate(acq_times.values) if not np.isnat(acq_time_i)
                  and dt64_to_datetime(acq_time_i) - filename_starttime < timedelta(seconds=0)]
     update[too_late] = True

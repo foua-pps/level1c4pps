@@ -115,7 +115,7 @@ def fix_time(scene):
     if type(scene["ir_105_time"].values[0, 0]) is np.float64:
         epoch_to_2000 = dt.datetime(2000, 1, 1, tzinfo=dt.timezone.utc).timestamp()
         scene["ir_105_time"] = (scene["ir_105_time"] + epoch_to_2000).astype('datetime64[s]')
-    ind = int(scene["ir_105_time"].shape[0]/2)
+    ind = int(scene["ir_105_time"].shape[0] / 2)
     a_time = dt64_to_datetime(scene["ir_105_time"].values[ind, ind])
     if a_time > scene.end_time or a_time < scene.start_time:
         raise ValueError(f"There is someting wrong with the time variable, at {ind}, {ind}")

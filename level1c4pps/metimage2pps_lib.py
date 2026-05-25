@@ -86,8 +86,8 @@ PPS_TAGNAMES = {"vii_668": "ch_r06",
                 "vii_1240": "ch_rxx",
                 "vii_3959": "ch_tbxx",
                 "vii_4050": "ch_tbxx"}
-IR_BANDS = ["vii_3740", "vii_8540", "vii_10690", "vii_12020",  "vii_6725",
-            "vii_13345",  "vii_7325", "vii_3959", "vii_4050"]
+IR_BANDS = ["vii_3740", "vii_8540", "vii_10690", "vii_12020", "vii_6725",
+            "vii_13345", "vii_7325", "vii_3959", "vii_4050"]
 refl_bands = get_refl_bands(PPS_TAGNAMES)
 ONE_IR_CHANNEL = "vii_10690"
 
