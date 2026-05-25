@@ -64,6 +64,7 @@ PPS_TAGNAMES = {"reflectance_channel_1": "ch_r06",
 
 refl_bands = get_refl_bands(PPS_TAGNAMES)
 bandnames = sorted(list(PPS_TAGNAMES.keys()))
+ONE_IR_CHANNEL = "brightness_temperature_channel_4"
 
 RENAME_AND_MOVE_TO_HEADER = {'id': 'euemtsat_gac_id',
                              'licence': 'eumetsat_licence',
@@ -73,7 +74,7 @@ RENAME_AND_MOVE_TO_HEADER = {'id': 'euemtsat_gac_id',
 
 def update_ancilliary_datasets(scene):
     """Rename, delete and add some datasets and attributes."""
-    irch = scene['brightness_temperature_channel_4']
+    irch = scene[ONE_IR_CHANNEL]
 
     # Create new data set scanline timestamps
     scene['scanline_timestamps'] = scene['acq_time']
@@ -103,7 +104,7 @@ def update_ancilliary_datasets(scene):
 
 def set_header_and_band_attrs(scene, orbit_n=99999):
     """Set and delete some attributes."""
-    irch = scene['brightness_temperature_channel_4']
+    irch = scene[ONE_IR_CHANNEL]
     for attr in RENAME_AND_MOVE_TO_HEADER:
         if attr in irch.attrs:
             scene.attrs[RENAME_AND_MOVE_TO_HEADER[attr]] = irch.attrs.pop(attr)
@@ -203,7 +204,7 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None,
     # Crop after all renaming of variables are done
     # Problems to rename if cropping is done first.
     set_exact_time_and_crop(scene, start_line, end_line, time_key='acq_time')
-    irch = scene['brightness_temperature_channel_4']  # Redefine, to get updated start/end_times
+    irch = scene[ONE_IR_CHANNEL]  # Redefine, to get updated start/end_times
     set_header_and_band_attrs(scene, orbit_n=orbit_n)
     rename_latitude_longitude(scene)
     convert_angles(scene)

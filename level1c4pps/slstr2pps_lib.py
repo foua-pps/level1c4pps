@@ -83,9 +83,11 @@ GEOLOCATION_NAMES = [  # additional variables to load
     'solar_zenith_angle',
 ]
 
+ONE_IR_CHANNEL = 'S8'
+
 def set_header_and_band_attrs(scene, orbit_n=0):
     """Set and delete some attributes."""
-    irch = scene['S8']
+    irch = scene[ONE_IR_CHANNEL]
     nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGNAMES, irch, orbit_n=orbit_n)
     scene.attrs['source'] = "slstr2pps.py"
     return nimg
@@ -107,7 +109,7 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf',
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scene = load_data(scene_files, all_channels=all_channels, pps_channels=pps_channels)
-    irch = scene['S8']
+    irch = scene[ONE_IR_CHANNEL]
     set_header_and_band_attrs(scene, orbit_n=orbit_n)
     rename_latitude_longitude(scene)
     convert_angles(scene, delete_azimuth=True)

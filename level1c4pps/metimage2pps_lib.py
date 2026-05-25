@@ -89,7 +89,7 @@ PPS_TAGNAMES = {"vii_668": "ch_r06",
 IR_BANDS = ["vii_3740", "vii_8540", "vii_10690", "vii_12020",  "vii_6725",
             "vii_13345",  "vii_7325", "vii_3959", "vii_4050"]
 refl_bands = get_refl_bands(PPS_TAGNAMES)
-
+ONE_IR_CHANNEL =  "vii_10690"
 
 def destripe(scene, band, n_scans_per_block=2):
     """
@@ -113,7 +113,7 @@ def set_header_and_band_attrs(scene, orbit_n=00000):
     """Set and delete some attributes."""
     nimg = 0  # name of first dataset is image0
     # Set some header attributes:
-    irch = scene['vii_10690']
+    irch = scene[ONE_IR_CHANNEL]
     scene.attrs['source'] = "metimage2pps.py"
     nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGNAMES, irch, orbit_n=orbit_n)
     for band in refl_bands:
@@ -141,7 +141,7 @@ def process_one_scene(scene_files, out_path,
     tic = time.time()
     scene = load_data(scene_files, all_channels=all_channels, pps_channels=pps_channels)
      # one ir channel
-    irch = scene['vii_10690']
+    irch = scene[ONE_IR_CHANNEL]
     set_header_and_band_attrs(scene, orbit_n=orbit_n)
     rename_latitude_longitude(scene)
     adjust_lons_to_valid_range(scene)

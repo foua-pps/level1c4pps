@@ -64,6 +64,7 @@ PPS_TAGNAMES = {'refl_01_60um': "ch_r16",
 
 refl_bands = get_refl_bands(PPS_TAGNAMES)
 bandnames = sorted(list(PPS_TAGNAMES.keys()))
+ONE_IR_CHANNEL = 'temp_11_00um'
 
 channel_name = {"refl_00_65um": "VIS006",
                 "refl_00_86um": "VIS008",
@@ -152,7 +153,7 @@ def set_header_and_band_attrs(scene, orbit_n=00000):
     """Set and delete some attributes."""
     nimg = 0  # name of first dataset is image0
     # Set some header attributes:
-    irch = scene['temp_11_00um']
+    irch = scene[ONE_IR_CHANNEL]
     irch.attrs['instrument'] = "seviri"
     scene.attrs['source'] = "isccpng2pps.py"
     scene.attrs['platform_name'] = "meteosat11"
@@ -220,7 +221,7 @@ def fix_pixel_time(scene):
     """Fix the time pixel variable, original file does not contain units."""
     del scene["pixel_time"].coords["crs"]
     scene["pixel_time"].encoding['coordinates'] = "lon lat"
-    scene["pixel_time"].data = scene["pixel_time"].data * np.timedelta64(1, 's') + scene['temp_11_00um'].attrs["start_time"]
+    scene["pixel_time"].data = scene["pixel_time"].data * np.timedelta64(1, 's') + scene[ONE_IR_CHANNEL].attrs["start_time"]
 
 
 def load_data(scene_files):
@@ -235,7 +236,7 @@ def process_one_scene(scene_files, out_path,
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scene = load_data(scene_files)
-    irch = scene['temp_11_00um']
+    irch = scene[ONE_IR_CHANNEL]
     set_header_and_band_attrs(scene, orbit_n=orbit_n)
     fix_pixel_time(scene)
     # rename_latitude_longitude(scene)

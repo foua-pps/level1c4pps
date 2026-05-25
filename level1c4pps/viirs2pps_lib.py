@@ -65,10 +65,11 @@ PPS_TAGNAMES = {"M05": 'ch_r06',
                 "M08": 'ch_rxx',
                 "M13": 'ch_tbxx'}
 refl_bands = get_refl_bands(PPS_TAGNAMES)
+ONE_IR_CHANNEL = 'M15'
 
 def set_header_and_band_attrs(scene, orbit_n=0):
     """Set and delete some attributes."""
-    irch = scene['M15']
+    irch = scene[ONE_IR_CHANNEL]
     nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGNAMES, irch, orbit_n=orbit_n)
     scene.attrs['source'] = "viirs2pps.py"
     if 'I04' in scene:
@@ -76,7 +77,7 @@ def set_header_and_band_attrs(scene, orbit_n=0):
         scene.attrs['number_of_scans'] = scene['I04'].values.shape[0] / scene['I04'].attrs['rows_per_scan']
     else:
         # else use 11um.
-        scene.attrs['number_of_scans'] = scene['M15'].values.shape[0] / scene['M15'].attrs['rows_per_scan']
+        scene.attrs['number_of_scans'] = scene["M15"].values.shape[0] / scene["M15"].attrs['rows_per_scan']
     for band in refl_bands:
         if band not in scene:
             continue
@@ -116,7 +117,7 @@ def process_one_scene(scene_files, out_path, use_iband_res=False, reader='viirs_
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scene = load_data(scene_files, all_channels=all_channels, pps_channels=pps_channels, use_iband_res=use_iband_res)
-    irch = scene['M15']
+    irch = scene[ONE_IR_CHANNEL]
     set_header_and_band_attrs(scene, orbit_n=orbit_n)
     rename_latitude_longitude(scene)
     convert_angles(scene, delete_azimuth=True)

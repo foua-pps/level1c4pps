@@ -66,11 +66,11 @@ INSTRUMENTS = {'tirosn': 'avhrr',
                'noaa19': 'avhrr/3'}
 refl_bands = get_refl_bands(PPS_TAGNAMES)
 bandnames = sorted(list(PPS_TAGNAMES.keys()))
-
+ONE_IR_CHANNEL = '4'
 
 def update_ancilliary_datasets(scene):
     """Rename, delete and add some datasets and attributes."""
-    irch = scene['4']
+    irch = scene[ONE_IR_CHANNEL]
     scene['scanline_timestamps'] = xr.DataArray(da.from_array(scene['qual_flags'].coords['acq_time']),
                                                dims=['y'], coords={'y': scene['qual_flags']['y']})
     scene['scanline_timestamps'].attrs['name'] = 'scanline_timestamps'
@@ -83,7 +83,7 @@ def update_ancilliary_datasets(scene):
 
 def set_header_and_band_attrs(scene, orbit_n=99999):
     """Set and delete some attributes."""
-    irch = scene['4']
+    irch = scene[ONE_IR_CHANNEL]
     nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGNAMES, irch, orbit_n=orbit_n)
     scene.attrs['source'] = "gac2pps.py"
     scene.attrs['is_gac'] = 'True'
@@ -127,7 +127,7 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None, engine='h5netcd
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scene = load_data(gac_file, reader_kwargs)
-    irch = scene['4']
+    irch = scene[ONE_IR_CHANNEL]
     set_header_and_band_attrs(scene, orbit_n=orbit_n)
     rename_latitude_longitude(scene)
     convert_angles(scene)

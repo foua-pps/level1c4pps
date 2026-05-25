@@ -63,10 +63,11 @@ PPS_TAGNAMES = {'1': 'ch_r06',
 
 refl_bands = get_refl_bands(PPS_TAGNAMES)
 bandnames = sorted(list(PPS_TAGNAMES.keys()))
+ONE_IR_CHANNEL = '4'
 
 def set_header_and_band_attrs(scene, orbit_n=0):
     """Set and delete some attributes."""
-    irch = scene['4']
+    irch = scene[ONE_IR_CHANNEL]
     nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGNAMES, irch, orbit_n=orbit_n)
     scene.attrs['source'] = "avhrr2pps.py"
     return nimg
@@ -108,7 +109,7 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf', orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scene = load_data(scene_files)
-    irch = scene['4']
+    irch = scene[ONE_IR_CHANNEL]
     # Check if we have old hrpt format with data only every 20th line
     check_broken_data(scene)
     set_header_and_band_attrs(scene, orbit_n=orbit_n)

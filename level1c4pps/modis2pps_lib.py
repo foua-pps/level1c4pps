@@ -93,10 +93,11 @@ PPS_TAGNAMES = {'1': 'ch_r06',
                 '36': 'ch_tbxx'}
 
 refl_bands = get_refl_bands(PPS_TAGNAMES)
+ONE_IR_CHANNEL = '31'
 
 def set_header_and_band_attrs(scene, orbit_n=0):
     """Set and delete some attributes."""
-    irch = scene['31']
+    irch = scene[ONE_IR_CHANNEL]
     nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGNAMES, irch, orbit_n=orbit_n)
     scene.attrs['source'] = "modis2pps.py"
     return nimg
@@ -116,7 +117,7 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf', all_channels=Fal
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scene = load_data(scene_files, all_channels=all_channels, pps_channels=pps_channels)
-    irch = scene['31']
+    irch = scene[ONE_IR_CHANNEL]
     set_header_and_band_attrs(scene, orbit_n=orbit_n)
     rename_latitude_longitude(scene)
     convert_angles(scene, delete_azimuth=True)

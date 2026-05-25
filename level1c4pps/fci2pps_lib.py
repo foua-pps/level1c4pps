@@ -74,13 +74,13 @@ PPS_TAGNAMES = {"vis_06": "ch_r06",
                 "vis_04": "ch_rxx",
                 "vis_09": "ch_rxx"}
 refl_bands = get_refl_bands(PPS_TAGNAMES)
-
+ONE_IR_CHANNEL = "ir_105"
 
 
 def set_header_and_band_attrs(scene, orbit_n=00000):
     """Set and delete some attributes."""
     # Set some header attributes:
-    irch = scene['ir_105']
+    irch = scene[ONE_IR_CHANNEL]
     scene.attrs['source'] = "fci2pps.py"
     set_header_and_band_attrs_defaults(scene, PPS_TAGNAMES, irch, orbit_n=orbit_n)
     for band in refl_bands:
@@ -155,10 +155,10 @@ def resample_data(scn_in, datasets, resample_grid="coarse", resample_save_ram=Fa
 
 def add_angles_and_latlon(scene):
     """Add the lon/lat and angles datasets."""
-    irch = scene['ir_105']
+    irch = scene[ONE_IR_CHANNEL]
     lons, lats = get_lonlats(irch)
     suna, sunz = get_solar_angles(scene, lons=lons, lats=lats)
-    sata, satz = get_satellite_angles(scene['ir_105'], lons=lons, lats=lats)
+    sata, satz = get_satellite_angles(scene[ONE_IR_CHANNEL], lons=lons, lats=lats)
     azidiff = make_azidiff_angle(sata, suna)
     sata = None
     suna = None
@@ -207,7 +207,7 @@ def process_one_scene(scene_files, out_path,
                           resample_save_ram=resample_save_ram)
     fix_time(scene)
     add_angles_and_latlon(scene)
-    irch = scene['ir_105']
+    irch = scene[ONE_IR_CHANNEL]
     set_header_and_band_attrs(scene, orbit_n=orbit_n)
     filename = compose_filename(scene, out_path, instrument='fci', band=irch)
     encoding = get_encoding(scene)

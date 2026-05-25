@@ -64,6 +64,8 @@ PPS_TAGNAMES = {"M05": "ch_r06",
 
 refl_bands = get_refl_bands(PPS_TAGNAMES)
 bandnames = sorted(list(PPS_TAGNAMES.keys()))
+ONE_IR_CHANNEL = 'M15'
+
 # SBAF dictionary
 #
 # Spectral band adjustment factors for converting VGAC to AVHRR
@@ -715,7 +717,7 @@ def convert_to_noaa19(scene, sbaf_version, noaa21_sbaf_version):
 
 def set_header_and_band_attrs(scene, orbit_n=0):
     """Set and delete some attributes."""
-    irch = scene["M15"]
+    irch = scene[ONE_IR_CHANNEL]
     nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGNAMES, irch, orbit_n=orbit_n)
     scene.attrs["source"] = "vgac2pps.py"
     for band in refl_bands:
@@ -846,7 +848,7 @@ def process_one_scene(scene_files, out_path, engine="h5netcdf",
         scenes = [scenein]
     filenames = []
     for scene in scenes:
-        irch = scene["M15"]
+        irch = scene[ONE_IR_CHANNEL]
         set_header_and_band_attrs(scene, orbit_n=orbit_n)
         rename_latitude_longitude(scene)
         convert_angles(scene, delete_azimuth=False)
