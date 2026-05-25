@@ -96,7 +96,7 @@ def load_data(scene_files):
         avhrr_reader = 'avhrr_l1b_eps'
         angles = GEOLOCATION_NAMES_EPS
     else:
-        angles = 'avhrr_l1b_aapp'
+        avhrr_reader = 'avhrr_l1b_aapp'
         angles = GEOLOCATION_NAMES_AAPP
     scene = Scene(
         reader=avhrr_reader,
