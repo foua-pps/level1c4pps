@@ -48,11 +48,6 @@ from level1c4pps import (make_azidiff_angle,
                          fix_sun_earth_distance_correction_factor)
 
 import logging
-try:
-    FileNotFoundError
-except NameError:
-    # Python 2
-    FileNotFoundError = IOError
 
 logger = logging.getLogger("seviri2pps")
 
@@ -626,18 +621,13 @@ def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf',
     if hasattr(scene, 'start_time'):
         scene.attrs['start_time'] = scene.start_time
         scene.attrs['end_time'] = scene.end_time
-    # Find lat/lon data
     lons, lats = get_lonlats(scene['IR_108'])
 
     # Compute angles
     suna, sunz = get_solar_angles(scene, lons=lons, lats=lats)
     sata, satz = get_satellite_angles(scene['IR_108'], lons=lons, lats=lats)
     azidiff = make_azidiff_angle(sata, suna)
-
-    # Update coordinates
     update_coords(scene)
-
-    # Add ancillary datasets to the scene
     add_ancillary_datasets(scene,
                            lons=lons, lats=lats,
                            sunz=sunz, satz=satz,
