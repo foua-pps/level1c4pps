@@ -20,11 +20,9 @@
 """Utilities to convert AVHRR GAC formattet data to PPS level-1c format."""
 
 
-import os
 import time
 import xarray as xr
 import dask.array as da
-import numpy as np
 from datetime import datetime
 from satpy.scene import Scene
 import pygac  # testing that pygac is available # noqa: F401

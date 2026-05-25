@@ -19,7 +19,6 @@
 
 """Functions to convert AVHRR AAPP or EPS l1b data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
 
-import os
 import time
 from satpy.scene import Scene
 from level1c4pps import (compose_filename,

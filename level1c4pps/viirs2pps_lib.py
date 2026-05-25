@@ -19,7 +19,6 @@
 
 """Functions to convert VIIRS level-1 data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
 
-import os
 import time
 from satpy.scene import Scene
 from level1c4pps import (compose_filename,
@@ -87,16 +86,16 @@ def set_header_and_band_attrs(scene, orbit_n=0):
     return nimg
 
 
-def load_data(scene_files, all_channels=False, pps_channels=False, use_iband_res=False):
+def load_data(scene_files, reader, all_channels, pps_channels, use_iband_res):
     """Load data."""
     scene = Scene(
         reader=reader,
         filenames=scene_files)
     my_bands = get_band_names(PPS_TAGNAMES, all_channels, pps_channels)
     if use_iband_res:
-        my_bands_i = [band for band in my_bands if "I" in band]
-        my_bands_i_tags = [PPS_TAGNAMES[band] for band in my_bands_i]
-        my_bands_m = [band for band in my_bands if "M" in band and PPS_TAGNAMES[band] not in my_bands_i_tags]
+        my_ibands_i = [band for band in my_bands if "I" in band]
+        my_ibands_i_tags = [PPS_TAGNAMES[band] for band in my_ibands_i]
+        my_ibands_m = [band for band in my_bands if "M" in band and PPS_TAGNAMES[band] not in my_ibands_i_tags]
     else:
         my_bands = [band for band in my_bands if "I" not in band]
 
@@ -119,7 +118,7 @@ def process_one_scene(scene_files, out_path, use_iband_res=False, reader='viirs_
                       all_channels=False, pps_channels=False, orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
-    scene = load_data(scene_files, all_channels=all_channels, pps_channels=pps_channels, use_iband_res=use_iband_res)
+    scene = load_data(scene_files, reader, all_channels, pps_channels, use_iband_res)
     irch = scene[ONE_IR_CHANNEL]
     set_header_and_band_attrs(scene, orbit_n=orbit_n)
     rename_latitude_longitude(scene)

@@ -19,7 +19,6 @@
 
 """Utilities to convert AVHRR GAC formattet data to PPS level-1c format."""
 
-import os
 import time
 import satpy
 from satpy.scene import Scene
@@ -29,8 +28,6 @@ from level1c4pps import (log_time,
                          set_header_and_band_attrs_defaults,
                          rename_latitude_longitude, update_angle_attributes,
                          dt64_to_datetime,
-                         save_data,
-                         logger,
                          get_refl_bands,
                          get_header_attrs, convert_angles)
 from satpy.utils import debug_on

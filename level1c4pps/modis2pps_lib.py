@@ -19,10 +19,9 @@
 
 """Functions to convert MODIS level-1 data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
 
-import os
 import time
 from satpy.scene import Scene
-from level1c4pps import (get_encoding, compose_filename,
+from level1c4pps import (compose_filename,
                          set_header_and_band_attrs_defaults,
                          rename_latitude_longitude,
                          update_angle_attributes, get_header_attrs,

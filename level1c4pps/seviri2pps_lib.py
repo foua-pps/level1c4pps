@@ -40,6 +40,8 @@ from pyorbital.orbital import get_observer_look
 from level1c4pps import dt64_to_datetime
 from level1c4pps.calibration_coefs import get_calibration, CalibrationData
 from level1c4pps import (make_azidiff_angle,
+                         save_data,
+                         log_time,
                          get_encoding,
                          compose_filename,
                          update_angle_attributes,

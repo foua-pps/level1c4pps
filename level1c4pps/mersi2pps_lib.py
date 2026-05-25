@@ -31,7 +31,6 @@ from level1c4pps import (
     log_time,
     compose_filename,
     convert_angles,
-    get_encoding,
     get_refl_bands,
     get_header_attrs,
     rename_latitude_longitude,

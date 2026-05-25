@@ -22,7 +22,6 @@
 
 """Functions to convert ISCCP Next Generation level-1-G data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
 
-import os
 import time
 import xarray as xr
 import numpy as np

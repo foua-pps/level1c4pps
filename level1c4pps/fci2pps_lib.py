@@ -21,7 +21,6 @@
 
 import datetime as dt
 import logging
-import os
 import time
 
 import hdf5plugin  # testing that library for fci is available # noqa: F401
@@ -35,10 +34,10 @@ from satpy.scene import Scene
 from level1c4pps import (compose_filename,
                          dt64_to_datetime,
                          fix_timestamp_datatype,
-                         get_encoding,
                          get_refl_bands,
                          get_band_names,
                          save_data,
+                         get_encoding,
                          log_time,
                          get_header_attrs,
                          set_header_and_band_attrs_defaults)

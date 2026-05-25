@@ -19,7 +19,6 @@
 
 """Functions to convert MERSI-2 level-1 data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
 
-import os
 import time
 import satpy
 from satpy.scene import Scene
