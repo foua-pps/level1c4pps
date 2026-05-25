@@ -162,28 +162,16 @@ def add_angles_and_latlon(scene):
     sata = None
     suna = None
     add_ancillary_datasets(scene,
-                           lons=lons, lats=lats,
-                           sunz=sunz, satz=satz,
+                           lons=lons,
+                           lats=lats,
+                           sunz=sunz,
+                           satz=satz,
                            azidiff=azidiff,
-                           suna=suna, sata=sata,
+                           suna=suna,
+                           sata=sata,
                            irch_name="ir_105",
                            save_azimuth_angles=False,
                            chunks=(464, 928))
-
-
-def load_data(scene_files,
-              all_channels,
-              pps_channels,
-              resample_grid,
-              resample_save_ram):
-    """Load data with satpy."""
-    scenein = Scene(reader='fci_l1c_nc', filenames=scene_files)
-    my_bands = get_band_names(PPS_TAGNAMES, all_channels, pps_channels)
-    scenein.load(my_bands + ["ir_105_time"])
-    scene = resample_data(scenein, my_bands + ["ir_105_time"],
-                          resample_grid=resample_grid,
-                          resample_save_ram=resample_save_ram)
-    return scene
 
 
 def process_one_scene(scene_files, out_path,
@@ -195,11 +183,6 @@ def process_one_scene(scene_files, out_path,
                       orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
-    # scene = load_data(scene_files,
-    #                  all_channels,
-    #                  pps_channels,
-    #                  resample_grid,
-    #                  resample_save_ram)
     scenein = Scene(reader='fci_l1c_nc', filenames=scene_files)
     my_bands = get_band_names(PPS_TAGNAMES, all_channels, pps_channels)
     scenein.load(my_bands + ["ir_105_time"])

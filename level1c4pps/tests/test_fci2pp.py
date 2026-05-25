@@ -21,6 +21,7 @@
 import datetime as dt
 import sys
 import unittest
+import os
 
 import numpy as np
 import xarray as xr
@@ -55,9 +56,20 @@ def get_fake_scene(start_time=dt.datetime(2000, 1, 1, 0)):
                'end_time': end_time,
                'wavelength': WavelengthRange(0.56, 0.635, 0.71)}
     )
+    for key in ['ir_105_time']:
+        scene[key] = xr.DataArray(
+            [[5.0, 6.0],
+             [7.2, 8.0]],
+            dims=('y', 'x'),
+            attrs={"name": key}
+        )
+    scene["longitude"] = lons
+    scene["latitude"] = lats
+    scene.attrs["end_time"] = end_time
+    scene.attrs["start_time"] = start_time
     scene['ir_105'] = xr.DataArray(
-        [[5, 6],
-         [7, 8]],
+        [[5.0, 6.0],
+         [7.0, 8.0]],
         dims=('y', 'x'),
         attrs={'calibration': 'brightness_temperature',
                'start_time': start_time,
@@ -70,10 +82,10 @@ def get_fake_scene(start_time=dt.datetime(2000, 1, 1, 0)):
          [7.2, 8.0]],
         dims=('y', 'x'),
         attrs={}
-
     )
     scene.attrs['sensor'] = {'fci'}
     scene.attrs['platform_name'] = 'Meteosat-12'
+    scene.load = mock.MagicMock
     return scene
 
 
@@ -117,3 +129,14 @@ class TestFCI2PPS(unittest.TestCase):
         self.assertEqual(scene["vis_06"].attrs["name"], "image1")
         self.assertEqual(scene["vis_06"].attrs["sun_zenith_angle_correction_applied"], "True")
         self.assertEqual(scene["vis_06"].attrs["valid_range"][1], 20000)
+
+    @mock.patch("level1c4pps.fci2pps_lib.Scene")
+    @mock.patch("level1c4pps.fci2pps_lib.add_angles_and_latlon")
+    def test_process_one_scene(self, mock_lonlats, mock_scene):
+        """Test to set process_one_scene."""
+        import level1c4pps.fci2pps_lib as fci2pps
+        scene = get_fake_scene()
+        mock_scene.return_value = scene
+        scene.resample_data = mock.MagicMock(return_value = scene)
+        filename = fci2pps.process_one_scene("dummy", out_path='./level1c4pps/tests/')
+        self.assertEqual(os.path.basename(filename), "S_NWC_fci_meteosat12_00000_20000101T0000000Z_20000101T0001000Z.nc")
