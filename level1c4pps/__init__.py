@@ -316,20 +316,7 @@ def get_band_encoding(dataset, chunks=None):
         # pygac qual flags
         enc = {'dtype': 'int16', 'zlib': True,
                'complevel': 4, '_FillValue': -32001.0}
-    elif name in ['scanline_timestamps']:
-        # pygac scanline_timestamps
-        enc = {'dtype': 'int64',
-               'zlib': True,
-               'units': 'milliseconds since 1970-01-01',
-               'complevel': 4,
-               '_FillValue': -1.0}
-    elif name in ['pixel_time']:
-        enc = {'dtype': 'int64',
-               'zlib': True,
-               'units': 'milliseconds since 1970-01-01',
-               'complevel': 4,
-               '_FillValue': -1.0}
-    elif name in ['ir_105_time']:
+    elif name in ['scanline_timestamps', 'pixel_time', 'ir_105_time']:
         enc = {'dtype': 'int64',
                'zlib': True,
                'units': 'milliseconds since 1970-01-01',
