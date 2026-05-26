@@ -101,7 +101,8 @@ def load_data(scene_files):
     scene = Scene(
         reader=avhrr_reader,
         filenames=scene_files)
-    scene.load(bandnames + angles)
+    bands_to_load = bandnames + angles
+    scene.load(bands_to_load)
     return scene
 
 

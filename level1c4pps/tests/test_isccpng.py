@@ -37,7 +37,7 @@ class TestIsccpng2PPS(unittest.TestCase):
         """Create a test scene."""
         self.scene = Scene()
         scene_dict = {}
-        for key in isccpng2pps.ANGLE_NAMES + ["wmo_id", "pixel_time", "lon", "lat"] + ["refl_00_65um", 'temp_11_00um']:
+        for key in isccpng2pps.GEOLOCATION_NAMES + ["refl_00_65um", 'temp_11_00um']:
             scene_dict[key] = xr.DataArray([[1.0, 2.0],
                                             [3.0, 4.0]],
                                            dims=('y', 'x'),

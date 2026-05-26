@@ -128,7 +128,8 @@ def load_data(scene_files, all_channels=False, pps_channels=False):
     """Load data."""
     scene = Scene(reader='vii_l1b_nc', filenames=scene_files)
     my_bands = get_band_names(PPS_TAGNAMES, all_channels, pps_channels)
-    scene.load(my_bands + GEOLOCATION_NAMES)
+    bands_to_load = my_bands + GEOLOCATION_NAMES
+    scene.load(bands_to_load)
     return scene
 
 

@@ -38,8 +38,15 @@ from level1c4pps import (log_time,
 import logging
 
 logger = logging.getLogger('gac2pps')
-
-
+GEOLOCATION_NAMES = [  # additional variables to load
+    'latitude',
+    'longitude',
+    'qual_flags',
+    'sensor_zenith_angle',
+    'solar_zenith_angle',
+    'solar_azimuth_angle',
+    'sensor_azimuth_angle',
+    'sun_sensor_azimuth_difference_angle']
 PPS_TAGNAMES = {"1": "ch_r06",
                 "2": "ch_r09",
                 "3a": "ch_r16",
@@ -109,14 +116,8 @@ def load_data(gac_file, reader_kwargs):
     scene = Scene(reader='avhrr_l1b_gaclac',
                   filenames=[gac_file], reader_kwargs=reader_kwargs)
     # Loading all at once sometimes fails with newer satpy, so start with BANDNAMES ...
-
     scene.load(bandnames)
-    scene.load(['latitude',
-               'longitude',
-                'qual_flags',
-                'sensor_zenith_angle', 'solar_zenith_angle',
-                'solar_azimuth_angle', 'sensor_azimuth_angle',
-                'sun_sensor_azimuth_difference_angle'])
+    scene.load(GEOLOCATION_NAMES)
     return scene
 
 

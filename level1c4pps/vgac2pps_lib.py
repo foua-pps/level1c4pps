@@ -43,7 +43,14 @@ logger = logging.getLogger("vgac2pps")
 # "M10", "M14" are not AVHRR channels, but needed for NN SABAF
 MBAND_AVHRR = ["M05", "M07", "M12", "M15", "M16", "M10", "M14"]
 
-ANGLE_NAMES = ["vza", "sza", "azn", "azi"]
+GEOLOCATION_NAMES = [  # additional variables to load
+    "vza",
+    "sza",
+    "azn",
+    "azi",
+    "latitude",
+    "longitude",
+    "scanline_timestamps"]
 
 PPS_TAGNAMES = {"M05": "ch_r06",
                 "M07": "ch_r09",
@@ -782,7 +789,8 @@ def set_exact_time_and_crop(scene, start_line, end_line, time_key="scanline_time
     end_time_dt64 = scene[time_key].values[end_line]
     start_time = dt64_to_datetime(start_time_dt64)
     end_time = dt64_to_datetime(end_time_dt64)
-    for ds in bandnames + ANGLE_NAMES + ["latitude", "longitude", "scanline_timestamps"]:
+    bands_to_crop = bandnames + GEOLOCATION_NAMES
+    for ds in bands_to_crop:
         if ds in scene and "nscn" in scene[ds].dims:
             scene[ds] = scene[ds].isel(nscn=slice(start_line, end_line + 1))
             try:
@@ -827,9 +835,8 @@ def load_data(scene_files, all_channels, pps_channels, avhrr_channels, noaa19_sb
         my_mbands = MBAND_AVHRR
     if avhrr_channels:
         my_mbands = MBAND_AVHRR
-    scene.load(my_mbands
-               + ANGLE_NAMES
-               + ["latitude", "longitude", "scanline_timestamps"])
+    bands_to_load = my_mbands + GEOLOCATION_NAMES
+    scene.load(bands_to_load)
     return scene
 
 

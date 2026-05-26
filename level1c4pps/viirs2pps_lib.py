@@ -38,8 +38,10 @@ import logging
 logger = logging.getLogger('viirs2pps')
 
 
-ANGLE_NAMES = ['satellite_zenith_angle', 'solar_zenith_angle',
-               'satellite_azimuth_angle', 'solar_azimuth_angle']
+ANGLE_NAMES = ['satellite_zenith_angle',
+               'solar_zenith_angle',
+               'satellite_azimuth_angle',
+               'solar_azimuth_angle']
 
 PPS_TAGNAMES = {"M05": 'ch_r06',
                 "M07": 'ch_r09',
@@ -100,17 +102,20 @@ def load_data(scene_files, reader, all_channels, pps_channels, use_iband_res):
         my_bands = [band for band in my_bands if "I" not in band]
 
     if use_iband_res:
-        scene.load(my_ibands_i + ANGLE_NAMES + ['i_latitude', 'i_longitude'], resolution=371)
+        my_ibands_to_load = my_ibands_i + ANGLE_NAMES + ['i_latitude', 'i_longitude']
+        scene.load(my_ibands_to_load, resolution=371)
         scene.load(my_ibands_m, resolution=742)
         scene = scene.resample(resampler='native')
     elif reader == "viirs_compact":
         my_mband_refl = [band for band in my_bands if band in refl_bands]
         my_mband_tb = [band for band in my_bands if band not in refl_bands]
-        scene.load(my_mband_tb + ANGLE_NAMES + ['latitude_m', 'longitude_m'], resolution=742)
+        my_unmodified_bands_to_load = my_mband_tb + ANGLE_NAMES + ['latitude_m', 'longitude_m']
+        scene.load(my_unmodified_bands_to_load, resolution=742)
         # Load reflective bands with sunz-correction (not the default for VIIRS compact).
         scene.load(my_mband_refl, modifiers=("sunz_corrected", ))
     else:
-        scene.load(my_bands + ANGLE_NAMES + ['m_latitude', 'm_longitude'], resolution=742)
+        bands_to_load = my_bands + ANGLE_NAMES + ['m_latitude', 'm_longitude']
+        scene.load(bands_to_load, resolution=742)
     return scene
 
 

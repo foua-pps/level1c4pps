@@ -109,7 +109,8 @@ def load_data(scene_files, all_channels=False, pps_channels=False):
         reader='modis_l1b',
         filenames=scene_files)
     my_bands = get_band_names(PPS_TAGNAMES, all_channels, pps_channels)
-    scene.load(my_bands + GEOLOCATION_NAMES, resolution=1000)
+    bands_to_load = my_bands + GEOLOCATION_NAMES
+    scene.load(bands_to_load, resolution=1000)
     return scene
 
 

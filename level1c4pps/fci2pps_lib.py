@@ -185,7 +185,9 @@ def process_one_scene(scene_files, out_path,
     tic = time.time()
     scenein = Scene(reader='fci_l1c_nc', filenames=scene_files)
     my_bands = get_band_names(PPS_TAGNAMES, all_channels, pps_channels)
-    scenein.load(my_bands + ["ir_105_time"])
+    time_band = "ir_105_time"
+    bands_to_load = my_bands + [time_band]
+    scenein.load(bands_to_load)
     scene = resample_data(scenein, my_bands + ["ir_105_time"],
                           resample_grid=resample_grid,
                           resample_save_ram=resample_save_ram)

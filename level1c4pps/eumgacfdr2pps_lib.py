@@ -39,12 +39,17 @@ import logging
 logger = logging.getLogger('eumgacfdr2pps')
 
 # AVHRR-GAC_FDR_1C_N06_19810330T005421Z_19810330T024632Z_R_O_20200101T000000Z_0100.nc
-
-ANGLENAMES = ['sensor_zenith_angle',
-              'solar_zenith_angle',
-              'solar_azimuth_angle',
-              'sensor_azimuth_angle',
-              'sun_sensor_azimuth_difference_angle']
+GEOLOCATION_NAMES = [  # additional variables to load
+    'sensor_zenith_angle',
+    'solar_zenith_angle',
+    'solar_azimuth_angle',
+    'sensor_azimuth_angle',
+    'sun_sensor_azimuth_difference_angle',
+    'latitude',
+    'longitude',
+    'qual_flags',
+    'acq_time'
+]
 
 PPS_TAGNAMES = {"reflectance_channel_1": "ch_r06",
                 "reflectance_channel_2": "ch_r09",
@@ -57,6 +62,14 @@ PPS_TAGNAMES = {"reflectance_channel_1": "ch_r06",
 
 refl_bands = get_refl_bands(PPS_TAGNAMES)
 bandnames = sorted(list(PPS_TAGNAMES.keys()))
+ATTRIBUTES_TO_LOAD = [
+    'equator_crossing_time',
+    'equator_crossing_longitude'] 
+EXTRA_ATTRIBUTES_TO_LOAD_WHEN_NOT_CROPPING = [
+    'overlap_free_end',
+    'overlap_free_start',
+    'midnight_line']
+    
 ONE_IR_CHANNEL = "brightness_temperature_channel_4"
 
 RENAME_AND_MOVE_TO_HEADER = {'id': 'euemtsat_gac_id',
@@ -122,7 +135,8 @@ def set_exact_time_and_crop(scene, start_line, end_line, time_key='scanline_time
     end_time_dt64 = scene[time_key].values[end_line]
     start_time = dt64_to_datetime(start_time_dt64)
     end_time = dt64_to_datetime(end_time_dt64)
-    for ds in bandnames + ['latitude', 'longitude', 'qual_flags', 'acq_time'] + ANGLENAMES:
+    datasets_to_crop = bandnames + GEOLOCATION_NAMES
+    for ds in datasets_to_crop:
         if ds in scene and 'y' in scene[ds].dims:
             if end_line != -1:
                 scene[ds] = scene[ds].isel(y=slice(start_line, end_line + 1))
@@ -168,20 +182,12 @@ def load_data(eumgacfdr_file, start_line=None, end_line=None,):
     """Load data."""
     scene = Scene(reader='avhrr_l1c_eum_gac_fdr_nc',
                   filenames=[eumgacfdr_file])
-
     scene.load(bandnames)
-    scene.load(['latitude',
-               'longitude',
-                'qual_flags',
-                'equator_crossing_time',
-                'equator_crossing_longitude',
-                'acq_time'] +
-               ANGLENAMES)
+    scene.load(GEOLOCATION_NAMES)
+    scene.load(ATTRIBUTES_TO_LOAD )
     # Only load these if we do not crop data
-    if start_line is None and end_line is None:
-        scene.load(['overlap_free_end',
-                   'overlap_free_start',
-                    'midnight_line'])
+    if start_line is None and end_line is None:        
+        scene.load(EXTRA_ATTRIBUTES_TO_LOAD_WHEN_NOT_CROPPING)
     return scene
 
 

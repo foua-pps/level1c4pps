@@ -112,7 +112,8 @@ def load_data(scene_files, sensor):
     reader = SATPY_READER[sensor]
     scene = Scene(reader=reader, filenames=scene_files)
     band_names = list(PPS_TAGNAMES)
-    scene.load(band_names + GEOLOCATION_NAMES, resolution=RESOLUTION)
+    bands_to_load = band_names + GEOLOCATION_NAMES
+    scene.load(bands_to_load, resolution=RESOLUTION)
     return scene
 
 

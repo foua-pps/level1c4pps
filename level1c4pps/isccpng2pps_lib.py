@@ -44,9 +44,15 @@ import logging
 
 logger = logging.getLogger('isccpng2pps')
 
-
-ANGLE_NAMES = ['solar_zenith_angle', 'satellite_zenith_angle',
-               'solar_azimuth_angle', 'satellite_azimuth_angle']
+GEOLOCATION_NAMES = [
+    'solar_zenith_angle',
+    'satellite_zenith_angle',
+    'solar_azimuth_angle',
+    'satellite_azimuth_angle',
+    "wmo_id",
+    "pixel_time",
+    "lon",
+    "lat"]
 
 PPS_TAGNAMES = {'refl_01_60um': "ch_r16",
                 'refl_00_65um': "ch_r06",
@@ -227,7 +233,8 @@ def fix_pixel_time(scene):
 def load_data(scene_files):
     """Load data."""
     scene = Scene(reader='multiple_sensors_isccpng_l1g_nc', filenames=scene_files)
-    scene.load(bandnames + ANGLE_NAMES + ["wmo_id", "pixel_time", "lon", "lat"])
+    bands_to_load = bandnames + GEOLOCATION_NAMES
+    scene.load(bands_to_load)
     return scene
 
 
