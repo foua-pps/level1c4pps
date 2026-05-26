@@ -90,7 +90,7 @@ class TestVgac2PPS(unittest.TestCase):
                          'image6', 'image7', 'image8', 'image9',
                          'scanline_timestamps', 'time', 'time_bnds']
         for var in expected_vars:
-            self.assertTrue(var in pps_nc.variables.keys())
+            self.assertIn(var, pps_nc.variables)
 
         np.testing.assert_almost_equal(pps_nc.variables['image1'].sun_earth_distance_correction_factor,
                                        1.0, decimal=4)
@@ -125,7 +125,7 @@ class TestVgac2PPS(unittest.TestCase):
                          'scanline_timestamps', 'time', 'time_bnds']
 
         for var in expected_vars:
-            self.assertTrue(var in pps_nc.variables.keys())
+            self.assertIn(var, pps_nc.variables)
 
         np.testing.assert_almost_equal(pps_nc.variables['image1'].sun_earth_distance_correction_factor,
                                        1.0, decimal=4)
@@ -158,7 +158,7 @@ class TestVgac2PPS(unittest.TestCase):
                          'scanline_timestamps', 'time', 'time_bnds']
 
         for var in expected_vars:
-            self.assertTrue(var in pps_nc.variables.keys())
+            self.assertIn(var, pps_nc.variables)
 
         np.testing.assert_almost_equal(pps_nc.variables['image1'].sun_earth_distance_correction_factor,
                                        1.0, decimal=4)
@@ -193,7 +193,7 @@ class TestVgac2PPS(unittest.TestCase):
                          'scanline_timestamps', 'time', 'time_bnds']
 
         for var in expected_vars:
-            self.assertTrue(var in pps_nc.variables.keys())
+            self.assertIn(var, pps_nc.variables)
 
         np.testing.assert_almost_equal(pps_nc.variables['image1'].sun_earth_distance_correction_factor,
                                        1.0, decimal=4)
@@ -224,5 +224,5 @@ class TestVgac2PPS(unittest.TestCase):
                          'image6', 'image7', 'image8', 'image9',
                          'scanline_timestamps', 'time', 'time_bnds']
         for var in expected_vars:
-            self.assertTrue(var in pps_nc.variables.keys())
+            self.assertIn(var, pps_nc.variables)
         np.testing.assert_equal(pps_nc.variables['image1'].shape, (1, 7, 801))
