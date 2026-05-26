@@ -36,9 +36,10 @@ class TestViirs2PPS(unittest.TestCase):
         """Create a test scene."""
         self.scene = Scene()
         scene_dict = {}
-        for key in viirs2pps.ANGLE_NAMES + ['m_latitude', 'm_longitude'] + ['M05', 'M15']:
-            scene_dict[key] = xr.DataArray([[1.0, 2.0],
-                                            [3.0, 4.0]],
+        grid_data = [[1.0, 2.0], [3.0, 4.0]]
+        all_keys =  ['M05', 'M15'] + ['m_latitude', 'm_longitude'] + viirs2pps.ANGLE_NAMES
+        for key in all_keys:
+            scene_dict[key] = xr.DataArray(grid_data,
                                            dims=('y', 'x'),
                                            attrs={'name': key,
                                                   'id_tag': key})
@@ -67,9 +68,9 @@ class TestViirs2PPS(unittest.TestCase):
         self.assertTrue(self.scene["M05"].attrs['sun_zenith_angle_correction_applied'])
 
     @mock.patch("level1c4pps.viirs2pps_lib.Scene")
-    def test_process_one_scene(self, mock_load):
+    def test_process_one_scene(self, mock_scene_class):
         """Test to set process_one_scene."""
         import level1c4pps.viirs2pps_lib as viirs2pps
-        mock_load.return_value = self.scene
+        mock_scene_class.return_value = self.scene
         filename = viirs2pps.process_one_scene("dummy", out_path='./level1c4pps/tests/', orbit_n='12345')
         self.assertEqual(os.path.basename(filename), "S_NWC_viirs_npp_12345_20090701T1201000Z_20090701T1201000Z.nc")

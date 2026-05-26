@@ -36,9 +36,10 @@ class TestSlstr2PPS(unittest.TestCase):
         """Create a test scene."""
         self.scene = Scene()
         scene_dict = {}
-        for key in slstr2pps.GEOLOCATION_NAMES + ['S1', 'S8']:
-            scene_dict[key] = xr.DataArray([[1.0, 2.0],
-                                            [3.0, 4.0]],
+        grid_data = [[1.0, 2.0], [3.0, 4.0]]
+        all_keys = ['S1', 'S8'] + slstr2pps.GEOLOCATION_NAMES
+        for key in all_keys:
+            scene_dict[key] = xr.DataArray(grid_data,
                                            dims=('y', 'x'),
                                            attrs={'name': key,
                                                   'id_tag': key})

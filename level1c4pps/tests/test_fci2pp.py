@@ -64,12 +64,11 @@ def get_fake_scene(start_time=dt.datetime(2000, 1, 1, 0)):
                'wavelength': WavelengthRange(0.56, 0.635, 0.71),
                'area': SwathDefinition(lons[::2, ::2], lats[::2, ::2])}
     )
-    for key in ['ir_105_time']:
-        scene[key] = xr.DataArray(
-            np.ones((6000, 6000)),
-            dims=('y', 'x'),
-            attrs={"name": key}
-        )
+    scene['ir_105_time'] = xr.DataArray(
+        np.ones((6000, 6000)),
+        dims=('y', 'x'),
+        attrs={"name": 'ir_105_time'}
+    )
     scene["longitude"] = lons
     scene["latitude"] = lats
     scene.attrs["end_time"] = end_time

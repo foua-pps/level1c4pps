@@ -35,9 +35,10 @@ class TestModis2PPS(unittest.TestCase):
         """Create a test scene."""
         self.scene = Scene()
         scene_dict = {}
-        for key in modis2pps.GEOLOCATION_NAMES + ['1', '31']:
-            scene_dict[key] = xr.DataArray([[1.0, 2.0],
-                                            [3.0, 4.0]],
+        grid_data = [[1.0, 2.0], [3.0, 4.0]]
+        all_keys = ['1', '31'] + modis2pps.GEOLOCATION_NAMES
+        for key in all_keys:
+            scene_dict[key] = xr.DataArray(grid_data,
                                            dims=('y', 'x'),
                                            attrs={'name': key,
                                                   'id_tag': key})
@@ -56,6 +57,7 @@ class TestModis2PPS(unittest.TestCase):
                                   'orbit_number': 99999}
         for key in scene_dict:
             self.scene[key] = scene_dict[key]
+        self.scene.load = mock.MagicMock
         self.scene.attrs['sensor'] = ['modis']
 
     def test_compose_filename(self):
@@ -80,10 +82,10 @@ class TestModis2PPS(unittest.TestCase):
         self.assertTrue(isinstance(self.scene.attrs['orbit_number'], int))
         self.assertEqual(self.scene.attrs['orbit_number'], 12345)
 
-    @mock.patch("level1c4pps.modis2pps_lib.load_data")
-    def test_process_one_scene(self, mock_load):
+    @mock.patch("level1c4pps.modis2pps_lib.Scene")
+    def test_process_one_scene(self, mock_scene_class):
         """Test to set process_one_scene."""
         import level1c4pps.modis2pps_lib as modis2pps
-        mock_load.return_value = self.scene
+        mock_scene_class.return_value = self.scene
         filename = modis2pps.process_one_scene("dummy", out_path='./level1c4pps/tests/', orbit_n='12345')
         self.assertEqual(os.path.basename(filename), "S_NWC_modis_eos2_12345_20090701T1201000Z_20090701T1201000Z.nc")

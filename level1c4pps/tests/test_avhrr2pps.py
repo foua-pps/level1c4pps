@@ -36,9 +36,10 @@ class TestAvhrr2PPS(unittest.TestCase):
         """Create a test scene."""
         self.scene = Scene()
         scene_dict = {}
-        for key in avhrr2pps.GEOLOCATION_NAMES_AAPP + ['1', '4']:
-            scene_dict[key] = xr.DataArray([[1.0, 2.0],
-                                            [3.0, 4.0]],
+        grid_data = [[1.0, 2.0], [3.0, 4.0]]
+        all_keys =  ['1', '4'] + avhrr2pps.GEOLOCATION_NAMES_AAPP
+        for key in all_keys:
+            scene_dict[key] = xr.DataArray(grid_data,
                                            dims=('y', 'x'),
                                            attrs={'name': key,
                                                   'id_tag': key})
@@ -81,9 +82,9 @@ class TestAvhrr2PPS(unittest.TestCase):
         self.assertEqual(self.scene.attrs['orbit_number'], 12345)
 
     @mock.patch("level1c4pps.avhrr2pps_lib.Scene")
-    def test_process_one_scene(self, mock_load):
+    def test_process_one_scene(self, mock_scene_class):
         """Test to set process_one_scene."""
         import level1c4pps.avhrr2pps_lib as avhrr2pps
-        mock_load.return_value = self.scene
+        mock_scene_class.return_value = self.scene
         filename = avhrr2pps.process_one_scene("dummy", out_path='./level1c4pps/tests/', orbit_n='12345')
         self.assertEqual(os.path.basename(filename), "S_NWC_avhrr_noaa19_12345_20090701T1201000Z_20090701T1201000Z.nc")

@@ -37,9 +37,10 @@ class TestMersi2PPS(unittest.TestCase):
         """Create a test scene."""
         self.scene = Scene()
         scene_dict = {}
-        for key in mersi2pps.GEOLOCATION_NAMES + ['3', '24']:
-            scene_dict[key] = xr.DataArray([[1.0, 2.0],
-                                            [3.0, 4.0]],
+        grid_data = [[1.0, 2.0], [3.0, 4.0]]
+        all_keys = ['3', '24'] + mersi2pps.GEOLOCATION_NAMES
+        for key in all_keys:
+            scene_dict[key] = xr.DataArray(grid_data,
                                            dims=('y', 'x'),
                                            attrs={'name': key,
                                                   'id_tag': key})
@@ -114,10 +115,10 @@ class TestMersi2PPS(unittest.TestCase):
             self.assertEqual(sensor, expect)
 
     @mock.patch("level1c4pps.mersi2pps_lib.Scene")
-    def test_process_one_scene(self, mock_load):
+    def test_process_one_scene(self, mock_scene_class):
         """Test to set process_one_scene."""
         import level1c4pps.mersi2pps_lib as mersi2pps
-        mock_load.return_value = self.scene
+        mock_scene_class.return_value = self.scene
         filename = mersi2pps.process_one_scene(
             ["tf2019234102243.FY3F-X_MERSI_GEOQK_L1B.HDF"], out_path='./level1c4pps/tests/', orbit_n='12345')
         self.assertEqual(os.path.basename(filename), "S_NWC_mersi3_fy3f_12345_20090701T1201000Z_20090701T1201000Z.nc")
