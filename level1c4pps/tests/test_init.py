@@ -63,3 +63,20 @@ class TestInit(unittest.TestCase):
                                    out_lons, rtol=0.00001)
         np.testing.assert_allclose(centered_modulus(in_lons_np),
                                    out_lons_np, rtol=0.00001)
+
+    def test_get_band_names(self):
+        """Test get_band_names."""
+        from level1c4pps import get_band_names
+        from level1c4pps.modis2pps_lib import PPS_TAGNAMES
+        band_names_default = get_band_names(PPS_TAGNAMES, "default")
+        band_names_all = get_band_names(PPS_TAGNAMES, "all")
+        band_names_pps = get_band_names(PPS_TAGNAMES, "pps")
+        band_names_avhrr = get_band_names(PPS_TAGNAMES, "avhrr_heritage")
+        band_names_avhrr_exp = [ "1", "2", "6", "20", "31", "32"]
+        band_names_pps_exp = [ "1", "2", "6", "20", "31", "32", "29", "26"]
+        band_names_default_exp = [ "1", "2", "6", "20", "31", "32", "29", "7", "26", "27", "28", "33"]
+        self.assertEqual(sorted(band_names_all), sorted(PPS_TAGNAMES.keys()))
+        self.assertEqual(sorted(band_names_pps), sorted(band_names_pps_exp))
+        self.assertEqual(sorted(band_names_avhrr), sorted(band_names_avhrr_exp))
+        self.assertEqual(sorted(band_names_default), sorted(band_names_default_exp))
+        

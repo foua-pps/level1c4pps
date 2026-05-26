@@ -615,13 +615,17 @@ def fix_timestamp_datatype(scene, encoding, param):
         scene[param].data = scene[param].data.astype('datetime64[ms]')
 
 
-def get_band_names(pps_tagnames_dict, all_channels=False, pps_channels=False):
+def get_band_names(pps_tagnames_dict, mode="default"):
     """Get bands to use from all, default and recommended for pps."""
-    if all_channels:
+    if mode == "all":
         return sorted(list(pps_tagnames_dict.keys()))
-    if pps_channels:
+    if mode == "pps":
         return [key for key in pps_tagnames_dict if pps_tagnames_dict[key] in [
             'ch_r06', 'ch_r09', 'ch_r13', 'ch_r16', 'ch_tb37', 'ch_tb85', 'ch_tb11', 'ch_tb12']]
+    if mode == "avhrr_heritage":
+        return [key for key in pps_tagnames_dict if pps_tagnames_dict[key] in [
+            'ch_r06', 'ch_r09', 'ch_r16', 'ch_tb37', 'ch_tb11', 'ch_tb12']]
+    
     return [key for key in pps_tagnames_dict if "xx" not in pps_tagnames_dict[key]]
 
 

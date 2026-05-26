@@ -103,21 +103,21 @@ def set_header_and_band_attrs(scene, orbit_n=0):
     return nimg
 
 
-def load_data(scene_files, all_channels=False, pps_channels=False):
+def load_data(scene_files, channel_selection):
     """Load data."""
     scene = Scene(
         reader='modis_l1b',
         filenames=scene_files)
-    my_bands = get_band_names(PPS_TAGNAMES, all_channels, pps_channels)
+    my_bands = get_band_names(PPS_TAGNAMES, channel_selection)
     bands_to_load = my_bands + GEOLOCATION_NAMES
     scene.load(bands_to_load, resolution=1000)
     return scene
 
 
-def process_one_scene(scene_files, out_path, engine='h5netcdf', all_channels=False, pps_channels=False, orbit_n=0):
+def process_one_scene(scene_files, out_path, engine='h5netcdf', channel_selection="default", orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
-    scene = load_data(scene_files, all_channels=all_channels, pps_channels=pps_channels)
+    scene = load_data(scene_files, channel_selection)
     irch = scene[ONE_IR_CHANNEL]
     set_header_and_band_attrs(scene, orbit_n=orbit_n)
     rename_latitude_longitude(scene)

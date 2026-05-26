@@ -32,6 +32,7 @@ from level1c4pps import (
     compose_filename,
     convert_angles,
     get_refl_bands,
+    get_band_names,
     get_header_attrs,
     rename_latitude_longitude,
     set_header_and_band_attrs_defaults,
@@ -107,21 +108,21 @@ def get_sensor(scene_file):
     return None
 
 
-def load_data(scene_files, sensor):
+def load_data(scene_files, sensor, channel_selection):
     """Load data."""
     reader = SATPY_READER[sensor]
     scene = Scene(reader=reader, filenames=scene_files)
-    band_names = list(PPS_TAGNAMES)
+    band_names = get_band_names(PPS_TAGNAMES, channel_selection)
     bands_to_load = band_names + GEOLOCATION_NAMES
     scene.load(bands_to_load, resolution=RESOLUTION)
     return scene
 
 
-def process_one_scene(scene_files, out_path, engine='h5netcdf', orbit_n=0):
+def process_one_scene(scene_files, out_path, channel_selection="default", engine='h5netcdf', orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     sensor = get_sensor(os.path.basename(scene_files[0]))
-    scene = load_data(scene_files, sensor)
+    scene = load_data(scene_files, sensor, channel_selection)
     remove_broken_data(scene)
     band = scene[ONE_IR_CHANNEL]
     set_header_and_band_attrs(scene, band, orbit_n)

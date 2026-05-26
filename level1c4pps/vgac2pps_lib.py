@@ -825,15 +825,13 @@ def fix_platform_name(scene, scene_files):
         scene.attrs['platform'] = "JPSS-2"
 
 
-def load_data(scene_files, all_channels, pps_channels, avhrr_channels, noaa19_sbaf_version):
+def load_data(scene_files, channel_selection, noaa19_sbaf_version):
     """Load data with satpy."""
     scene = Scene(
         reader="viirs_vgac_l1c_nc",
         filenames=scene_files)
-    my_mbands = get_band_names(PPS_TAGNAMES, all_channels, pps_channels)
+    my_mbands = get_band_names(PPS_TAGNAMES, channel_selection)
     if noaa19_sbaf_version is not None:
-        my_mbands = MBAND_AVHRR
-    if avhrr_channels:
         my_mbands = MBAND_AVHRR
     bands_to_load = my_mbands + GEOLOCATION_NAMES
     scene.load(bands_to_load)
@@ -841,15 +839,14 @@ def load_data(scene_files, all_channels, pps_channels, avhrr_channels, noaa19_sb
 
 
 def process_one_scene(scene_files, out_path, engine="h5netcdf",
-                      all_channels=False, pps_channels=False, orbit_n=0,
+                      channel_selection="default",
+                      orbit_n=0,
                       noaa19_sbaf_version=None,
                       noaa21_sbaf_version=None,
-                      avhrr_channels=False,
                       split_files_at_midnight=True):
     """Make level 1c files in PPS-format."""
     tic = time.time()
-    scenein = load_data(scene_files, all_channels, pps_channels,
-                        avhrr_channels, noaa19_sbaf_version)
+    scenein = load_data(scene_files, channel_selection, noaa19_sbaf_version)
     fix_platform_name(scenein, scene_files)
     if split_files_at_midnight:
         scenes = split_scene_at_midnight(scenein)

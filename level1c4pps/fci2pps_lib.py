@@ -176,15 +176,14 @@ def add_angles_and_latlon(scene):
 
 def process_one_scene(scene_files, out_path,
                       engine='h5netcdf',
-                      all_channels=False,
-                      pps_channels=False,
+                      channel_selection="default",
                       resample_grid="coarse",
                       resample_save_ram=False,
                       orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scenein = Scene(reader='fci_l1c_nc', filenames=scene_files)
-    my_bands = get_band_names(PPS_TAGNAMES, all_channels, pps_channels)
+    my_bands = get_band_names(PPS_TAGNAMES, channel_selection)
     time_band = "ir_105_time"
     bands_to_load = my_bands + [time_band]
     scenein.load(bands_to_load)
