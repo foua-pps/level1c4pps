@@ -138,7 +138,6 @@ class TestFCI2PPS(unittest.TestCase):
     @mock.patch("level1c4pps.fci2pps_lib.add_angles_and_latlon")
     def test_process_one_scene(self, mock_lonlats, mock_scene):
         """Test to set process_one_scene."""
-        import level1c4pps.fci2pps_lib as fci2pps
         scene = get_fake_scene()
         del scene["vis_09"]
         mock_scene.return_value = scene

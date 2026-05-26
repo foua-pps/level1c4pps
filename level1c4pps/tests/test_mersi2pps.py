@@ -117,7 +117,6 @@ class TestMersi2PPS(unittest.TestCase):
     @mock.patch("level1c4pps.mersi2pps_lib.Scene")
     def test_process_one_scene(self, mock_scene_class):
         """Test to set process_one_scene."""
-        import level1c4pps.mersi2pps_lib as mersi2pps
         mock_scene_class.return_value = self.scene
         filename = mersi2pps.process_one_scene(
             ["tf2019234102243.FY3F-X_MERSI_GEOQK_L1B.HDF"], out_path='./level1c4pps/tests/', orbit_n='12345')

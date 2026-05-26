@@ -64,7 +64,6 @@ class TestIsccpng2PPS(unittest.TestCase):
     @mock.patch("level1c4pps.isccpng2pps_lib.load_data")
     def test_process_one_scene(self, mock_load):
         """Test to set process_one_scene."""
-        import level1c4pps.isccpng2pps_lib as isccpng2pps
         mock_load.return_value = self.scene
         filename = isccpng2pps.process_one_scene("dummy", out_path='./level1c4pps/tests/', orbit_n='12345')
         self.assertEqual(os.path.basename(filename), "S_NWC_seviri__12345_20210628T0000000Z_20210628T0001000Z.nc")

@@ -67,7 +67,6 @@ class TestSlstr2PPS(unittest.TestCase):
     @mock.patch("level1c4pps.slstr2pps_lib.load_data")
     def test_process_one_scene(self, mock_load):
         """Test to set process_one_scene."""
-        import level1c4pps.slstr2pps_lib as slstr2pps
         mock_load.return_value = self.scene
         filename = slstr2pps.process_one_scene("dummy", out_path='./level1c4pps/tests/', orbit_n='12345')
         self.assertEqual(os.path.basename(filename),

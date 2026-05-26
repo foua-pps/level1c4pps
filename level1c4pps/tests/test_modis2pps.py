@@ -85,7 +85,6 @@ class TestModis2PPS(unittest.TestCase):
     @mock.patch("level1c4pps.modis2pps_lib.Scene")
     def test_process_one_scene(self, mock_scene_class):
         """Test to set process_one_scene."""
-        import level1c4pps.modis2pps_lib as modis2pps
         mock_scene_class.return_value = self.scene
         filename = modis2pps.process_one_scene("dummy", out_path='./level1c4pps/tests/', orbit_n='12345')
         self.assertEqual(os.path.basename(filename), "S_NWC_modis_eos2_12345_20090701T1201000Z_20090701T1201000Z.nc")
