@@ -75,7 +75,7 @@ jobs:
           fail_ci_if_error: false
 
       - name: Coveralls Parallel
-        uses: AndreMiras/coveralls-python-action@develop
+        uses: coverallsapp/github-action@v2
         with:
           flag-name: run-${{ matrix.test_number }}
           parallel: true
@@ -86,6 +86,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Coveralls Finished
-        uses: AndreMiras/coveralls-python-action@develop
+        uses: coverallsapp/github-action@v2
         with:
           parallel-finished: true
