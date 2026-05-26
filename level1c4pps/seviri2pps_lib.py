@@ -170,17 +170,17 @@ def get_solar_angles(scene, lons, lats):
         Solar azimuth angle, Solar zenith angle in degrees
 
     """
-    suna = np.full(lons.shape, np.nan)
-    sunz = np.full(lons.shape, np.nan)
+    sun_azimuth = np.full(lons.shape, np.nan)
+    sun_zenith = np.full(lons.shape, np.nan)
     mean_acq_time = get_mean_acq_time(scene)
     for line, acq_time in enumerate(mean_acq_time.values):
         if np.isnat(acq_time):
             continue
-        _, suna_line = get_alt_az(acq_time, lons[line, :], lats[line, :])
-        suna_line = np.rad2deg(suna_line)
-        suna[line, :] = suna_line
-        sunz[line, :] = sun_zenith_angle(acq_time, lons[line, :], lats[line, :])
-    return suna, sunz
+        _, sun_azimuth_line = get_alt_az(acq_time, lons[line, :], lats[line, :])
+        sun_azimuth_line = np.rad2deg(sun_azimuth_line)
+        sun_azimuth[line, :] = sun_azimuth_line
+        sun_zenith[line, :] = sun_zenith_angle(acq_time, lons[line, :], lats[line, :])
+    return sun_azimuth, sun_zenith
 
 
 def get_satellite_angles(dataset, lons, lats):
@@ -223,14 +223,14 @@ def get_satellite_angles(dataset, lons, lats):
     # Compute angles
 
     if lons.shape[0] < 5000:
-        sata, satel = get_observer_look(
+        sat_azimuth, satel = get_observer_look(
             sat_lon,
             sat_lat,
             sat_alt,
             dataset.attrs['start_time'],
             lons, lats, 0)
     else:
-        sata = np.full(lons.shape, np.nan)
+        sat_azimuth = np.full(lons.shape, np.nan)
         satel = np.full(lons.shape, np.nan)
 
         chunks = list(range(0, lons.shape[0], 2000))
@@ -239,15 +239,15 @@ def get_satellite_angles(dataset, lons, lats):
             start_i = chunks[index]
             end_i = chunks[index + 1]
             logger.info(f"Get angles for lines {start_i} to {end_i}")
-            sata[start_i:end_i, :], satel[start_i:end_i, :] = get_observer_look(
+            sat_azimuth[start_i:end_i, :], satel[start_i:end_i, :] = get_observer_look(
                 sat_lon,
                 sat_lat,
                 sat_alt,
                 dataset.attrs['start_time'],
                 lons[start_i:end_i, :], lats[start_i:end_i, :], 0)
 
-    satz = 90 - satel
-    return sata, satz
+    sat_zenith = 90 - satel
+    return sat_azimuth, sat_zenith
 
 
 def set_attrs(scene):
@@ -349,8 +349,8 @@ def update_coords(scene):
         scene[band].coords['time'] = scene[band].attrs['start_time']
 
 
-def add_ancillary_datasets(scene, lons, lats, sunz, satz, azidiff,
-                           suna, sata,
+def add_ancillary_datasets(scene, lons, lats, sun_zenith, sat_zenith, azidiff,
+                           sun_azimuth, sat_azimuth,
                            save_azimuth_angles=False, irch_name="IR_108",
                            chunks=(512, 3712)):
     """Add ancillary datasets to the scene.
@@ -358,8 +358,8 @@ def add_ancillary_datasets(scene, lons, lats, sunz, satz, azidiff,
     Args:
         lons: Longitude coordinates
         lats: Latitude coordinates
-        sunz: Solar zenith angle
-        satz: Satellite zenith angle
+        sun_zenith: Solar zenith angle
+        sat_zenith: Satellite zenith angle
         azidiff: Absolute azimuth difference angle
         chunks: Chunksize
 
@@ -392,12 +392,12 @@ def add_ancillary_datasets(scene, lons, lats, sunz, satz, azidiff,
 
     # Sunzenith
     scene['sunzenith'] = xr.DataArray(
-        da.from_array(sunz[:, :], chunks=chunks),
+        da.from_array(sun_zenith[:, :], chunks=chunks),
         dims=['y', 'x'], coords=angle_coords)
 
     # Satzenith
     scene['satzenith'] = xr.DataArray(
-        da.from_array(satz[:, :], chunks=chunks),
+        da.from_array(sat_zenith[:, :], chunks=chunks),
         dims=['y', 'x'], coords=angle_coords)
 
     # Azidiff
@@ -408,13 +408,13 @@ def add_ancillary_datasets(scene, lons, lats, sunz, satz, azidiff,
     #  Sunazimuth
     if save_azimuth_angles:
         scene['sunazimuth'] = xr.DataArray(
-            da.from_array(suna[:, :], chunks=chunks),
+            da.from_array(sun_azimuth[:, :], chunks=chunks),
             dims=['y', 'x'], coords=angle_coords)
 
     #  Satazimuth
     if save_azimuth_angles:
         scene['satazimuth'] = xr.DataArray(
-            da.from_array(sata[:, :], chunks=chunks),
+            da.from_array(sat_azimuth[:, :], chunks=chunks),
             dims=['y', 'x'], coords=angle_coords)
 
     # Update the attributes
@@ -624,15 +624,18 @@ def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf',
     lons, lats = get_lonlats(scene['IR_108'])
 
     # Compute angles
-    suna, sunz = get_solar_angles(scene, lons=lons, lats=lats)
-    sata, satz = get_satellite_angles(scene['IR_108'], lons=lons, lats=lats)
-    azidiff = make_azidiff_angle(sata, suna)
+    sun_azimuth, sun_zenith = get_solar_angles(scene, lons=lons, lats=lats)
+    sat_azimuth, sat_zenith = get_satellite_angles(scene['IR_108'], lons=lons, lats=lats)
+    azidiff = make_azidiff_angle(sat_azimuth, sun_azimuth)
     update_coords(scene)
     add_ancillary_datasets(scene,
-                           lons=lons, lats=lats,
-                           sunz=sunz, satz=satz,
+                           lons=lons,
+                           lats=lats,
+                           sun_zenith=sun_zenith,
+                           sat_zenith=sat_zenith,
                            azidiff=azidiff,
-                           suna=suna, sata=sata,
+                           sun_azimuth=sun_azimuth,
+                           sat_azimuth=sat_azimuth,
                            save_azimuth_angles=save_azimuth_angles)
     add_proj_satpos(scene)
 

@@ -101,12 +101,12 @@ def get_solar_angles(scene, lons, lats):
 
     """
     suna = np.full(lons.shape, np.nan)
-    sunz = np.full(lons.shape, np.nan)
+    sun_zenith = np.full(lons.shape, np.nan)
     acq_time = scene["ir_105_time"].copy()
     _, suna = get_alt_az(acq_time, lons, lats)
     suna = np.rad2deg(suna)
-    sunz = sun_zenith_angle(acq_time, lons, lats)
-    return suna, sunz
+    sun_zenith = sun_zenith_angle(acq_time, lons, lats)
+    return suna, sun_zenith
 
 
 def fix_time(scene):
@@ -156,19 +156,19 @@ def add_angles_and_latlon(scene):
     """Add the lon/lat and angles datasets."""
     irch = scene[ONE_IR_CHANNEL]
     lons, lats = get_lonlats(irch)
-    suna, sunz = get_solar_angles(scene, lons=lons, lats=lats)
-    sata, satz = get_satellite_angles(scene[ONE_IR_CHANNEL], lons=lons, lats=lats)
-    azidiff = make_azidiff_angle(sata, suna)
-    sata = None
-    suna = None
+    sun_azimuth, sun_zenith = get_solar_angles(scene, lons=lons, lats=lats)
+    sat_azimuth, sat_zenith = get_satellite_angles(scene[ONE_IR_CHANNEL], lons=lons, lats=lats)
+    azidiff = make_azidiff_angle(sat_azimuth, sun_azimuth)
+    sat_azimuth = None
+    sun_azimuth = None
     add_ancillary_datasets(scene,
                            lons=lons,
                            lats=lats,
-                           sunz=sunz,
-                           satz=satz,
+                           sun_zenith=sun_zenith,
+                           sat_zenith=sat_zenith,
                            azidiff=azidiff,
-                           suna=suna,
-                           sata=sata,
+                           sun_azimuth=sun_azimuth,
+                           sat_azimuth=sat_azimuth,
                            irch_name="ir_105",
                            save_azimuth_angles=False,
                            chunks=(464, 928))

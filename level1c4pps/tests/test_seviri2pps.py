@@ -125,14 +125,14 @@ class TestSeviri2PPS(unittest.TestCase):
     def test_get_solar_angles(self, get_alt_az, sun_zenith_angle,
                               get_mean_acq_time):
         """Test getting solar angles."""
-        def sunz_patched(time, lon, lat):
+        def sun_zenith_patched(time, lon, lat):
             return time.astype(int) + lon + lat
 
         def alt_az_patched(time, lon, lat):
             return (time.astype(int) + lon + lat) * np.pi / 2
 
         get_alt_az.side_effect = alt_az_patched
-        sun_zenith_angle.side_effect = sunz_patched
+        sun_zenith_angle.side_effect = sun_zenith_patched
         get_mean_acq_time.return_value = xr.DataArray(np.array(
             ['1970-01-01 00:00:00.000000003',
              '1970-01-01 00:00:00.000000002',
@@ -147,18 +147,18 @@ class TestSeviri2PPS(unittest.TestCase):
                          [-3, -4],
                          [-5, -6],
                          [0, 0]])
-        suna_exp = np.array([[270, 270],
+        sun_azimuth_exp = np.array([[270, 270],
                              [180, 180],
                              [90, 90],
                              [np.nan, np.nan]])
-        sunz_exp = np.array([[3, 3],
+        sun_zenith_exp = np.array([[3, 3],
                              [2, 2],
                              [1, 1],
                              [np.nan, np.nan]])
 
-        suna, sunz = seviri2pps.get_solar_angles('scene', lons=lons, lats=lats)
-        np.testing.assert_array_equal(suna, suna_exp)
-        np.testing.assert_array_equal(sunz, sunz_exp)
+        sun_azimuth, sun_zenith = seviri2pps.get_solar_angles('scene', lons=lons, lats=lats)
+        np.testing.assert_array_equal(sun_azimuth, sun_azimuth_exp)
+        np.testing.assert_array_equal(sun_zenith, sun_zenith_exp)
 
     @mock.patch('level1c4pps.seviri2pps_lib.get_observer_look')
     @mock.patch('level1c4pps.seviri2pps_lib.satpy.utils.get_satpos')
@@ -170,16 +170,16 @@ class TestSeviri2PPS(unittest.TestCase):
             elif alt == 36000:
                 return None, 22  # < 20
             else:
-                return 'sata', 176
+                return 'sat_azimuth', 176
 
         lons = np.array([90, 180])
         lats = np.array([65, 65])
         get_observer_look.side_effect = get_observer_look_patched
         get_satpos.return_value = 'sat_lon', 'sat_lat', 12345678
         ds = mock.MagicMock(attrs={'start_time': 'start_time'})
-        sata, satz = seviri2pps.get_satellite_angles(ds, lons, lats)
-        self.assertEqual(sata, 'sata')
-        self.assertEqual(satz, -86)
+        sat_azimuth, sat_zenith = seviri2pps.get_satellite_angles(ds, lons, lats)
+        self.assertEqual(sat_azimuth, 'sat_azimuth')
+        self.assertEqual(sat_zenith, -86)
         get_observer_look.assert_called_with('sat_lon', 'sat_lat', 12345.678,
                                              'start_time', lons, lats, 0)
 
@@ -303,10 +303,10 @@ class TestSeviri2PPS(unittest.TestCase):
 
         lons = np.array([[1.0, 2.0], [3.0, 4.0]])
         lats = np.array([[1.1, 2.1], [3.1, 4.1]])
-        sunz = np.array([[1.2, 2.2], [3.2, 4.2]])
-        satz = np.array([[1.3, 2.3], [3.3, 4.3]])
-        suna = np.array([[5.2, 2.2], [5.2, 1.2]])
-        sata = np.array([[3.3, 2.3], [3.3, 7.3]])
+        sun_zenith = np.array([[1.2, 2.2], [3.2, 4.2]])
+        sat_zenith = np.array([[1.3, 2.3], [3.3, 4.3]])
+        sun_azimuth = np.array([[5.2, 2.2], [5.2, 1.2]])
+        sat_azimuth = np.array([[3.3, 2.3], [3.3, 7.3]])
         azidiff = np.array([[1.4, 2.4], [3.4, 4.4]])
 
         ir_108 = xr.DataArray(data=np.array([[0.1, 0.2], [0.3, 0.4]]),
@@ -319,10 +319,13 @@ class TestSeviri2PPS(unittest.TestCase):
                                      'georef_offset_corrected': True})
         scene = {'IR_108': ir_108}
         seviri2pps.add_ancillary_datasets(scene,
-                                          lons=lons, lats=lats,
-                                          sunz=sunz, satz=satz,
+                                          lons=lons,
+                                          lats=lats,
+                                          sun_zenith=sun_zenith,
+                                          sat_zenith=sat_zenith,
                                           azidiff=azidiff,
-                                          suna=suna, sata=sata,
+                                          sun_azimuth=sun_azimuth,
+                                          sat_azimuth=sat_azimuth,
                                           save_azimuth_angles=True)
 
         # Test lon/lat
@@ -333,19 +336,19 @@ class TestSeviri2PPS(unittest.TestCase):
         self.assertEqual(scene['lat'].attrs['units'], 'degrees_north')
 
         # Test angles
-        np.testing.assert_array_equal(scene['sunzenith'].data, sunz)
+        np.testing.assert_array_equal(scene['sunzenith'].data, sun_zenith)
         self.assertEqual(scene['sunzenith'].attrs['name'], 'sunzenith')
 
-        np.testing.assert_array_equal(scene['satzenith'].data, satz)
+        np.testing.assert_array_equal(scene['satzenith'].data, sat_zenith)
         self.assertEqual(scene['satzenith'].attrs['name'], 'satzenith')
 
         np.testing.assert_array_equal(scene['azimuthdiff'].data, azidiff)
         self.assertEqual(scene['azimuthdiff'].attrs['name'], 'azimuthdiff')
 
-        np.testing.assert_array_equal(scene['satazimuth'].data, sata)
+        np.testing.assert_array_equal(scene['satazimuth'].data, sat_azimuth)
         self.assertEqual(scene['satazimuth'].attrs['name'], 'satazimuth')
 
-        np.testing.assert_array_equal(scene['sunazimuth'].data, suna)
+        np.testing.assert_array_equal(scene['sunazimuth'].data, sun_azimuth)
         self.assertEqual(scene['sunazimuth'].attrs['name'], 'sunazimuth')
 
         for angle in ['azimuthdiff', 'satzenith', 'sunzenith']:
