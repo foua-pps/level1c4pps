@@ -79,3 +79,8 @@ class TestInit(unittest.TestCase):
         self.assertEqual(sorted(band_names_pps), sorted(band_names_pps_exp))
         self.assertEqual(sorted(band_names_avhrr), sorted(band_names_avhrr_exp))
         self.assertEqual(sorted(band_names_default), sorted(band_names_default_exp))
+        
+    def test_check_file_exists(self):
+        """Test the check that input files are existing."""
+        self.assertRaises(FileNotFoundError, level1c4pps.check_file_exists, "a_filename_that_does_not_exists")
+        self.assertRaises(FileNotFoundError, level1c4pps.check_file_exists, ["a_filename_that_does_not_exists"])
