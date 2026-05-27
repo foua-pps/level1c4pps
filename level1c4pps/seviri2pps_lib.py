@@ -601,6 +601,7 @@ class SEVIRIFilenameParser:
         """Postprocess HRIT filename info."""
         return parsed
 
+
 def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf',
                      use_nominal_time_in_filename=False,
                      clip_calib=False,

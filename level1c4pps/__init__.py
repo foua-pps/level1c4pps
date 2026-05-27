@@ -618,7 +618,7 @@ def get_band_names(pps_tags_dict, mode="default"):
     if mode == "pps":
         return [key for key in pps_tags_dict if pps_tags_dict[key] in PPS_BANDS]
     if mode == "avhrr_heritage":
-        return [key for key in pps_tags_dict if pps_tags_dict[key] in AVHRR_BANDS]    
+        return [key for key in pps_tags_dict if pps_tags_dict[key] in AVHRR_BANDS]
     return [key for key in pps_tags_dict if "xx" not in pps_tags_dict[key]]
 
 
@@ -653,7 +653,7 @@ def save_data(
 def log_time(filename, tic):
     """Log time consumption."""
     logger.info(f"Saved file {os.path.basename(filename)} after {time.time() - tic:3.1f} seconds")
-    
+
 
 def check_file_exists(filename_list_or_string):
     """Check that the files exist that we want to read."""
@@ -662,4 +662,4 @@ def check_file_exists(filename_list_or_string):
             if not os.path.isfile(fname):
                 raise FileNotFoundError(f"No such file: {fname}")
     elif not os.path.isfile(filename_list_or_string):
-        raise FileNotFoundError(f"No such file: {filename_list_or_string}")  
+        raise FileNotFoundError(f"No such file: {filename_list_or_string}")

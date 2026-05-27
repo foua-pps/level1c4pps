@@ -62,7 +62,7 @@ class TestIsccpng2PPS(unittest.TestCase):
         for key in scene_dict:
             self.scene[key] = scene_dict[key]
         self.scene.attrs['sensor'] = ['isccpng']
-        
+
     @mock.patch("level1c4pps.isccpng2pps_lib.check_file_exists")
     @mock.patch("level1c4pps.isccpng2pps_lib.load_data")
     def test_process_one_scene(self, mock_load, mock_check_file_exists):

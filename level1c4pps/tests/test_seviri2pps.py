@@ -32,7 +32,7 @@ import level1c4pps.seviri2pps_lib as seviri2pps
 import level1c4pps.calibration_coefs as calib
 from satpy.dataset.dataid import WavelengthRange
 from pyresample.area_config import load_area_from_string
-    
+
 seviri_area = """msg_seviri_fes_3km:
   description:
     MSG SEVIRI Full Earth Scanning service area definition
@@ -50,6 +50,7 @@ seviri_area = """msg_seviri_fes_3km:
     lower_left_xy: [-5570248.686685662, -5567248.28340708]
     upper_right_xy: [5567248.28340708,   5570248.686685662]
 """
+
 
 def get_fake_scene(size=1):
     scene = Scene()
@@ -86,7 +87,7 @@ def get_fake_scene(size=1):
     )
     scene.attrs['sensor'] = {'seviri'}
     start = np.datetime64('2019-08-26 12:20:00.000000003')
-    acq_time = start - 0.1*np.arange(size * 2).astype('timedelta64[D]')
+    acq_time = start - 0.1 * np.arange(size * 2).astype('timedelta64[D]')
     acq_time = xr.DataArray(np.array(acq_time, dtype='datetime64[ns]'), dims=('y'))
     scene['VIS006'].coords["acq_time"] = acq_time
     scene['IR_108'].coords["acq_time"] = acq_time
@@ -96,7 +97,7 @@ def get_fake_scene(size=1):
 
 class TestSeviri2PPS(unittest.TestCase):
     """Test for SEVIRI converter."""
-    
+
     @mock.patch('level1c4pps.seviri2pps_lib.add_proj_satpos')
     @mock.patch('level1c4pps.seviri2pps_lib.satpy.utils.get_satpos')
     @mock.patch('level1c4pps.seviri2pps_lib.check_file_exists')
@@ -119,10 +120,11 @@ class TestSeviri2PPS(unittest.TestCase):
             "H-000-MSG4__-MSG4________-VIS008___-000006___-201908261215-__",
             "H-000-MSG4__-MSG4________-WV_062___-000006___-201908261215-__",
             "H-000-MSG4__-MSG4________-WV_073___-000006___-201908261215-__"
-            ]
+        ]
 
         filename = seviri2pps.process_one_scan(hrit_files, out_path='./level1c4pps/tests/')
-        self.assertEqual(os.path.basename(filename), "S_NWC_seviri_meteosat11_99999_20200101T1200000Z_20090701T0100000Z.nc")
+        self.assertEqual(os.path.basename(filename),
+                         "S_NWC_seviri_meteosat11_99999_20200101T1200000Z_20090701T0100000Z.nc")
 
     @mock.patch('level1c4pps.seviri2pps_lib.Scene')
     def test_load_and_calibrate(self, mocked_scene):
@@ -218,7 +220,7 @@ class TestSeviri2PPS(unittest.TestCase):
         sun_azimuth, sun_zenith = seviri2pps.get_solar_angles('scene', lons=lons, lats=lats)
         np.testing.assert_array_equal(sun_azimuth, sun_azimuth_exp)
         np.testing.assert_array_equal(sun_zenith, sun_zenith_exp)
-        
+
     @mock.patch('level1c4pps.seviri2pps_lib.get_observer_look')
     @mock.patch('level1c4pps.seviri2pps_lib.satpy.utils.get_satpos')
     def test_get_satellite_angles(self, get_satpos, get_observer_look):
