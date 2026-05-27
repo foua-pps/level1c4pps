@@ -19,16 +19,16 @@
 
 """Unit tests for the fci2pps_lib module."""
 import datetime as dt
+import os
 import sys
 import unittest
-import os
+from unittest import mock
 
 import numpy as np
 import xarray as xr
 from pyresample import SwathDefinition
 from satpy.dataset.dataid import WavelengthRange
 
-from unittest import mock
 sys.modules["hdf5plugin"] = mock.MagicMock()
 import level1c4pps.fci2pps_lib as fci2pps  # modify hdf5plugin first # noqa: E402
 

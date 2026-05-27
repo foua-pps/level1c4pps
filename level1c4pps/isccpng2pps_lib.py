@@ -22,25 +22,19 @@
 
 """Functions to convert ISCCP Next Generation level-1-G data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
 
-import time
-import xarray as xr
-import numpy as np
-from satpy.scene import Scene
-from level1c4pps import (dt64_to_datetime,
-                         compose_filename,
-                         apply_sunz_correction,
-                         rename_latitude_longitude,
-                         update_angle_attributes, get_header_attrs,
-                         set_header_and_band_attrs_defaults,
-                         convert_angles,
-                         get_refl_bands,
-                         check_file_exists,
-                         save_data,
-                         log_time,
-                         adjust_lons_to_valid_range)
-
 import logging
+import time
 
+import numpy as np
+import xarray as xr
+from satpy.scene import Scene
+
+from level1c4pps import (adjust_lons_to_valid_range, apply_sunz_correction,
+                         check_file_exists, compose_filename, convert_angles,
+                         dt64_to_datetime, get_header_attrs, get_refl_bands,
+                         log_time, rename_latitude_longitude, save_data,
+                         set_header_and_band_attrs_defaults,
+                         update_angle_attributes)
 
 logger = logging.getLogger('isccpng2pps')
 

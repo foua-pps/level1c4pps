@@ -23,8 +23,9 @@ import datetime as dt
 import os
 import unittest
 from unittest import mock
-from satpy import Scene
+
 import xarray as xr
+from satpy import Scene
 
 import level1c4pps.slstr2pps_lib as slstr2pps
 

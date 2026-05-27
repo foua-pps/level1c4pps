@@ -19,26 +19,20 @@
 
 """Functions to convert EPS-SG MetImage level-1 data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
 
-import numpy as np
-import time
-import satpy
-from satpy.scene import Scene
-from level1c4pps import (apply_sunz_correction,
-                         compose_filename,
-                         rename_latitude_longitude,
-                         get_refl_bands,
-                         get_band_names,
-                         save_data,
-                         check_file_exists,
-                         log_time,
-                         update_angle_attributes, get_header_attrs,
-                         set_header_and_band_attrs_defaults,
-                         convert_angles,
-                         adjust_lons_to_valid_range)
-
 import logging
-from packaging.version import Version
+import time
 
+import numpy as np
+import satpy
+from packaging.version import Version
+from satpy.scene import Scene
+
+from level1c4pps import (adjust_lons_to_valid_range, apply_sunz_correction,
+                         check_file_exists, compose_filename, convert_angles,
+                         get_band_names, get_header_attrs, get_refl_bands,
+                         log_time, rename_latitude_longitude, save_data,
+                         set_header_and_band_attrs_defaults,
+                         update_angle_attributes)
 
 # from satpy.utils import debug_on
 # debug_on()

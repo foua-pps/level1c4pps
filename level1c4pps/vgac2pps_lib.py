@@ -18,26 +18,20 @@
 
 """Functions to convert VGAC level-1c data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
 
+import logging
 import os
 import time
-from satpy.scene import Scene
-from level1c4pps import (get_encoding,
-                         log_time,
-                         save_data,
-                         get_band_names,
-                         compose_filename,
-                         set_header_and_band_attrs_defaults,
-                         rename_latitude_longitude,
-                         dt64_to_datetime,
-                         get_refl_bands,
-                         check_file_exists,
-                         fix_timestamp_datatype,
-                         update_angle_attributes,
-                         get_header_attrs,
-                         convert_angles)
-import pyspectral  # testing that pyspectral is available # noqa: F401
-import logging
+
 import numpy as np
+import pyspectral  # testing that pyspectral is available # noqa: F401
+from satpy.scene import Scene
+
+from level1c4pps import (check_file_exists, compose_filename, convert_angles,
+                         dt64_to_datetime, fix_timestamp_datatype,
+                         get_band_names, get_encoding, get_header_attrs,
+                         get_refl_bands, log_time, rename_latitude_longitude,
+                         save_data, set_header_and_band_attrs_defaults,
+                         update_angle_attributes)
 
 logger = logging.getLogger("vgac2pps")
 

@@ -18,15 +18,18 @@
 # along with level1c4pps.  If not, see <http://www.gnu.org/licenses/>.
 
 """Package Initializer for level1c4pps."""
-from importlib.metadata import version
-import numpy as np
-import xarray as xr
-from datetime import datetime, timezone
-import os
 import logging
-import satpy
+import os
 import time
+from datetime import datetime, timezone
+from importlib.metadata import version
+
+import numpy as np
+import satpy
+import xarray as xr
+
 import level1c4pps
+
 logging.basicConfig(
     format='level1c4pps %(levelname)s: |%(asctime)s|: %(message)s',
     level=logging.INFO,

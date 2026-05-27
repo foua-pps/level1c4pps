@@ -19,21 +19,17 @@
 
 """Functions to convert MERSI-2 level-1 data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
 
-import time
-from satpy.scene import Scene
-from level1c4pps import (save_data,
-                         log_time,
-                         compose_filename,
-                         set_header_and_band_attrs_defaults,
-                         rename_latitude_longitude,
-                         update_angle_attributes,
-                         check_file_exists,
-                         get_band_names,
-                         get_refl_bands,
-                         get_header_attrs,
-                         convert_angles)
-import pyspectral  # testing that pyspectral is available # noqa: F401
 import logging
+import time
+
+import pyspectral  # testing that pyspectral is available # noqa: F401
+from satpy.scene import Scene
+
+from level1c4pps import (check_file_exists, compose_filename, convert_angles,
+                         get_band_names, get_header_attrs, get_refl_bands,
+                         log_time, rename_latitude_longitude, save_data,
+                         set_header_and_band_attrs_defaults,
+                         update_angle_attributes)
 
 # Example:
 # S3A_SL_1_RBT____20200911T163815_20200911T164115_20200912T215136_0179_062_340_0360_LN2_O_NT_004.SEN3#

@@ -19,22 +19,19 @@
 
 """Functions to convert MODIS level-1 data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
 
-import time
-from satpy.scene import Scene
-from level1c4pps import (compose_filename,
-                         set_header_and_band_attrs_defaults,
-                         rename_latitude_longitude,
-                         update_angle_attributes, get_header_attrs,
-                         convert_angles,
-                         save_data,
-                         check_file_exists,
-                         log_time,
-                         get_refl_bands,
-                         get_band_names,
-                         apply_sunz_correction)
-
 import logging
+import time
+
+from satpy.scene import Scene
 from satpy.utils import debug_on
+
+from level1c4pps import (apply_sunz_correction, check_file_exists,
+                         compose_filename, convert_angles, get_band_names,
+                         get_header_attrs, get_refl_bands, log_time,
+                         rename_latitude_longitude, save_data,
+                         set_header_and_band_attrs_defaults,
+                         update_angle_attributes)
+
 debug_on()
 
 # Example:

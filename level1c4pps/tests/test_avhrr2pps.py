@@ -20,11 +20,12 @@
 """Unit tests for the avhrr2pps_lib module."""
 
 import datetime as dt
-import unittest
 import os
+import unittest
 from unittest import mock
-from satpy import Scene
+
 import xarray as xr
+from satpy import Scene
 
 import level1c4pps.avhrr2pps_lib as avhrr2pps
 

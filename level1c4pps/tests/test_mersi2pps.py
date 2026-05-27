@@ -20,11 +20,12 @@
 """Unit tests for the merci2pps_lib module."""
 
 import datetime as dt
+import os
 import unittest
 from unittest import mock
+
 import numpy as np
 import xarray as xr
-import os
 from satpy import Scene
 
 import level1c4pps.mersi2pps_lib as mersi2pps

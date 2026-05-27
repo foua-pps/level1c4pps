@@ -20,11 +20,13 @@
 """Unit tests for the gac2pps_lib module."""
 
 import datetime as dt
+import os
 import unittest
 from unittest import mock
-from satpy import Scene
-import os
+
 import xarray as xr
+from satpy import Scene
+
 import level1c4pps.modis2pps_lib as modis2pps
 
 

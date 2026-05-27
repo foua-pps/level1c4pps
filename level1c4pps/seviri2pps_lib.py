@@ -23,32 +23,26 @@
 """Tools to convert SEVIRI hrit to PPS level-1c format."""
 
 
+import logging
 import os
-import numpy as np
-import xarray as xr
-import dask.array as da
-from glob import glob
 import time
 from datetime import datetime, timedelta, timezone
-from satpy.scene import Scene
+from glob import glob
+
+import dask.array as da
+import numpy as np
 import satpy.utils
-from trollsift.parser import globify, Parser
-
-
+import xarray as xr
 from pyorbital.astronomy import get_alt_az, sun_zenith_angle
 from pyorbital.orbital import get_observer_look
-from level1c4pps import dt64_to_datetime
-from level1c4pps.calibration_coefs import get_calibration, CalibrationData
-from level1c4pps import (make_azidiff_angle,
-                         save_data,
-                         log_time,
-                         get_encoding,
-                         check_file_exists,
-                         compose_filename,
-                         update_angle_attributes,
-                         fix_sun_earth_distance_correction_factor)
+from satpy.scene import Scene
+from trollsift.parser import Parser, globify
 
-import logging
+from level1c4pps import (check_file_exists, compose_filename, dt64_to_datetime,
+                         fix_sun_earth_distance_correction_factor,
+                         get_encoding, log_time, make_azidiff_angle, save_data,
+                         update_angle_attributes)
+from level1c4pps.calibration_coefs import CalibrationData, get_calibration
 
 logger = logging.getLogger("seviri2pps")
 

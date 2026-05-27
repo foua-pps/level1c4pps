@@ -20,14 +20,15 @@
 """Unit tests for the gac2pps_lib module."""
 
 import datetime as dt
-import netCDF4
 import unittest
 from datetime import datetime, timezone
 from unittest import mock
+
+import netCDF4
+import numpy as np
 from satpy import Scene
 
 import level1c4pps.gac2pps_lib as gac2pps
-import numpy as np
 
 
 class TestGac2PPS(unittest.TestCase):

@@ -31,19 +31,11 @@ from packaging.version import Version
 from pyorbital.astronomy import get_alt_az, sun_zenith_angle
 from satpy.scene import Scene
 
-from level1c4pps import (compose_filename,
-                         dt64_to_datetime,
-                         fix_timestamp_datatype,
-                         get_refl_bands,
-                         get_band_names,
-                         save_data,
-                         get_encoding,
-                         log_time,
-                         get_header_attrs,
-                         check_file_exists,
+from level1c4pps import (check_file_exists, compose_filename, dt64_to_datetime,
+                         fix_timestamp_datatype, get_band_names, get_encoding,
+                         get_header_attrs, get_refl_bands, log_time, save_data,
                          set_header_and_band_attrs_defaults)
-from level1c4pps.seviri2pps_lib import (add_ancillary_datasets,
-                                        get_lonlats,
+from level1c4pps.seviri2pps_lib import (add_ancillary_datasets, get_lonlats,
                                         get_satellite_angles,
                                         make_azidiff_angle)
 

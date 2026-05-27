@@ -20,23 +20,20 @@
 """Utilities to convert AVHRR GAC formattet data to PPS level-1c format."""
 
 
-import time
-import xarray as xr
-import dask.array as da
-from datetime import datetime
-from satpy.scene import Scene
-import pygac  # testing that pygac is available # noqa: F401
-from level1c4pps import (log_time,
-                         save_data,
-                         check_file_exists,
-                         compose_filename,
-                         set_header_and_band_attrs_defaults,
-                         rename_latitude_longitude,
-                         update_angle_attributes,
-                         get_header_attrs,
-                         get_refl_bands,
-                         convert_angles)
 import logging
+import time
+from datetime import datetime
+
+import dask.array as da
+import pygac  # testing that pygac is available # noqa: F401
+import xarray as xr
+from satpy.scene import Scene
+
+from level1c4pps import (check_file_exists, compose_filename, convert_angles,
+                         get_header_attrs, get_refl_bands, log_time,
+                         rename_latitude_longitude, save_data,
+                         set_header_and_band_attrs_defaults,
+                         update_angle_attributes)
 
 logger = logging.getLogger('gac2pps')
 GEOLOCATION_NAMES = [  # additional variables to load

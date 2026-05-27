@@ -19,14 +19,15 @@
 
 """Unit tests for the eumgacfdr2pps_lib module."""
 
-import netCDF4
 import unittest
 from datetime import datetime, timezone
 from unittest import mock
+
+import netCDF4
+import numpy as np
 from satpy import Scene
 
 import level1c4pps.eumgacfdr2pps_lib as eumgacfdr2pps
-import numpy as np
 
 
 class TestEumgacfdr2PPS(unittest.TestCase):

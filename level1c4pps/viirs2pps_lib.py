@@ -19,20 +19,17 @@
 
 """Functions to convert VIIRS level-1 data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
 
-import time
-from satpy.scene import Scene
-from level1c4pps import (compose_filename,
-                         set_header_and_band_attrs_defaults,
-                         rename_latitude_longitude,
-                         save_data,
-                         get_refl_bands,
-                         log_time,
-                         check_file_exists,
-                         get_band_names,
-                         update_angle_attributes, get_header_attrs,
-                         convert_angles)
-import pyspectral  # testing that pyspectral is available # noqa: F401
 import logging
+import time
+
+import pyspectral  # testing that pyspectral is available # noqa: F401
+from satpy.scene import Scene
+
+from level1c4pps import (check_file_exists, compose_filename, convert_angles,
+                         get_band_names, get_header_attrs, get_refl_bands,
+                         log_time, rename_latitude_longitude, save_data,
+                         set_header_and_band_attrs_defaults,
+                         update_angle_attributes)
 
 # Example:
 

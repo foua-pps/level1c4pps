@@ -19,14 +19,15 @@
 
 """Unit tests for the vgac2pps_lib module."""
 
-import netCDF4
 import unittest
 from datetime import datetime, timezone
 from unittest import mock
+
+import netCDF4
+import numpy as np
 from satpy import Scene
 
 import level1c4pps.vgac2pps_lib as vgac2pps
-import numpy as np
 
 try:
     import sbafs_ann  # noqa: F401

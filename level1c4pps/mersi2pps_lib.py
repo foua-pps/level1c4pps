@@ -25,20 +25,12 @@ import time
 
 import numpy as np
 from satpy.scene import Scene
-from level1c4pps import (
-    ANGLE_ATTRIBUTES,
-    save_data,
-    log_time,
-    compose_filename,
-    convert_angles,
-    get_refl_bands,
-    get_band_names,
-    get_header_attrs,
-    check_file_exists,
-    rename_latitude_longitude,
-    set_header_and_band_attrs_defaults,
-    update_angle_attributes,
-)
+
+from level1c4pps import (ANGLE_ATTRIBUTES, check_file_exists, compose_filename,
+                         convert_angles, get_band_names, get_header_attrs,
+                         get_refl_bands, log_time, rename_latitude_longitude,
+                         save_data, set_header_and_band_attrs_defaults,
+                         update_angle_attributes)
 
 # Example filenames:
 # tf2019234102243.FY3D-X_MERSI_GEOQK_L1B.HDF

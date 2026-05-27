@@ -20,14 +20,16 @@
 """Unit tests for the metimage2pps_lib module."""
 
 import datetime as dt
+import os
 import unittest
+from unittest import mock
+
 import numpy as np
 import xarray as xr
-from unittest import mock
 from satpy import Scene
 from satpy.dataset.dataid import WavelengthRange
+
 import level1c4pps.metimage2pps_lib as metimage2pps
-import os
 
 
 class TestMETimage2PPS(unittest.TestCase):

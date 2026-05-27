@@ -20,18 +20,19 @@
 """Unit tests for the seviri2pps_lib module."""
 
 import datetime as dt
-import numpy as np
-import pytest
+import os
 import unittest
 from unittest import mock
-import xarray as xr
-from satpy import Scene
-import os
 
-import level1c4pps.seviri2pps_lib as seviri2pps
-import level1c4pps.calibration_coefs as calib
-from satpy.dataset.dataid import WavelengthRange
+import numpy as np
+import pytest
+import xarray as xr
 from pyresample.area_config import load_area_from_string
+from satpy import Scene
+from satpy.dataset.dataid import WavelengthRange
+
+import level1c4pps.calibration_coefs as calib
+import level1c4pps.seviri2pps_lib as seviri2pps
 
 seviri_area = """msg_seviri_fes_3km:
   description:
@@ -144,7 +145,8 @@ class TestSeviri2PPS(unittest.TestCase):
                                   dims=('y', 'x'))
         ir_108_exp = xr.DataArray([[5.0, 6.0], [7.0, 8.0]],
                                   dims=('y', 'x'))
-        from satpy.readers.core.utils import remove_earthsun_distance_correction  # satpy > 0.56
+        from satpy.readers.core.utils import \
+            remove_earthsun_distance_correction  # satpy > 0.56
         res['VIS006'] = remove_earthsun_distance_correction(res['VIS006'])
         np.testing.assert_allclose(res['VIS006'].values, vis006_exp.values, atol=0.0000005)
         np.testing.assert_allclose(res['IR_108'].values, ir_108_exp.values)

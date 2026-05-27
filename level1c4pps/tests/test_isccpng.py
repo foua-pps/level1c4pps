@@ -20,12 +20,13 @@
 """Unit tests for the isccpng2pps_lib module."""
 
 import datetime as dt
-import unittest
 import os
-import numpy as np
+import unittest
 from unittest import mock
-from satpy import Scene
+
+import numpy as np
 import xarray as xr
+from satpy import Scene
 
 import level1c4pps.isccpng2pps_lib as isccpng2pps
 

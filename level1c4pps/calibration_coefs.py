@@ -20,10 +20,10 @@
 """Module with calibration coefficients for SEVIRI."""
 
 import datetime
-from enum import Enum
 import json
 import logging
 import os
+from enum import Enum
 
 logger = logging.getLogger("calibration")
 

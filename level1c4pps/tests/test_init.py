@@ -20,9 +20,11 @@
 """Unit tests for misc functions in __init__.py."""
 
 import unittest
-import xarray as xr
-import level1c4pps
+
 import numpy as np
+import xarray as xr
+
+import level1c4pps
 
 
 class TestInit(unittest.TestCase):

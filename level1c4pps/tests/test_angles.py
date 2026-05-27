@@ -18,13 +18,14 @@
 
 """Unit tests for angle computations."""
 
-from level1c4pps import make_azidiff_angle, update_angle_attributes
-
 import datetime as dt
+import unittest
+from unittest import mock
+
 import numpy as np
 import xarray as xr
-from unittest import mock
-import unittest
+
+from level1c4pps import make_azidiff_angle, update_angle_attributes
 
 SAT_AZ = np.ma.array([[48.0, 56.0, 64.0, 72.0],
                       [80.0, 88.0, 96.0, 104.0],
