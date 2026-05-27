@@ -28,6 +28,7 @@ from satpy.scene import Scene
 import pygac  # testing that pygac is available # noqa: F401
 from level1c4pps import (log_time,
                          save_data,
+                         check_file_exists,
                          compose_filename,
                          set_header_and_band_attrs_defaults,
                          rename_latitude_longitude,
@@ -124,6 +125,7 @@ def load_data(gac_file, reader_kwargs):
 def process_one_file(gac_file, out_path='.', reader_kwargs=None, engine='h5netcdf', orbit_n=99999):
     """Make level 1c files in PPS-format."""
     tic = time.time()
+    check_file_exists(gac_file)
     scene = load_data(gac_file, reader_kwargs)
     irch = scene[ONE_IR_CHANNEL]
     set_header_and_band_attrs(scene, orbit_n=orbit_n)

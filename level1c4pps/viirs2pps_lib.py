@@ -27,6 +27,7 @@ from level1c4pps import (compose_filename,
                          save_data,
                          get_refl_bands,
                          log_time,
+                         check_file_exists,
                          get_band_names,
                          update_angle_attributes, get_header_attrs,
                          convert_angles)
@@ -123,6 +124,7 @@ def process_one_scene(scene_files, out_path, use_iband_res=False, reader='viirs_
                       channel_selection="default", orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
+    check_file_exists(scene_files)
     scene = load_data(scene_files, reader, channel_selection, use_iband_res)
     irch = scene[ONE_IR_CHANNEL]
     set_header_and_band_attrs(scene, orbit_n=orbit_n)

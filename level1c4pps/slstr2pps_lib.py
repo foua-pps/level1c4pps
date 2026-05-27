@@ -27,6 +27,7 @@ from level1c4pps import (save_data,
                          set_header_and_band_attrs_defaults,
                          rename_latitude_longitude,
                          update_angle_attributes,
+                         check_file_exists,
                          get_band_names,
                          get_refl_bands,
                          get_header_attrs,
@@ -101,6 +102,7 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf',
                       channel_selection="default", orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
+    check_file_exists(scene_files)
     scene = load_data(scene_files, channel_selection)
     irch = scene[ONE_IR_CHANNEL]
     set_header_and_band_attrs(scene, orbit_n=orbit_n)

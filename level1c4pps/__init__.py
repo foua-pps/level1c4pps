@@ -663,6 +663,9 @@ def log_time(filename, tic):
 
 def check_file_exists(tslot_files):
     """Check that the files exist that we want to read."""
-    for fname in tslot_files:
-        if not os.path.isfile(fname):
-            raise FileNotFoundError('No such file: {}'.format(fname))  
+    if isinstance(tslot_files, list):
+        for fname in tslot_files:
+            if not os.path.isfile(fname):
+                raise FileNotFoundError('No such file: {}'.format(fname))  
+    elif not os.path.isfile(tslot_files):
+        raise FileNotFoundError('No such file: {}'.format(tslot_files))  

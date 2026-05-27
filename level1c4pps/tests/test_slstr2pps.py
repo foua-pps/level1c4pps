@@ -64,8 +64,9 @@ class TestSlstr2PPS(unittest.TestCase):
         self.assertTrue(isinstance(self.scene.attrs['orbit_number'], int))
         self.assertEqual(self.scene.attrs['orbit_number'], 12345)
 
+    @mock.patch("level1c4pps.slstr2pps_lib.check_file_exists")
     @mock.patch("level1c4pps.slstr2pps_lib.load_data")
-    def test_process_one_scene(self, mock_load):
+    def test_process_one_scene(self, mock_load, mock_check_file_exists):
         """Test to set process_one_scene."""
         mock_load.return_value = self.scene
         filename = slstr2pps.process_one_scene("dummy", out_path='./level1c4pps/tests/', orbit_n='12345')

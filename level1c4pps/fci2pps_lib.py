@@ -40,6 +40,7 @@ from level1c4pps import (compose_filename,
                          get_encoding,
                          log_time,
                          get_header_attrs,
+                         check_file_exists,
                          set_header_and_band_attrs_defaults)
 from level1c4pps.seviri2pps_lib import (add_ancillary_datasets,
                                         get_lonlats,
@@ -182,6 +183,7 @@ def process_one_scene(scene_files, out_path,
                       orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
+    check_file_exists(scene_files)
     scenein = Scene(reader='fci_l1c_nc', filenames=scene_files)
     my_bands = get_band_names(PPS_TAGS, channel_selection)
     time_band = "ir_105_time"

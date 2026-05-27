@@ -29,6 +29,7 @@ from level1c4pps import (compose_filename,
                          update_angle_attributes,
                          get_header_attrs,
                          convert_angles,
+                         check_file_exists,
                          get_refl_bands,
                          apply_sunz_correction)
 
@@ -109,6 +110,7 @@ def load_data(scene_files):
 def process_one_scene(scene_files, out_path, engine='h5netcdf', orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
+    check_file_exists(scene_files)
     scene = load_data(scene_files)
     irch = scene[ONE_IR_CHANNEL]
     # Check if we have old hrpt format with data only every 20th line

@@ -23,6 +23,7 @@ import time
 from satpy.scene import Scene
 from level1c4pps import (log_time,
                          save_data,
+                         check_file_exists,
                          compose_filename,
                          set_header_and_band_attrs_defaults,
                          rename_latitude_longitude, update_angle_attributes,
@@ -194,6 +195,7 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None,
                      remove_broken=True, orbit_n=99999):
     """Make level 1c files in PPS-format."""
     tic = time.time()
+    check_file_exists(eumgacfdr_file)
     scene = load_data(eumgacfdr_file, start_line=start_line, end_line=end_line)
     # Needs to be done before everything else to avoid problems with attributes.
     if remove_broken:

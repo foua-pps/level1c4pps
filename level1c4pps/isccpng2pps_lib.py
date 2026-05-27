@@ -34,6 +34,7 @@ from level1c4pps import (dt64_to_datetime,
                          set_header_and_band_attrs_defaults,
                          convert_angles,
                          get_refl_bands,
+                         check_file_exists,
                          save_data,
                          log_time,
                          adjust_lons_to_valid_range)
@@ -242,6 +243,7 @@ def process_one_scene(scene_files, out_path,
                       orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
+    check_file_exists(scene_files)
     scene = load_data(scene_files)
     irch = scene[ONE_IR_CHANNEL]
     set_header_and_band_attrs(scene, orbit_n=orbit_n)

@@ -114,8 +114,9 @@ class TestMersi2PPS(unittest.TestCase):
             sensor = mersi2pps.get_sensor(filename)
             self.assertEqual(sensor, expect)
 
+    @mock.patch("level1c4pps.mersi2pps_lib.check_file_exists")
     @mock.patch("level1c4pps.mersi2pps_lib.Scene")
-    def test_process_one_scene(self, mock_scene_class):
+    def test_process_one_scene(self, mock_scene_class, mock_check_file_exists):
         """Test to set process_one_scene."""
         mock_scene_class.return_value = self.scene
         filename = mersi2pps.process_one_scene(

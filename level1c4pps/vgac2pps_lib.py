@@ -30,8 +30,10 @@ from level1c4pps import (get_encoding,
                          rename_latitude_longitude,
                          dt64_to_datetime,
                          get_refl_bands,
+                         check_file_exists,
                          fix_timestamp_datatype,
-                         update_angle_attributes, get_header_attrs,
+                         update_angle_attributes,
+                         get_header_attrs,
                          convert_angles)
 import pyspectral  # testing that pyspectral is available # noqa: F401
 import logging
@@ -846,6 +848,7 @@ def process_one_scene(scene_files, out_path, engine="h5netcdf",
                       split_files_at_midnight=True):
     """Make level 1c files in PPS-format."""
     tic = time.time()
+    check_file_exists(scene_files)
     scenein = load_data(scene_files, channel_selection, noaa19_sbaf_version)
     fix_platform_name(scenein, scene_files)
     if split_files_at_midnight:

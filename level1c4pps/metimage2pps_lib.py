@@ -29,6 +29,7 @@ from level1c4pps import (apply_sunz_correction,
                          get_refl_bands,
                          get_band_names,
                          save_data,
+                         check_file_exists,
                          log_time,
                          update_angle_attributes, get_header_attrs,
                          set_header_and_band_attrs_defaults,
@@ -141,6 +142,7 @@ def process_one_scene(scene_files, out_path,
                       platform_name=None):
     """Make level 1c files in PPS-format."""
     tic = time.time()
+    check_file_exists(scene_files)
     scene = load_data(scene_files, channel_selection)
     # one ir channel
     irch = scene[ONE_IR_CHANNEL]

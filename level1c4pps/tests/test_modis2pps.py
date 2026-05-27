@@ -81,9 +81,10 @@ class TestModis2PPS(unittest.TestCase):
         modis2pps.set_header_and_band_attrs(self.scene, orbit_n='12345')
         self.assertTrue(isinstance(self.scene.attrs['orbit_number'], int))
         self.assertEqual(self.scene.attrs['orbit_number'], 12345)
-
+        
+    @mock.patch("level1c4pps.modis2pps_lib.check_file_exists")
     @mock.patch("level1c4pps.modis2pps_lib.Scene")
-    def test_process_one_scene(self, mock_scene_class):
+    def test_process_one_scene(self, mock_scene_class, mock_check_file_exists):
         """Test to set process_one_scene."""
         mock_scene_class.return_value = self.scene
         filename = modis2pps.process_one_scene("dummy", out_path='./level1c4pps/tests/', orbit_n='12345')

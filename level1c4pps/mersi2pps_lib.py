@@ -34,6 +34,7 @@ from level1c4pps import (
     get_refl_bands,
     get_band_names,
     get_header_attrs,
+    check_file_exists,
     rename_latitude_longitude,
     set_header_and_band_attrs_defaults,
     update_angle_attributes,
@@ -121,6 +122,7 @@ def load_data(scene_files, sensor, channel_selection):
 def process_one_scene(scene_files, out_path, channel_selection="default", engine='h5netcdf', orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
+    check_file_exists(scene_files)
     sensor = get_sensor(os.path.basename(scene_files[0]))
     scene = load_data(scene_files, sensor, channel_selection)
     remove_broken_data(scene)

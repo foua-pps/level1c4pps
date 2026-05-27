@@ -133,10 +133,11 @@ class TestFCI2PPS(unittest.TestCase):
         self.assertEqual(scene["vis_06"].attrs["name"], "image1")
         self.assertEqual(scene["vis_06"].attrs["sun_zenith_angle_correction_applied"], "True")
         self.assertEqual(scene["vis_06"].attrs["valid_range"][1], 20000)
-
+        
+    @mock.patch("level1c4pps.fci2pps_lib.check_file_exists")
     @mock.patch("level1c4pps.fci2pps_lib.Scene")
     @mock.patch("level1c4pps.fci2pps_lib.add_angles_and_latlon")
-    def test_process_one_scene(self, mock_lonlats, mock_scene):
+    def test_process_one_scene(self, mock_lonlats, mock_scene, mock_check_file_exists):
         """Test to set process_one_scene."""
         scene = get_fake_scene()
         del scene["vis_09"]
