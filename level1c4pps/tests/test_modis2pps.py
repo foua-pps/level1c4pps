@@ -58,7 +58,7 @@ class TestModis2PPS(unittest.TestCase):
         for key in scene_dict:
             self.scene[key] = scene_dict[key]
         self.scene.load = mock.MagicMock
-        self.scene.attrs['sensor'] = ['modis']
+        self.scene.attrs['instrument'] = 'modis'
 
     def test_compose_filename(self):
         """Test compose filename for MODIS."""

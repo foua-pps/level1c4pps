@@ -56,7 +56,7 @@ class TestSlstr2PPS(unittest.TestCase):
                                   'orbit_number': 99999}
         for key in scene_dict:
             self.scene[key] = scene_dict[key]
-        self.scene.attrs['sensor'] = ['slstr']
+        self.scene.attrs['sensor'] = 'slstr'
 
     def test_set_header_and_band_attrs(self):
         """Test to set header_and_band_attrs."""
