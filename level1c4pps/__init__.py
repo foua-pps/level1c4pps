@@ -37,7 +37,7 @@ xr.set_options(keep_attrs=True)
 
 __version__ = version(__name__)
 
-PPS_TAGNAMES_TO_IMAGE_NR = {'ch_r06': 'image1',
+PPS_TAGS_TO_IMAGE_NR = {'ch_r06': 'image1',
                             'ch_r09': 'image2',
                             'ch_tb11': 'image3',
                             'ch_tb12': 'image4',
@@ -382,10 +382,10 @@ def fix_sun_earth_distance_correction_factor(scene, band, start_time):
         scene[band].attrs['sun_earth_distance_correction_factor'] = sun_earth_distance * sun_earth_distance
 
 
-def set_header_and_band_attrs_defaults(scene, PPS_TAGNAMES, irch, orbit_n=0):
+def set_header_and_band_attrs_defaults(scene, PPS_TAGS, irch, orbit_n=0):
     """Add some default values for band attributes."""
     # Set some header attributes:
-    refl_bands = get_refl_bands(PPS_TAGNAMES)
+    refl_bands = get_refl_bands(PPS_TAGS)
     scene.attrs['history'] = "Created by level1c4pps."
     scene.attrs['history'] += irch.attrs.pop('history', "")
     if 'platform' in scene.attrs:
@@ -423,10 +423,10 @@ def set_header_and_band_attrs_defaults(scene, PPS_TAGNAMES, irch, orbit_n=0):
 
     # bands
     nimg = 20  # name of first dataset id_tag ch_rxx or ch_tbxx is image20
-    for band in PPS_TAGNAMES:
+    for band in PPS_TAGS:
         if band not in scene:
             continue
-        idtag = PPS_TAGNAMES.get(band, None)
+        idtag = PPS_TAGS.get(band, None)
         if idtag is not None:
             scene[band].attrs['id_tag'] = idtag
         scene[band].attrs['description'] = sensor_name.upper() + ' ' + str(band).upper()
@@ -442,8 +442,8 @@ def set_header_and_band_attrs_defaults(scene, PPS_TAGNAMES, irch, orbit_n=0):
         scene[band].attrs['sun_zenith_angle_correction_applied'] = 'False'
         if "sunz_corrected" in scene[band].attrs.get('modifiers', []):
             scene[band].attrs['sun_zenith_angle_correction_applied'] = 'True'
-        if idtag in PPS_TAGNAMES_TO_IMAGE_NR:
-            scene[band].attrs['name'] = PPS_TAGNAMES_TO_IMAGE_NR[idtag]
+        if idtag in PPS_TAGS_TO_IMAGE_NR:
+            scene[band].attrs['name'] = PPS_TAGS_TO_IMAGE_NR[idtag]
         else:
             scene[band].attrs['name'] = "image{:d}".format(nimg)
             nimg += 1
@@ -615,23 +615,24 @@ def fix_timestamp_datatype(scene, encoding, param):
         scene[param].data = scene[param].data.astype('datetime64[ms]')
 
 
-def get_band_names(pps_tagnames_dict, mode="default"):
+def get_band_names(pps_tags_dict, mode="default"):
     """Get bands to use from all, default and recommended for pps."""
+    PPS_BANDS = ['ch_r06', 'ch_r09', 'ch_r13', 'ch_r16', 'ch_tb37', 'ch_tb85', 'ch_tb11', 'ch_tb12']
+    AVHRR_BANDS = ['ch_r06', 'ch_r09', 'ch_r16', 'ch_tb37', 'ch_tb11', 'ch_tb12']
     if mode == "all":
-        return sorted(list(pps_tagnames_dict.keys()))
+        return sorted(list(pps_tags_dict.keys()))
     if mode == "pps":
-        return [key for key in pps_tagnames_dict if pps_tagnames_dict[key] in [
-            'ch_r06', 'ch_r09', 'ch_r13', 'ch_r16', 'ch_tb37', 'ch_tb85', 'ch_tb11', 'ch_tb12']]
+        return [key for key in pps_tags_dict if pps_tags_dict[key] in PPS_BANDS]
     if mode == "avhrr_heritage":
-        return [key for key in pps_tagnames_dict if pps_tagnames_dict[key] in [
+        return [key for key in pps_tags_dict if pps_tags_dict[key] in AVHRR_BANDS]
             'ch_r06', 'ch_r09', 'ch_r16', 'ch_tb37', 'ch_tb11', 'ch_tb12']]
     
-    return [key for key in pps_tagnames_dict if "xx" not in pps_tagnames_dict[key]]
+    return [key for key in pps_tags_dict if "xx" not in pps_tags_dict[key]]
 
 
-def get_refl_bands(pps_tagnames_dict):
+def get_refl_bands(pps_tags_dict):
     """Get reflective bands."""
-    return [key for key in pps_tagnames_dict if "ch_r" in pps_tagnames_dict[key]]
+    return [key for key in pps_tags_dict if "ch_r" in pps_tags_dict[key]]
 
 
 def save_data(
