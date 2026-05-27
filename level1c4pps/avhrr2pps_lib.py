@@ -54,11 +54,11 @@ GEOLOCATION_NAMES_AAPP = [  # additional variables to load
     'longitude']
 
 PPS_TAGS = {'1': 'ch_r06',
-                '2': 'ch_r09',
-                '3a': 'ch_r16',
-                '3b': 'ch_tb37',
-                '4': 'ch_tb11',
-                '5': 'ch_tb12'}
+            '2': 'ch_r09',
+            '3a': 'ch_r16',
+            '3b': 'ch_tb37',
+            '4': 'ch_tb11',
+            '5': 'ch_tb12'}
 
 refl_bands = get_refl_bands(PPS_TAGS)
 band_names = sorted(list(PPS_TAGS.keys()))

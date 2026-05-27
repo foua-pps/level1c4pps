@@ -53,21 +53,21 @@ GEOLOCATION_NAMES = [  # additional variables to load
     "scanline_timestamps"]
 
 PPS_TAGS = {"M05": "ch_r06",
-                "M07": "ch_r09",
-                "M09": "ch_r13",
-                "M10": "ch_r16",
-                "M12": "ch_tb37",
-                "M11": "ch_r22",
-                "M14": "ch_tb85",
-                "M15": "ch_tb11",
-                "M16": "ch_tb12",
-                "M01": "ch_rxx",
-                "M02": "ch_rxx",
-                "M03": "ch_rxx",
-                "M04": "ch_rxx",
-                "M06": "ch_rxx",
-                "M08": "ch_rxx",
-                "M13": "ch_tbxx"}
+            "M07": "ch_r09",
+            "M09": "ch_r13",
+            "M10": "ch_r16",
+            "M12": "ch_tb37",
+            "M11": "ch_r22",
+            "M14": "ch_tb85",
+            "M15": "ch_tb11",
+            "M16": "ch_tb12",
+            "M01": "ch_rxx",
+            "M02": "ch_rxx",
+            "M03": "ch_rxx",
+            "M04": "ch_rxx",
+            "M06": "ch_rxx",
+            "M08": "ch_rxx",
+            "M13": "ch_tbxx"}
 
 refl_bands = get_refl_bands(PPS_TAGS)
 band_names = sorted(list(PPS_TAGS.keys()))

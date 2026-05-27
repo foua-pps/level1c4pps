@@ -148,13 +148,13 @@ class TestSeviri2PPS(unittest.TestCase):
                          [-5, -6],
                          [0, 0]])
         sun_azimuth_exp = np.array([[270, 270],
-                             [180, 180],
-                             [90, 90],
-                             [np.nan, np.nan]])
+                                    [180, 180],
+                                    [90, 90],
+                                    [np.nan, np.nan]])
         sun_zenith_exp = np.array([[3, 3],
-                             [2, 2],
-                             [1, 1],
-                             [np.nan, np.nan]])
+                                   [2, 2],
+                                   [1, 1],
+                                   [np.nan, np.nan]])
 
         sun_azimuth, sun_zenith = seviri2pps.get_solar_angles('scene', lons=lons, lats=lats)
         np.testing.assert_array_equal(sun_azimuth, sun_azimuth_exp)

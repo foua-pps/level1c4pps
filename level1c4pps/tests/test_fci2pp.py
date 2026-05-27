@@ -74,7 +74,7 @@ def get_fake_scene(start_time=dt.datetime(2000, 1, 1, 0)):
     scene.attrs["end_time"] = end_time
     scene.attrs["start_time"] = start_time
     scene['ir_105'] = xr.DataArray(
-        4.0 * np.ones((6000,6000)),
+        4.0 * np.ones((6000, 6000)),
         dims=('y', 'x'),
         attrs={'calibration': 'brightness_temperature',
                'start_time': start_time,
@@ -83,7 +83,7 @@ def get_fake_scene(start_time=dt.datetime(2000, 1, 1, 0)):
                'area': SwathDefinition(lons, lats)}
     )
     scene['ir_105_time'] = xr.DataArray(
-        4.0 + np.ones((6000,6000)),
+        4.0 + np.ones((6000, 6000)),
         dims=('y', 'x'),
         attrs={}
     )

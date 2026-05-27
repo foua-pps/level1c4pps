@@ -92,6 +92,10 @@ class TestMETimage2PPS(unittest.TestCase):
     def test_process_one_scene(self, mock_scene_class):
         """Test to set process_one_scene."""
         mock_scene_class.return_value = self.scene
-        filename = metimage2pps.process_one_scene("dummpy", out_path='./level1c4pps/tests/', destripe_ir_channels=True, platform_name="metopd")
+        filename = metimage2pps.process_one_scene(
+            "dummpy",
+            out_path='./level1c4pps/tests/',
+            destripe_ir_channels=True,
+            platform_name="metopd")
         self.assertEqual(os.path.basename(filename),
                          "S_NWC_metimage_metopd_00000_20200101T1201000Z_20200101T1202000Z.nc")

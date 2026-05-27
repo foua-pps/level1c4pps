@@ -72,11 +72,10 @@ class TestInit(unittest.TestCase):
         band_names_all = get_band_names(PPS_TAGNAMES, "all")
         band_names_pps = get_band_names(PPS_TAGNAMES, "pps")
         band_names_avhrr = get_band_names(PPS_TAGNAMES, "avhrr_heritage")
-        band_names_avhrr_exp = [ "1", "2", "6", "20", "31", "32"]
-        band_names_pps_exp = [ "1", "2", "6", "20", "31", "32", "29", "26"]
-        band_names_default_exp = [ "1", "2", "6", "20", "31", "32", "29", "7", "26", "27", "28", "33"]
+        band_names_avhrr_exp = ["1", "2", "6", "20", "31", "32"]
+        band_names_pps_exp = ["1", "2", "6", "20", "31", "32", "29", "26"]
+        band_names_default_exp = ["1", "2", "6", "20", "31", "32", "29", "7", "26", "27", "28", "33"]
         self.assertEqual(sorted(band_names_all), sorted(PPS_TAGNAMES.keys()))
         self.assertEqual(sorted(band_names_pps), sorted(band_names_pps_exp))
         self.assertEqual(sorted(band_names_avhrr), sorted(band_names_avhrr_exp))
         self.assertEqual(sorted(band_names_default), sorted(band_names_default_exp))
-        

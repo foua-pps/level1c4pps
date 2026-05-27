@@ -37,7 +37,7 @@ class TestAvhrr2PPS(unittest.TestCase):
         self.scene = Scene()
         scene_dict = {}
         grid_data = [[1.0, 2.0], [3.0, 4.0]]
-        all_keys =  ['1', '4'] + avhrr2pps.GEOLOCATION_NAMES_AAPP
+        all_keys = ['1', '4'] + avhrr2pps.GEOLOCATION_NAMES_AAPP
         for key in all_keys:
             scene_dict[key] = xr.DataArray(grid_data,
                                            dims=('y', 'x'),

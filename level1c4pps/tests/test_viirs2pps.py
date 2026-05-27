@@ -37,7 +37,7 @@ class TestViirs2PPS(unittest.TestCase):
         self.scene = Scene()
         scene_dict = {}
         grid_data = [[1.0, 2.0], [3.0, 4.0]]
-        all_keys =  ['M05', 'M15'] + ['m_latitude', 'm_longitude'] + viirs2pps.ANGLE_NAMES
+        all_keys = ['M05', 'M15'] + ['m_latitude', 'm_longitude'] + viirs2pps.ANGLE_NAMES
         for key in all_keys:
             scene_dict[key] = xr.DataArray(grid_data,
                                            dims=('y', 'x'),

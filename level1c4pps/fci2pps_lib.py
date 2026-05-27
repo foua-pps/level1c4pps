@@ -57,21 +57,21 @@ if Version(satpy.__version__) <= Version('0.59.0'):
 
 
 PPS_TAGS = {"vis_06": "ch_r06",
-                "vis_08": "ch_r09",
-                "nir_13": "ch_r13",
-                "nir_16": "ch_r16",
-                "nir_22": "ch_r22",
-                "ir_38": "ch_tb37",
-                "ir_87": "ch_tb85",
-                "ir_105": "ch_tb11",
-                "ir_123": "ch_tb12",
-                # Not used yet:
-                "wv_63": "ch_tb67",
-                "wv_73": "ch_tb73",
-                "ir_133": "ch_tb133",
-                "vis_05": "ch_rxx",
-                "vis_04": "ch_rxx",
-                "vis_09": "ch_rxx"}
+            "vis_08": "ch_r09",
+            "nir_13": "ch_r13",
+            "nir_16": "ch_r16",
+            "nir_22": "ch_r22",
+            "ir_38": "ch_tb37",
+            "ir_87": "ch_tb85",
+            "ir_105": "ch_tb11",
+            "ir_123": "ch_tb12",
+            # Not used yet:
+            "wv_63": "ch_tb67",
+            "wv_73": "ch_tb73",
+            "ir_133": "ch_tb133",
+            "vis_05": "ch_rxx",
+            "vis_04": "ch_rxx",
+            "vis_09": "ch_rxx"}
 refl_bands = get_refl_bands(PPS_TAGS)
 ONE_IR_CHANNEL = "ir_105"
 

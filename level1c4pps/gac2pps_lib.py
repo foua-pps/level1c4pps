@@ -48,12 +48,12 @@ GEOLOCATION_NAMES = [  # additional variables to load
     'sensor_azimuth_angle',
     'sun_sensor_azimuth_difference_angle']
 PPS_TAGS = {"1": "ch_r06",
-                "2": "ch_r09",
-                "3a": "ch_r16",
-                "3": "ch_tb37",
-                "3b": "ch_tb37",
-                "4": "ch_tb11",
-                "5": "ch_tb12"}
+            "2": "ch_r09",
+            "3a": "ch_r16",
+            "3": "ch_tb37",
+            "3b": "ch_tb37",
+            "4": "ch_tb11",
+            "5": "ch_tb12"}
 INSTRUMENTS = {'tirosn': 'avhrr',
                'noaa6': 'avhrr',
                'noaa7': 'avhrr/2',

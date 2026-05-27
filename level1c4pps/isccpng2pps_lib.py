@@ -26,8 +26,7 @@ import time
 import xarray as xr
 import numpy as np
 from satpy.scene import Scene
-from level1c4pps import (get_encoding,
-                         dt64_to_datetime,
+from level1c4pps import (dt64_to_datetime,
                          compose_filename,
                          apply_sunz_correction,
                          rename_latitude_longitude,
@@ -55,16 +54,16 @@ GEOLOCATION_NAMES = [
     "lat"]
 
 PPS_TAGS = {'refl_01_60um': "ch_r16",
-                'refl_00_65um': "ch_r06",
-                'refl_00_86um': "ch_r09",
-                'temp_03_80um': "ch_tb37",
-                'temp_08_60um': "ch_tb85",
-                'temp_09_70um': "ch_tbxx",
-                'temp_11_00um': "ch_tb11",
-                'temp_12_00um': "ch_tb12",
-                'temp_13_30um': "ch_tb133",
-                'temp_06_20um': "ch_tbxx",
-                'temp_07_30um': "ch_tb73"}
+            'refl_00_65um': "ch_r06",
+            'refl_00_86um': "ch_r09",
+            'temp_03_80um': "ch_tb37",
+            'temp_08_60um': "ch_tb85",
+            'temp_09_70um': "ch_tbxx",
+            'temp_11_00um': "ch_tb11",
+            'temp_12_00um': "ch_tb12",
+            'temp_13_30um': "ch_tb133",
+            'temp_06_20um': "ch_tbxx",
+            'temp_07_30um': "ch_tb73"}
 
 
 refl_bands = get_refl_bands(PPS_TAGS)

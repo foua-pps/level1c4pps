@@ -38,18 +38,18 @@ xr.set_options(keep_attrs=True)
 __version__ = version(__name__)
 
 PPS_TAGS_TO_IMAGE_NR = {'ch_r06': 'image1',
-                            'ch_r09': 'image2',
-                            'ch_tb11': 'image3',
-                            'ch_tb12': 'image4',
-                            'ch_tb37': 'image5',
-                            'ch_r16': 'image6',
-                            'ch_tb85': 'image7',
-                            'ch_r13': 'image8',
-                            'ch_r22': 'image9',
-                            'ch_r21': 'image10',
-                            'ch_tb67': 'image11',
-                            'ch_tb73': 'image12',
-                            'ch_tb133': 'image13'}
+                        'ch_r09': 'image2',
+                        'ch_tb11': 'image3',
+                        'ch_tb12': 'image4',
+                        'ch_tb37': 'image5',
+                        'ch_r16': 'image6',
+                        'ch_tb85': 'image7',
+                        'ch_r13': 'image8',
+                        'ch_r22': 'image9',
+                        'ch_r21': 'image10',
+                        'ch_tb67': 'image11',
+                        'ch_tb73': 'image12',
+                        'ch_tb133': 'image13'}
 
 ATTRIBUTES_TO_DELETE_FROM_CHANNELS = [
     'ancillary_variables',
@@ -624,9 +624,7 @@ def get_band_names(pps_tags_dict, mode="default"):
     if mode == "pps":
         return [key for key in pps_tags_dict if pps_tags_dict[key] in PPS_BANDS]
     if mode == "avhrr_heritage":
-        return [key for key in pps_tags_dict if pps_tags_dict[key] in AVHRR_BANDS]
-            'ch_r06', 'ch_r09', 'ch_r16', 'ch_tb37', 'ch_tb11', 'ch_tb12']]
-    
+        return [key for key in pps_tags_dict if pps_tags_dict[key] in AVHRR_BANDS]    
     return [key for key in pps_tags_dict if "xx" not in pps_tags_dict[key]]
 
 

@@ -20,7 +20,6 @@
 """Utilities to convert AVHRR GAC formattet data to PPS level-1c format."""
 
 import time
-import satpy
 from satpy.scene import Scene
 from level1c4pps import (log_time,
                          save_data,
@@ -30,7 +29,6 @@ from level1c4pps import (log_time,
                          dt64_to_datetime,
                          get_refl_bands,
                          get_header_attrs, convert_angles)
-from packaging.version import Version
 
 # import xarray as xr
 # xr.set_options(keep_attrs=True)
@@ -52,24 +50,24 @@ GEOLOCATION_NAMES = [  # additional variables to load
 ]
 
 PPS_TAGS = {"reflectance_channel_1": "ch_r06",
-                "reflectance_channel_2": "ch_r09",
-                "reflectance_channel_3": "ch_r16",
-                "reflectance_channel_3a": "ch_r16",
-                "brightness_temperature_channel_3b": "ch_tb37",
-                "brightness_temperature_channel_3": "ch_tb37",
-                "brightness_temperature_channel_4": "ch_tb11",
-                "brightness_temperature_channel_5": "ch_tb12"}
+            "reflectance_channel_2": "ch_r09",
+            "reflectance_channel_3": "ch_r16",
+            "reflectance_channel_3a": "ch_r16",
+            "brightness_temperature_channel_3b": "ch_tb37",
+            "brightness_temperature_channel_3": "ch_tb37",
+            "brightness_temperature_channel_4": "ch_tb11",
+            "brightness_temperature_channel_5": "ch_tb12"}
 
 refl_bands = get_refl_bands(PPS_TAGS)
 band_names = sorted(list(PPS_TAGS.keys()))
 ATTRIBUTES_TO_LOAD = [
     'equator_crossing_time',
-    'equator_crossing_longitude'] 
+    'equator_crossing_longitude']
 EXTRA_ATTRIBUTES_TO_LOAD_WHEN_NOT_CROPPING = [
     'overlap_free_end',
     'overlap_free_start',
     'midnight_line']
-    
+
 ONE_IR_CHANNEL = "brightness_temperature_channel_4"
 
 RENAME_AND_MOVE_TO_HEADER = {'id': 'euemtsat_gac_id',
@@ -184,9 +182,9 @@ def load_data(eumgacfdr_file, start_line=None, end_line=None):
                   filenames=[eumgacfdr_file])
     scene.load(band_names)
     scene.load(GEOLOCATION_NAMES)
-    scene.load(ATTRIBUTES_TO_LOAD )
+    scene.load(ATTRIBUTES_TO_LOAD)
     # Only load these if we do not crop data
-    if start_line is None and end_line is None:        
+    if start_line is None and end_line is None:
         scene.load(EXTRA_ATTRIBUTES_TO_LOAD_WHEN_NOT_CROPPING)
     return scene
 

@@ -59,19 +59,19 @@ class UnexpectedSatpyVersion(Exception):
 
 
 BAND_NAMES = ['VIS006', 'VIS008', 'IR_016', 'IR_039',
-             'IR_087', 'IR_108', 'IR_120',
-             'IR_134', 'IR_097', 'WV_062', 'WV_073']
+              'IR_087', 'IR_108', 'IR_120',
+              'IR_134', 'IR_097', 'WV_062', 'WV_073']
 PPS_TAGS = {'VIS006': 'ch_r06',
-                'VIS008': 'ch_r09',
-                'IR_016': 'ch_r16',
-                'IR_039': 'ch_tb37',
-                'IR_087': 'ch_tb85',
-                'IR_108': 'ch_tb11',
-                'IR_120': 'ch_tb12',
-                'IR_134': 'ch_tb133',
-                'IR_097': 'ch_tb97',
-                'WV_062': 'ch_tb67',
-                'WV_073': 'ch_tb73'}
+            'VIS008': 'ch_r09',
+            'IR_016': 'ch_r16',
+            'IR_039': 'ch_tb37',
+            'IR_087': 'ch_tb85',
+            'IR_108': 'ch_tb11',
+            'IR_120': 'ch_tb12',
+            'IR_134': 'ch_tb133',
+            'IR_097': 'ch_tb97',
+            'WV_062': 'ch_tb67',
+            'WV_073': 'ch_tb73'}
 
 HRIT_FILE_PATTERN = ('{rate:1s}-000-{hrit_format:_<6s}-'
                      '{platform_shortname:_<12s}-{channel:_<8s}_-'

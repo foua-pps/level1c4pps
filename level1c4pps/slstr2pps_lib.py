@@ -20,7 +20,6 @@
 """Functions to convert MERSI-2 level-1 data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
 
 import time
-import satpy
 from satpy.scene import Scene
 from level1c4pps import (save_data,
                          log_time,
@@ -34,7 +33,6 @@ from level1c4pps import (save_data,
                          convert_angles)
 import pyspectral  # testing that pyspectral is available # noqa: F401
 import logging
-from packaging.version import Version
 
 # Example:
 # S3A_SL_1_RBT____20200911T163815_20200911T164115_20200912T215136_0179_062_340_0360_LN2_O_NT_004.SEN3#
@@ -54,17 +52,17 @@ logger = logging.getLogger('slstr2pps')
 
 
 PPS_TAGS = {'S2': 'ch_r06',  # or S1
-                'S3': 'ch_r09',
-                'S4': 'ch_r13',
-                'S5': 'ch_r16',
-                'S6': 'ch_r22',
-                'S7': 'ch_tb37',
-                'S8': 'ch_tb11',
-                'S9': 'ch_tb12',
-                # Not yet in pps:
-                'S1': 'ch_rxx',
-                'F1': 'ch_tbxx',
-                'F2': 'ch_tbxx'}
+            'S3': 'ch_r09',
+            'S4': 'ch_r13',
+            'S5': 'ch_r16',
+            'S6': 'ch_r22',
+            'S7': 'ch_tb37',
+            'S8': 'ch_tb11',
+            'S9': 'ch_tb12',
+            # Not yet in pps:
+            'S1': 'ch_rxx',
+            'F1': 'ch_tbxx',
+            'F2': 'ch_tbxx'}
 refl_bands = get_refl_bands(PPS_TAGS)
 
 GEOLOCATION_NAMES = [  # additional variables to load
