@@ -53,7 +53,7 @@ logger = logging.getLogger('slstr2pps')
 # 'solar_azimuth_angle_n', 'solar_azimuth_angle_o', 'solar_zenith_angle_n', 'solar_zenith_angle_o']
 
 
-PPS_TAGNAMES = {'S2': 'ch_r06',  # or S1
+PPS_TAGS = {'S2': 'ch_r06',  # or S1
                 'S3': 'ch_r09',
                 'S4': 'ch_r13',
                 'S5': 'ch_r16',
@@ -65,7 +65,7 @@ PPS_TAGNAMES = {'S2': 'ch_r06',  # or S1
                 'S1': 'ch_rxx',
                 'F1': 'ch_tbxx',
                 'F2': 'ch_tbxx'}
-refl_bands = get_refl_bands(PPS_TAGNAMES)
+refl_bands = get_refl_bands(PPS_TAGS)
 
 GEOLOCATION_NAMES = [  # additional variables to load
     'latitude',
@@ -82,7 +82,7 @@ ONE_IR_CHANNEL = 'S8'
 def set_header_and_band_attrs(scene, orbit_n=0):
     """Set and delete some attributes."""
     irch = scene[ONE_IR_CHANNEL]
-    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGNAMES, irch, orbit_n=orbit_n)
+    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGS, irch, orbit_n=orbit_n)
     scene.attrs['source'] = "slstr2pps.py"
     return nimg
 
@@ -92,7 +92,7 @@ def load_data(scene_files, channel_selection):
     scene = Scene(
         reader='slstr_l1b',
         filenames=scene_files)
-    my_bands = get_band_names(PPS_TAGNAMES, channel_selection)
+    my_bands = get_band_names(PPS_TAGS, channel_selection)
     bands_to_load = my_bands + GEOLOCATION_NAMES
     scene.load(bands_to_load)
     # Everything should be on the same grid, to be saved as ppsleve1c

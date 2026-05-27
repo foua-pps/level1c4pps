@@ -43,7 +43,7 @@ ANGLE_NAMES = ['satellite_zenith_angle',
                'satellite_azimuth_angle',
                'solar_azimuth_angle']
 
-PPS_TAGNAMES = {"M05": 'ch_r06',
+PPS_TAGS = {"M05": 'ch_r06',
                 "M07": 'ch_r09',
                 "M09": 'ch_r13',
                 "M10": 'ch_r16',
@@ -65,14 +65,14 @@ PPS_TAGNAMES = {"M05": 'ch_r06',
                 "M06": 'ch_rxx',
                 "M08": 'ch_rxx',
                 "M13": 'ch_tbxx'}
-refl_bands = get_refl_bands(PPS_TAGNAMES)
+refl_bands = get_refl_bands(PPS_TAGS)
 ONE_IR_CHANNEL = 'M15'
 
 
 def set_header_and_band_attrs(scene, orbit_n=0):
     """Set and delete some attributes."""
     irch = scene[ONE_IR_CHANNEL]
-    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGNAMES, irch, orbit_n=orbit_n)
+    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGS, irch, orbit_n=orbit_n)
     scene.attrs['source'] = "viirs2pps.py"
     if 'I04' in scene:
         # If highresolution we should have I04,
@@ -93,11 +93,11 @@ def load_data(scene_files, reader, channel_selection, use_iband_res):
     scene = Scene(
         reader=reader,
         filenames=scene_files)
-    my_bands = get_band_names(PPS_TAGNAMES, channel_selection)
+    my_bands = get_band_names(PPS_TAGS, channel_selection)
     if use_iband_res:
         my_ibands_i = [band for band in my_bands if "I" in band]
-        my_ibands_i_tags = [PPS_TAGNAMES[band] for band in my_ibands_i]
-        my_ibands_m = [band for band in my_bands if "M" in band and PPS_TAGNAMES[band] not in my_ibands_i_tags]
+        my_ibands_i_tags = [PPS_TAGS[band] for band in my_ibands_i]
+        my_ibands_m = [band for band in my_bands if "M" in band and PPS_TAGS[band] not in my_ibands_i_tags]
     else:
         my_bands = [band for band in my_bands if "I" not in band]
 

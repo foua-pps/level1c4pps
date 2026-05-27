@@ -57,7 +57,7 @@ SATPY_READER = {  # satpy reader associated to sensor
     'mersi-2': 'mersi2_l1b',
     'mersi-3': 'mersi3_l1b',
 }
-PPS_TAGNAMES = {  # PPS band name associated to satpy band name
+PPS_TAGS = {  # PPS band name associated to satpy band name
     '3': 'ch_r06',
     '4': 'ch_r09',
     '5': 'ch_r13',
@@ -77,7 +77,7 @@ GEOLOCATION_NAMES = [  # additional variables to load
     'solar_zenith_angle',
 ]
 
-refl_bands = get_refl_bands(PPS_TAGNAMES)
+refl_bands = get_refl_bands(PPS_TAGS)
 
 ONE_IR_CHANNEL = '24'
 RESOLUTION = 1000  # [m]
@@ -87,14 +87,14 @@ LOW_TB = 1  # [K] very cold brightness temperature
 def set_header_and_band_attrs(scene, band, orbit_n):
     """Set and delete some attributes."""
     set_header_and_band_attrs_defaults(
-        scene, PPS_TAGNAMES, band, orbit_n=orbit_n,
+        scene, PPS_TAGS, band, orbit_n=orbit_n,
     )
     scene.attrs['source'] = "mersi2pps.py"
 
 
 def remove_broken_data(scene):
     """Set bad data to nodata."""
-    for band in PPS_TAGNAMES:
+    for band in PPS_TAGS:
         if band not in refl_bands and band in scene:
             scene[band].data = np.where(scene[band].data < LOW_TB, np.nan, scene[band].data)
 
@@ -112,7 +112,7 @@ def load_data(scene_files, sensor, channel_selection):
     """Load data."""
     reader = SATPY_READER[sensor]
     scene = Scene(reader=reader, filenames=scene_files)
-    band_names = get_band_names(PPS_TAGNAMES, channel_selection)
+    band_names = get_band_names(PPS_TAGS, channel_selection)
     bands_to_load = band_names + GEOLOCATION_NAMES
     scene.load(bands_to_load, resolution=RESOLUTION)
     return scene

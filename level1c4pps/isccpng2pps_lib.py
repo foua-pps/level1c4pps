@@ -54,7 +54,7 @@ GEOLOCATION_NAMES = [
     "lon",
     "lat"]
 
-PPS_TAGNAMES = {'refl_01_60um': "ch_r16",
+PPS_TAGS = {'refl_01_60um': "ch_r16",
                 'refl_00_65um': "ch_r06",
                 'refl_00_86um': "ch_r09",
                 'temp_03_80um': "ch_tb37",
@@ -67,8 +67,8 @@ PPS_TAGNAMES = {'refl_01_60um': "ch_r16",
                 'temp_07_30um': "ch_tb73"}
 
 
-refl_bands = get_refl_bands(PPS_TAGNAMES)
-band_names = sorted(list(PPS_TAGNAMES.keys()))
+refl_bands = get_refl_bands(PPS_TAGS)
+band_names = sorted(list(PPS_TAGS.keys()))
 ONE_IR_CHANNEL = 'temp_11_00um'
 
 channel_name = {"refl_00_65um": "VIS006",
@@ -162,7 +162,7 @@ def set_header_and_band_attrs(scene, orbit_n=00000):
     irch.attrs['instrument'] = "seviri"
     scene.attrs['source'] = "isccpng2pps.py"
     scene.attrs['platform_name'] = "meteosat11"
-    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGNAMES, irch, orbit_n=orbit_n)
+    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGS, irch, orbit_n=orbit_n)
     for band in refl_bands:
         if band not in scene:
             continue

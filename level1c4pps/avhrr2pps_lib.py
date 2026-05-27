@@ -53,22 +53,22 @@ GEOLOCATION_NAMES_AAPP = [  # additional variables to load
     'latitude',
     'longitude']
 
-PPS_TAGNAMES = {'1': 'ch_r06',
+PPS_TAGS = {'1': 'ch_r06',
                 '2': 'ch_r09',
                 '3a': 'ch_r16',
                 '3b': 'ch_tb37',
                 '4': 'ch_tb11',
                 '5': 'ch_tb12'}
 
-refl_bands = get_refl_bands(PPS_TAGNAMES)
-band_names = sorted(list(PPS_TAGNAMES.keys()))
+refl_bands = get_refl_bands(PPS_TAGS)
+band_names = sorted(list(PPS_TAGS.keys()))
 ONE_IR_CHANNEL = '4'
 
 
 def set_header_and_band_attrs(scene, orbit_n=0):
     """Set and delete some attributes."""
     irch = scene[ONE_IR_CHANNEL]
-    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGNAMES, irch, orbit_n=orbit_n)
+    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGS, irch, orbit_n=orbit_n)
     scene.attrs['source'] = "avhrr2pps.py"
     return nimg
 

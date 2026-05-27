@@ -51,7 +51,7 @@ GEOLOCATION_NAMES = [  # additional variables to load
     'acq_time'
 ]
 
-PPS_TAGNAMES = {"reflectance_channel_1": "ch_r06",
+PPS_TAGS = {"reflectance_channel_1": "ch_r06",
                 "reflectance_channel_2": "ch_r09",
                 "reflectance_channel_3": "ch_r16",
                 "reflectance_channel_3a": "ch_r16",
@@ -60,8 +60,8 @@ PPS_TAGNAMES = {"reflectance_channel_1": "ch_r06",
                 "brightness_temperature_channel_4": "ch_tb11",
                 "brightness_temperature_channel_5": "ch_tb12"}
 
-refl_bands = get_refl_bands(PPS_TAGNAMES)
-band_names = sorted(list(PPS_TAGNAMES.keys()))
+refl_bands = get_refl_bands(PPS_TAGS)
+band_names = sorted(list(PPS_TAGS.keys()))
 ATTRIBUTES_TO_LOAD = [
     'equator_crossing_time',
     'equator_crossing_longitude'] 
@@ -114,7 +114,7 @@ def set_header_and_band_attrs(scene, orbit_n=99999):
     for attr in RENAME_AND_MOVE_TO_HEADER:
         if attr in irch.attrs:
             scene.attrs[RENAME_AND_MOVE_TO_HEADER[attr]] = irch.attrs.pop(attr)
-    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGNAMES, irch, orbit_n=orbit_n)
+    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGS, irch, orbit_n=orbit_n)
     scene.attrs['source'] = "eumgacfdr2pps.py"
     scene.attrs['is_gac'] = 'True'
     for band in band_names:
@@ -158,7 +158,7 @@ def remove_broken_data(scene):
     bad_lines = np.sum(scene['qual_flags'].values[:, 1:], axis=1) > 0
     if bad_lines.any():
         remove = np.where(bad_lines, np.nan, 0)
-        for band in PPS_TAGNAMES:
+        for band in PPS_TAGS:
             if band in scene:
                 scene[band].values = scene[band].values + remove[:, np.newaxis]
 

@@ -61,7 +61,7 @@ class UnexpectedSatpyVersion(Exception):
 BAND_NAMES = ['VIS006', 'VIS008', 'IR_016', 'IR_039',
              'IR_087', 'IR_108', 'IR_120',
              'IR_134', 'IR_097', 'WV_062', 'WV_073']
-PPS_TAGNAMES = {'VIS006': 'ch_r06',
+PPS_TAGS = {'VIS006': 'ch_r06',
                 'VIS008': 'ch_r09',
                 'IR_016': 'ch_r16',
                 'IR_039': 'ch_tb37',
@@ -262,7 +262,7 @@ def set_attrs(scene):
 
     # For each band
     for image_num, band in enumerate(BAND_NAMES):
-        idtag = PPS_TAGNAMES[band]
+        idtag = PPS_TAGS[band]
         scene[band].attrs['id_tag'] = idtag
         scene[band].attrs['description'] = 'SEVIRI ' + str(band)
         scene[band].attrs['wavelength'] = [scene[band].attrs['wavelength'].min,

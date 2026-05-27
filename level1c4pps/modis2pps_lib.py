@@ -51,7 +51,7 @@ GEOLOCATION_NAMES = [  # additional variables to load
     'latitude',
     'longitude']
 
-PPS_TAGNAMES = {'1': 'ch_r06',
+PPS_TAGS = {'1': 'ch_r06',
                 '2': 'ch_r09',
                 '26': 'ch_r13',
                 '6': 'ch_r16',
@@ -91,14 +91,14 @@ PPS_TAGNAMES = {'1': 'ch_r06',
                 '35': 'ch_tbxx',
                 '36': 'ch_tbxx'}
 
-refl_bands = get_refl_bands(PPS_TAGNAMES)
+refl_bands = get_refl_bands(PPS_TAGS)
 ONE_IR_CHANNEL = '31'
 
 
 def set_header_and_band_attrs(scene, orbit_n=0):
     """Set and delete some attributes."""
     irch = scene[ONE_IR_CHANNEL]
-    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGNAMES, irch, orbit_n=orbit_n)
+    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGS, irch, orbit_n=orbit_n)
     scene.attrs['source'] = "modis2pps.py"
     return nimg
 
@@ -108,7 +108,7 @@ def load_data(scene_files, channel_selection):
     scene = Scene(
         reader='modis_l1b',
         filenames=scene_files)
-    my_bands = get_band_names(PPS_TAGNAMES, channel_selection)
+    my_bands = get_band_names(PPS_TAGS, channel_selection)
     bands_to_load = my_bands + GEOLOCATION_NAMES
     scene.load(bands_to_load, resolution=1000)
     return scene

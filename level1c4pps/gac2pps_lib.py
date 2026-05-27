@@ -47,7 +47,7 @@ GEOLOCATION_NAMES = [  # additional variables to load
     'solar_azimuth_angle',
     'sensor_azimuth_angle',
     'sun_sensor_azimuth_difference_angle']
-PPS_TAGNAMES = {"1": "ch_r06",
+PPS_TAGS = {"1": "ch_r06",
                 "2": "ch_r09",
                 "3a": "ch_r16",
                 "3": "ch_tb37",
@@ -68,8 +68,8 @@ INSTRUMENTS = {'tirosn': 'avhrr',
                'noaa17': 'avhrr/3',
                'noaa18': 'avhrr/3',
                'noaa19': 'avhrr/3'}
-refl_bands = get_refl_bands(PPS_TAGNAMES)
-band_names = sorted(list(PPS_TAGNAMES.keys()))
+refl_bands = get_refl_bands(PPS_TAGS)
+band_names = sorted(list(PPS_TAGS.keys()))
 ONE_IR_CHANNEL = '4'
 
 
@@ -89,7 +89,7 @@ def update_ancilliary_datasets(scene):
 def set_header_and_band_attrs(scene, orbit_n=99999):
     """Set and delete some attributes."""
     irch = scene[ONE_IR_CHANNEL]
-    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGNAMES, irch, orbit_n=orbit_n)
+    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGS, irch, orbit_n=orbit_n)
     scene.attrs['source'] = "gac2pps.py"
     scene.attrs['is_gac'] = 'True'
     for band in band_names:

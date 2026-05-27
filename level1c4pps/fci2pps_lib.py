@@ -56,7 +56,7 @@ if Version(satpy.__version__) <= Version('0.59.0'):
         logger.warning("Native resampling craching for satpy 0.57 to 0.59.0.")
 
 
-PPS_TAGNAMES = {"vis_06": "ch_r06",
+PPS_TAGS = {"vis_06": "ch_r06",
                 "vis_08": "ch_r09",
                 "nir_13": "ch_r13",
                 "nir_16": "ch_r16",
@@ -72,7 +72,7 @@ PPS_TAGNAMES = {"vis_06": "ch_r06",
                 "vis_05": "ch_rxx",
                 "vis_04": "ch_rxx",
                 "vis_09": "ch_rxx"}
-refl_bands = get_refl_bands(PPS_TAGNAMES)
+refl_bands = get_refl_bands(PPS_TAGS)
 ONE_IR_CHANNEL = "ir_105"
 
 
@@ -81,7 +81,7 @@ def set_header_and_band_attrs(scene, orbit_n=00000):
     # Set some header attributes:
     irch = scene[ONE_IR_CHANNEL]
     scene.attrs['source'] = "fci2pps.py"
-    set_header_and_band_attrs_defaults(scene, PPS_TAGNAMES, irch, orbit_n=orbit_n)
+    set_header_and_band_attrs_defaults(scene, PPS_TAGS, irch, orbit_n=orbit_n)
     for band in refl_bands:
         if band not in scene:
             continue
@@ -183,7 +183,7 @@ def process_one_scene(scene_files, out_path,
     """Make level 1c files in PPS-format."""
     tic = time.time()
     scenein = Scene(reader='fci_l1c_nc', filenames=scene_files)
-    my_bands = get_band_names(PPS_TAGNAMES, channel_selection)
+    my_bands = get_band_names(PPS_TAGS, channel_selection)
     time_band = "ir_105_time"
     bands_to_load = my_bands + [time_band]
     scenein.load(bands_to_load)

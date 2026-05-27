@@ -52,7 +52,7 @@ GEOLOCATION_NAMES = [  # additional variables to load
     "longitude",
     "scanline_timestamps"]
 
-PPS_TAGNAMES = {"M05": "ch_r06",
+PPS_TAGS = {"M05": "ch_r06",
                 "M07": "ch_r09",
                 "M09": "ch_r13",
                 "M10": "ch_r16",
@@ -69,8 +69,8 @@ PPS_TAGNAMES = {"M05": "ch_r06",
                 "M08": "ch_rxx",
                 "M13": "ch_tbxx"}
 
-refl_bands = get_refl_bands(PPS_TAGNAMES)
-band_names = sorted(list(PPS_TAGNAMES.keys()))
+refl_bands = get_refl_bands(PPS_TAGS)
+band_names = sorted(list(PPS_TAGS.keys()))
 ONE_IR_CHANNEL = 'M15'
 
 # SBAF dictionary
@@ -725,7 +725,7 @@ def convert_to_noaa19(scene, sbaf_version, noaa21_sbaf_version):
 def set_header_and_band_attrs(scene, orbit_n=0):
     """Set and delete some attributes."""
     irch = scene[ONE_IR_CHANNEL]
-    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGNAMES, irch, orbit_n=orbit_n)
+    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGS, irch, orbit_n=orbit_n)
     scene.attrs["source"] = "vgac2pps.py"
     for band in refl_bands:
         if band not in scene:
@@ -830,7 +830,7 @@ def load_data(scene_files, channel_selection, noaa19_sbaf_version):
     scene = Scene(
         reader="viirs_vgac_l1c_nc",
         filenames=scene_files)
-    my_mbands = get_band_names(PPS_TAGNAMES, channel_selection)
+    my_mbands = get_band_names(PPS_TAGS, channel_selection)
     if noaa19_sbaf_version is not None:
         my_mbands = MBAND_AVHRR
     bands_to_load = my_mbands + GEOLOCATION_NAMES

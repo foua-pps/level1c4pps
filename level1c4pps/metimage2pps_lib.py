@@ -64,7 +64,7 @@ GEOLOCATION_NAMES = ['satellite_zenith_angle',
                      'lat_pixels',
                      'lon_pixels']
 
-PPS_TAGNAMES = {"vii_668": "ch_r06",
+PPS_TAGS = {"vii_668": "ch_r06",
                 "vii_865": "ch_r09",
                 "vii_1375": "ch_r13",
                 "vii_1630": "ch_r16",
@@ -87,7 +87,7 @@ PPS_TAGNAMES = {"vii_668": "ch_r06",
                 "vii_4050": "ch_tbxx"}
 IR_BANDS = ["vii_3740", "vii_8540", "vii_10690", "vii_12020", "vii_6725",
             "vii_13345", "vii_7325", "vii_3959", "vii_4050"]
-refl_bands = get_refl_bands(PPS_TAGNAMES)
+refl_bands = get_refl_bands(PPS_TAGS)
 ONE_IR_CHANNEL = "vii_10690"
 
 
@@ -115,7 +115,7 @@ def set_header_and_band_attrs(scene, orbit_n=00000):
     # Set some header attributes:
     irch = scene[ONE_IR_CHANNEL]
     scene.attrs['source'] = "metimage2pps.py"
-    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGNAMES, irch, orbit_n=orbit_n)
+    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGS, irch, orbit_n=orbit_n)
     for band in refl_bands:
         if band not in scene:
             continue
@@ -127,7 +127,7 @@ def set_header_and_band_attrs(scene, orbit_n=00000):
 def load_data(scene_files, channel_selection):
     """Load data."""
     scene = Scene(reader='vii_l1b_nc', filenames=scene_files)
-    my_bands = get_band_names(PPS_TAGNAMES, channel_selection)
+    my_bands = get_band_names(PPS_TAGS, channel_selection)
     bands_to_load = my_bands + GEOLOCATION_NAMES
     scene.load(bands_to_load)
     return scene
