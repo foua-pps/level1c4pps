@@ -61,7 +61,7 @@ PPS_TAGNAMES = {"reflectance_channel_1": "ch_r06",
                 "brightness_temperature_channel_5": "ch_tb12"}
 
 refl_bands = get_refl_bands(PPS_TAGNAMES)
-bandnames = sorted(list(PPS_TAGNAMES.keys()))
+band_names = sorted(list(PPS_TAGNAMES.keys()))
 ATTRIBUTES_TO_LOAD = [
     'equator_crossing_time',
     'equator_crossing_longitude'] 
@@ -117,7 +117,7 @@ def set_header_and_band_attrs(scene, orbit_n=99999):
     nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGNAMES, irch, orbit_n=orbit_n)
     scene.attrs['source'] = "eumgacfdr2pps.py"
     scene.attrs['is_gac'] = 'True'
-    for band in bandnames:
+    for band in band_names:
         if band not in scene:
             continue
         if band in refl_bands:
@@ -135,7 +135,7 @@ def set_exact_time_and_crop(scene, start_line, end_line, time_key='scanline_time
     end_time_dt64 = scene[time_key].values[end_line]
     start_time = dt64_to_datetime(start_time_dt64)
     end_time = dt64_to_datetime(end_time_dt64)
-    datasets_to_crop = bandnames + GEOLOCATION_NAMES
+    datasets_to_crop = band_names + GEOLOCATION_NAMES
     for ds in datasets_to_crop:
         if ds in scene and 'y' in scene[ds].dims:
             if end_line != -1:
@@ -171,18 +171,18 @@ def remove_broken_data(scene):
     # bad_lines = qflags.sum(dim='num_flags') > 0
     # bad_pixels = bad_lines.expand_dims({'x': x})  # filled with zeros
     # bad_pixels, _ = xr.broadcast(bad_lines, bad_pixels)
-    # for band in BANDNAMES:
+    # for band in band_names:
     #    if band in scene:
     #        print(scene[band].attrs['name'])
     #        scene[band] = scene[band].where(~bad_pixels)
     #        print(scene[band].attrs['name'])
 
 
-def load_data(eumgacfdr_file, start_line=None, end_line=None,):
+def load_data(eumgacfdr_file, start_line=None, end_line=None):
     """Load data."""
     scene = Scene(reader='avhrr_l1c_eum_gac_fdr_nc',
                   filenames=[eumgacfdr_file])
-    scene.load(bandnames)
+    scene.load(band_names)
     scene.load(GEOLOCATION_NAMES)
     scene.load(ATTRIBUTES_TO_LOAD )
     # Only load these if we do not crop data

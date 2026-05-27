@@ -68,7 +68,7 @@ PPS_TAGNAMES = {'refl_01_60um': "ch_r16",
 
 
 refl_bands = get_refl_bands(PPS_TAGNAMES)
-bandnames = sorted(list(PPS_TAGNAMES.keys()))
+band_names = sorted(list(PPS_TAGNAMES.keys()))
 ONE_IR_CHANNEL = 'temp_11_00um'
 
 channel_name = {"refl_00_65um": "VIS006",
@@ -193,7 +193,7 @@ def homogenize_channel(scene, wmo_id, illum, band, sol_zen):
 def homogenize(scene):
     """Homogenize data to Meteosat-11."""
     sol_zen = scene["sunzenith"]
-    for band in bandnames:
+    for band in band_names:
         if band not in scene:
             continue
         for wmo_id in satellite_names:
@@ -233,7 +233,7 @@ def fix_pixel_time(scene):
 def load_data(scene_files):
     """Load data."""
     scene = Scene(reader='multiple_sensors_isccpng_l1g_nc', filenames=scene_files)
-    bands_to_load = bandnames + GEOLOCATION_NAMES
+    bands_to_load = band_names + GEOLOCATION_NAMES
     scene.load(bands_to_load)
     return scene
 

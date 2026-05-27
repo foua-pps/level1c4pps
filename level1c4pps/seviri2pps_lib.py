@@ -58,7 +58,7 @@ class UnexpectedSatpyVersion(Exception):
     pass
 
 
-BANDNAMES = ['VIS006', 'VIS008', 'IR_016', 'IR_039',
+BAND_NAMES = ['VIS006', 'VIS008', 'IR_016', 'IR_039',
              'IR_087', 'IR_108', 'IR_120',
              'IR_134', 'IR_097', 'WV_062', 'WV_073']
 PPS_TAGNAMES = {'VIS006': 'ch_r06',
@@ -139,7 +139,7 @@ def _check_is_seviri_data(scene):
 
 def _load_bands(scene, rotate):
     scene.load(
-        BANDNAMES,
+        BAND_NAMES,
         upper_right_corner=_get_upper_right_corner(rotate)
     )
 
@@ -261,7 +261,7 @@ def set_attrs(scene):
     scene.attrs['date_created'] = nowutc.strftime("%Y-%m-%dT%H:%M:%SZ")
 
     # For each band
-    for image_num, band in enumerate(BANDNAMES):
+    for image_num, band in enumerate(BAND_NAMES):
         idtag = PPS_TAGNAMES[band]
         scene[band].attrs['id_tag'] = idtag
         scene[band].attrs['description'] = 'SEVIRI ' + str(band)
@@ -318,7 +318,7 @@ def get_mean_acq_time(scene):
     # not converted to NaN, but to -9.22E18. So we have to set these elements
     # to NaN manually
     acq_times = []
-    for band in BANDNAMES:
+    for band in BAND_NAMES:
         acq_time = scene[band].coords['acq_time'].drop_vars(['acq_time'])
         is_nat = np.isnat(acq_time.values)
         acq_time = acq_time.astype(int).where(np.logical_not(is_nat))
@@ -333,7 +333,7 @@ def get_mean_acq_time(scene):
 def update_coords(scene):
     """Update band coordinates."""
     mean_acq_time = get_mean_acq_time(scene)
-    for band in BANDNAMES:
+    for band in BAND_NAMES:
         # Override channel-specific scanline timestamps with mean acquisition
         # time. The differences are not very large and the resulting nc file
         # is much simpler.

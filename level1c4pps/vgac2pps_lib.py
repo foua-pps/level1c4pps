@@ -70,7 +70,7 @@ PPS_TAGNAMES = {"M05": "ch_r06",
                 "M13": "ch_tbxx"}
 
 refl_bands = get_refl_bands(PPS_TAGNAMES)
-bandnames = sorted(list(PPS_TAGNAMES.keys()))
+band_names = sorted(list(PPS_TAGNAMES.keys()))
 ONE_IR_CHANNEL = 'M15'
 
 # SBAF dictionary
@@ -789,7 +789,7 @@ def set_exact_time_and_crop(scene, start_line, end_line, time_key="scanline_time
     end_time_dt64 = scene[time_key].values[end_line]
     start_time = dt64_to_datetime(start_time_dt64)
     end_time = dt64_to_datetime(end_time_dt64)
-    bands_to_crop = bandnames + GEOLOCATION_NAMES
+    bands_to_crop = band_names + GEOLOCATION_NAMES
     for ds in bands_to_crop:
         if ds in scene and "nscn" in scene[ds].dims:
             scene[ds] = scene[ds].isel(nscn=slice(start_line, end_line + 1))

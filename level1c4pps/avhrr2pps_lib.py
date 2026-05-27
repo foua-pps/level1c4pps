@@ -61,7 +61,7 @@ PPS_TAGNAMES = {'1': 'ch_r06',
                 '5': 'ch_tb12'}
 
 refl_bands = get_refl_bands(PPS_TAGNAMES)
-bandnames = sorted(list(PPS_TAGNAMES.keys()))
+band_names = sorted(list(PPS_TAGNAMES.keys()))
 ONE_IR_CHANNEL = '4'
 
 
@@ -101,7 +101,7 @@ def load_data(scene_files):
     scene = Scene(
         reader=avhrr_reader,
         filenames=scene_files)
-    bands_to_load = bandnames + angles
+    bands_to_load = band_names + angles
     scene.load(bands_to_load)
     return scene
 

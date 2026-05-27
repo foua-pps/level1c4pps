@@ -69,7 +69,7 @@ INSTRUMENTS = {'tirosn': 'avhrr',
                'noaa18': 'avhrr/3',
                'noaa19': 'avhrr/3'}
 refl_bands = get_refl_bands(PPS_TAGNAMES)
-bandnames = sorted(list(PPS_TAGNAMES.keys()))
+band_names = sorted(list(PPS_TAGNAMES.keys()))
 ONE_IR_CHANNEL = '4'
 
 
@@ -92,7 +92,7 @@ def set_header_and_band_attrs(scene, orbit_n=99999):
     nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGNAMES, irch, orbit_n=orbit_n)
     scene.attrs['source'] = "gac2pps.py"
     scene.attrs['is_gac'] = 'True'
-    for band in bandnames:
+    for band in band_names:
         if band not in scene:
             continue
         if band in refl_bands:
@@ -115,8 +115,8 @@ def load_data(gac_file, reader_kwargs):
         reader_kwargs['tle_name'] = tle_name
     scene = Scene(reader='avhrr_l1b_gaclac',
                   filenames=[gac_file], reader_kwargs=reader_kwargs)
-    # Loading all at once sometimes fails with newer satpy, so start with BANDNAMES ...
-    scene.load(bandnames)
+    # Loading all at once sometimes fails with newer satpy, so start with band_names ...
+    scene.load(band_names)
     scene.load(GEOLOCATION_NAMES)
     return scene
 
