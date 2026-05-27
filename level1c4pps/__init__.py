@@ -659,3 +659,10 @@ def save_data(
 def log_time(filename, tic):
     """Log time consumption."""
     logger.info(f"Saved file {os.path.basename(filename)} after {time.time() - tic:3.1f} seconds")
+    
+
+def check_file_exists(tslot_files):
+    """Check that the files exist that we want to read."""
+    for fname in tslot_files:
+        if not os.path.isfile(fname):
+            raise FileNotFoundError('No such file: {}'.format(fname))  

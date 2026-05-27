@@ -26,38 +26,103 @@ import unittest
 from unittest import mock
 import xarray as xr
 from satpy import Scene
+import os
 
 import level1c4pps.seviri2pps_lib as seviri2pps
 import level1c4pps.calibration_coefs as calib
 from satpy.dataset.dataid import WavelengthRange
+from pyresample.area_config import load_area_from_string
+    
+seviri_area = """msg_seviri_fes_3km:
+  description:
+    MSG SEVIRI Full Earth Scanning service area definition
+    with 3 km resolution
+  projection:
+    proj: geos
+    lon_0: 0.0
+    a: 6378169.0
+    b: 6356583.8
+    h: 35785831.0
+  shape:
+    height: 3712
+    width: 3712
+  area_extent:
+    lower_left_xy: [-5570248.686685662, -5567248.28340708]
+    upper_right_xy: [5567248.28340708,   5570248.686685662]
+"""
 
-
-def get_fake_scene():
+def get_fake_scene(size=1):
     scene = Scene()
+    grid_data = np.tile([[1.0, 2.0], [3.0, 4.0]], (size, size))
+    grid_data_ir = np.tile([[5.0, 6.0], [7.0, 8.0]], (size, size))
+    lons = np.array(grid_data)
+    lats = np.array(grid_data)
+    area = load_area_from_string(seviri_area)
     start_time = dt.datetime(2020, 1, 1, 12)
+    end_time = dt.datetime(2009, 7, 1, 1)
     scene['VIS006'] = xr.DataArray(
-        [[1.0, 2.0],
-         [3.0, 4.0]],
+        grid_data,
         dims=('y', 'x'),
         attrs={'calibration': 'reflectance',
                'sun_earth_distance_correction_applied': True,
                'start_time': start_time,
+               'end_time': end_time,
+               'area': area,
                'wavelength': WavelengthRange(0.56, 0.635, 0.71)}
     )
     scene['IR_108'] = xr.DataArray(
-        [[5, 6],
-         [7, 8]],
+        grid_data_ir,
         dims=('y', 'x'),
         attrs={'calibration': 'brightness_temperature',
                'start_time': start_time,
+               'georef_offset_corrected': True,
+               'platform_name': "Meteosat-11",
+               'orbital_parameters': {'projection_longitude': 'lon0',
+                                      'projection_latitude': 'lat0',
+                                      'projection_altitude': 'h'},
+               'end_time': end_time,
+               'area': area,
                'wavelength': WavelengthRange(9.8, 10.8, 11.8)}
     )
     scene.attrs['sensor'] = {'seviri'}
+    start = np.datetime64('2019-08-26 12:20:00.000000003')
+    acq_time = start - 0.1*np.arange(size * 2).astype('timedelta64[D]')
+    acq_time = xr.DataArray(np.array(acq_time, dtype='datetime64[ns]'), dims=('y'))
+    scene['VIS006'].coords["acq_time"] = acq_time
+    scene['IR_108'].coords["acq_time"] = acq_time
+    scene.attrs["filename_starttime"] = "201908261215"
     return scene
 
 
 class TestSeviri2PPS(unittest.TestCase):
     """Test for SEVIRI converter."""
+    
+    @mock.patch('level1c4pps.seviri2pps_lib.add_proj_satpos')
+    @mock.patch('level1c4pps.seviri2pps_lib.satpy.utils.get_satpos')
+    @mock.patch('level1c4pps.seviri2pps_lib.check_file_exists')
+    @mock.patch('level1c4pps.seviri2pps_lib._create_scene')
+    def test_process_one_scan(self, mocked_load, mocked_exist, mock_get_satpos, mock_add_proj_satpos):
+        """Test main function."""
+        mocked_load.return_value = get_fake_scene(size=1856)
+        mocked_exist.return_value = True
+        mock_get_satpos.return_value = 0, 0, 12345678
+        hrit_files = [
+            "H-000-MSG4__-MSG4________-HRV______-000006___-201908261215-__",
+            "H-000-MSG4__-MSG4________-IR_016___-000006___-201908261215-__",
+            "H-000-MSG4__-MSG4________-IR_039___-000006___-201908261215-__",
+            "H-000-MSG4__-MSG4________-IR_087___-000006___-201908261215-__",
+            "H-000-MSG4__-MSG4________-IR_097___-000006___-201908261215-__",
+            "H-000-MSG4__-MSG4________-IR_108___-000006___-201908261215-__",
+            "H-000-MSG4__-MSG4________-IR_120___-000006___-201908261215-__",
+            "H-000-MSG4__-MSG4________-IR_134___-000006___-201908261215-__",
+            "H-000-MSG4__-MSG4________-VIS006___-000006___-201908261215-__",
+            "H-000-MSG4__-MSG4________-VIS008___-000006___-201908261215-__",
+            "H-000-MSG4__-MSG4________-WV_062___-000006___-201908261215-__",
+            "H-000-MSG4__-MSG4________-WV_073___-000006___-201908261215-__"
+            ]
+
+        filename = seviri2pps.process_one_scan(hrit_files, out_path='./level1c4pps/tests/')
+        self.assertEqual(os.path.basename(filename), "S_NWC_seviri_meteosat11_99999_20200101T1200000Z_20090701T0100000Z.nc")
 
     @mock.patch('level1c4pps.seviri2pps_lib.Scene')
     def test_load_and_calibrate(self, mocked_scene):
@@ -73,20 +138,14 @@ class TestSeviri2PPS(unittest.TestCase):
         )
 
         # Compare results and expectations
-        vis006_exp = xr.DataArray(
-            [[1.034205, 2.06841],
-             [3.102615, 4.13682]],
-            dims=('y', 'x')
-        )
-        ir_108_exp = xr.DataArray(
-            [[5, 6],
-             [7, 8]],
-            dims=('y', 'x')
-        )
+        vis006_exp = xr.DataArray([[1.034205, 2.06841], [3.102615, 4.13682]],
+                                  dims=('y', 'x'))
+        ir_108_exp = xr.DataArray([[5.0, 6.0], [7.0, 8.0]],
+                                  dims=('y', 'x'))
         from satpy.readers.core.utils import remove_earthsun_distance_correction  # satpy > 0.56
         res['VIS006'] = remove_earthsun_distance_correction(res['VIS006'])
-        xr.testing.assert_allclose(res['VIS006'], vis006_exp)
-        xr.testing.assert_equal(res['IR_108'], ir_108_exp)
+        np.testing.assert_allclose(res['VIS006'].values, vis006_exp.values, atol=0.0000005)
+        np.testing.assert_allclose(res['IR_108'].values, ir_108_exp.values)
 
         self.assertFalse(
             res['VIS006'].attrs['sun_earth_distance_correction_applied'],
@@ -159,7 +218,7 @@ class TestSeviri2PPS(unittest.TestCase):
         sun_azimuth, sun_zenith = seviri2pps.get_solar_angles('scene', lons=lons, lats=lats)
         np.testing.assert_array_equal(sun_azimuth, sun_azimuth_exp)
         np.testing.assert_array_equal(sun_zenith, sun_zenith_exp)
-
+        
     @mock.patch('level1c4pps.seviri2pps_lib.get_observer_look')
     @mock.patch('level1c4pps.seviri2pps_lib.satpy.utils.get_satpos')
     def test_get_satellite_angles(self, get_satpos, get_observer_look):

@@ -43,6 +43,7 @@ from level1c4pps import (make_azidiff_angle,
                          save_data,
                          log_time,
                          get_encoding,
+                         check_file_exists,
                          compose_filename,
                          update_angle_attributes,
                          fix_sun_earth_distance_correction_factor)
@@ -600,18 +601,14 @@ class SEVIRIFilenameParser:
         """Postprocess HRIT filename info."""
         return parsed
 
-
 def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf',
                      use_nominal_time_in_filename=False,
                      clip_calib=False,
                      path_to_external_ir_calibration=None,
                      save_azimuth_angles=False):
     """Make level 1c files in PPS-format."""
-    for fname in tslot_files:
-        if not os.path.isfile(fname):
-            raise FileNotFoundError('No such file: {}'.format(fname))
-
     tic = time.time()
+    check_file_exists(tslot_files)
     scene = load_and_calibrate(
         tslot_files,
         rotate=rotate,
@@ -656,7 +653,7 @@ def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf',
     encoding = get_encoding_seviri(scene)
     header_attrs = get_header_attrs(scene)
     save_data(scene, filename, header_attrs, engine,
-              unlimited_dims=['time'], exclude_attrs=['raw_metadata'], enconding=encoding)
+              unlimited_dims=['time'], exclude_attrs=['raw_metadata'], encoding=encoding)
     log_time(filename, tic)
     return filename
 
