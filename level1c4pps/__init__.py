@@ -327,12 +327,6 @@ def get_band_encoding(dataset, chunks=None):
     return name, enc
 
 
-def remove_attributes(scene, band, remove):
-    """Remove attributes from band."""
-    for attr in remove:
-        scene[band].attrs.pop(attr, None)
-
-
 def rename_latitude_longitude(scene):
     """Rename latitude longitude to lat lon."""
     lat_name_satpy = 'latitude'
@@ -661,11 +655,11 @@ def log_time(filename, tic):
     logger.info(f"Saved file {os.path.basename(filename)} after {time.time() - tic:3.1f} seconds")
     
 
-def check_file_exists(tslot_files):
+def check_file_exists(filename_list_or_string):
     """Check that the files exist that we want to read."""
-    if isinstance(tslot_files, list):
-        for fname in tslot_files:
+    if isinstance(filename_list_or_string, list):
+        for fname in filename_list_or_string:
             if not os.path.isfile(fname):
-                raise FileNotFoundError('No such file: {}'.format(fname))  
-    elif not os.path.isfile(tslot_files):
-        raise FileNotFoundError('No such file: {}'.format(tslot_files))  
+                raise FileNotFoundError(f"No such file: {fname}")
+    elif not os.path.isfile(filename_list_or_string):
+        raise FileNotFoundError(f"No such file: {filename_list_or_string}")  
