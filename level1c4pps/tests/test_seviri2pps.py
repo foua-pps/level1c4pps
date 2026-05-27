@@ -198,7 +198,7 @@ class TestSeviri2PPS(unittest.TestCase):
 
     def test_set_attrs(self):
         """Test setting scene attributes."""
-        seviri2pps.BANDNAMES = ['VIS006', 'IR_108']
+        seviri2pps.BAND_NAMES = ['VIS006', 'IR_108']
         scene = get_fake_scene()
         scene['VIS006'].attrs['sun_earth_distance_correction_applied'] = True
         scene['VIS006'].attrs['start_time'] = dt.datetime(2020, 1, 1, 12)
@@ -230,7 +230,7 @@ class TestSeviri2PPS(unittest.TestCase):
     def test_get_mean_acq_time(self):
         """Test computation of mean scanline acquisition time."""
         scene = get_fake_scene()
-        seviri2pps.BANDNAMES = ['VIS006', 'IR_108']
+        seviri2pps.BAND_NAMES = ['VIS006', 'IR_108']
         vis006 = xr.DataArray(
             data=list(range(56)),
             dims=('y', ),
@@ -262,7 +262,7 @@ class TestSeviri2PPS(unittest.TestCase):
     def test_update_coords(self, get_mean_acq_time):
         """Test updating coordinates."""
         get_mean_acq_time.return_value = xr.DataArray([7, 8, 9], dims=('x',))
-        seviri2pps.BANDNAMES = ['VIS006', 'IR_108']
+        seviri2pps.BAND_NAMES = ['VIS006', 'IR_108']
         vis006 = xr.DataArray(data=[1, 2, 3],
                               dims=('x',),
                               coords={'acq_time': ('x', [0, 0, 0])},
@@ -281,7 +281,7 @@ class TestSeviri2PPS(unittest.TestCase):
         seviri2pps.update_coords(scene)
 
         self.assertEqual(scene.attrs['area'], 'myarea')
-        for band in seviri2pps.BANDNAMES:
+        for band in seviri2pps.BAND_NAMES:
             self.assertEqual(scene[band].attrs['coordinates'], 'lon lat')
             np.testing.assert_array_equal(scene[band].coords['acq_time'].data,
                                           [7, 8, 9])
@@ -381,7 +381,7 @@ class TestSeviri2PPS(unittest.TestCase):
 
     def test_get_encoding(self):
         """Test get encoding."""
-        seviri2pps.BANDNAMES = ['VIS006', 'IR_108']
+        seviri2pps.BAND_NAMES = ['VIS006', 'IR_108']
         vis006 = mock.MagicMock(attrs={'name': 'image0',
                                        'id_tag': 'ch_r06'})
         ir_108 = mock.MagicMock(attrs={'name': 'image1',
