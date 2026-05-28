@@ -42,7 +42,7 @@ if __name__ == "__main__":
                         help="Output directory where to store the level1c file")
     parser.add_argument('-ch', '--channel_selection', nargs='?',
                         required=False, default="default",
-                        choices=["default", "all", "pps", "avhrr_heritage"]],
+                        choices=["default", "all", "pps", "avhrr_heritage"],
                         help="Channels to use.")
     parser.add_argument('-ne', '--nc_engine', type=str, nargs='?',
                         required=False, default='h5netcdf',
