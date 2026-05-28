@@ -57,6 +57,8 @@ class TestSlstr2PPS(unittest.TestCase):
                                   'orbit_number': 99999}
         for key in scene_dict:
             self.scene[key] = scene_dict[key]
+        self.scene.load = mock.MagicMock()
+        self.scene.resample = mock.MagicMock(return_value=self.scene)
         self.scene.attrs['sensor'] = 'slstr'
 
     def test_set_header_and_band_attrs(self):
@@ -66,10 +68,10 @@ class TestSlstr2PPS(unittest.TestCase):
         self.assertEqual(self.scene.attrs['orbit_number'], 12345)
 
     @mock.patch("level1c4pps.slstr2pps_lib.check_file_exists")
-    @mock.patch("level1c4pps.slstr2pps_lib.load_data")
-    def test_process_one_scene(self, mock_load, mock_check_file_exists):
+    @mock.patch("level1c4pps.slstr2pps_lib.Scene")
+    def test_process_one_scene(self, mock_scene_obj, mock_check_file_exists):
         """Test to set process_one_scene."""
-        mock_load.return_value = self.scene
+        mock_scene_obj.return_value = self.scene
         filename = slstr2pps.process_one_scene("dummy", out_path='./level1c4pps/tests/', orbit_n='12345')
         self.assertEqual(os.path.basename(filename),
                          "S_NWC_slstr_sentinel3a_12345_20090701T1201000Z_20090701T1201000Z.nc")

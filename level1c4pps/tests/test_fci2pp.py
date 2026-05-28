@@ -33,19 +33,19 @@ sys.modules["hdf5plugin"] = mock.MagicMock()
 import level1c4pps.fci2pps_lib as fci2pps  # modify hdf5plugin first # noqa: E402
 
 
-def get_fake_scene(start_time=dt.datetime(2000, 1, 1, 0)):
+def get_fake_scene(start_time=dt.datetime(2000, 1, 1, 0), size=10):
     """Create fake scene."""
     from satpy import Scene
     scene = Scene()
     end_time = dt.datetime(2000, 1, 1, 0, 1)
     lons = xr.DataArray(
-        74 + np.ones((6000, 6000)),
+        74 + np.ones((2*size, 2*size)),
         dims=('y', 'x'))
     lats = xr.DataArray(
-        34 + np.ones((6000, 6000)),
+        34 + np.ones((2*size, 2*size)),
         dims=('y', 'x'))
     scene['vis_06'] = xr.DataArray(
-        np.ones((6000, 6000)),
+        np.ones((2*size, 2*size)),
         dims=('y', 'x'),
         attrs={'calibration': 'reflectance',
                'sun_earth_distance_correction_applied': True,
@@ -54,8 +54,8 @@ def get_fake_scene(start_time=dt.datetime(2000, 1, 1, 0)):
                'wavelength': WavelengthRange(0.56, 0.635, 0.71),
                'area': SwathDefinition(lons, lats)}
     )
-    scene['vis_09'] = xr.DataArray(
-        np.ones((3000, 3000)),
+    scene['vis_08'] = xr.DataArray(
+        np.ones((size, size)),
         dims=('y', 'x'),
         attrs={'calibration': 'reflectance',
                'sun_earth_distance_correction_applied': True,
@@ -65,7 +65,7 @@ def get_fake_scene(start_time=dt.datetime(2000, 1, 1, 0)):
                'area': SwathDefinition(lons[::2, ::2], lats[::2, ::2])}
     )
     scene['ir_105_time'] = xr.DataArray(
-        np.ones((6000, 6000)),
+        np.ones((2*size, 2*size)),
         dims=('y', 'x'),
         attrs={"name": 'ir_105_time'}
     )
@@ -74,7 +74,7 @@ def get_fake_scene(start_time=dt.datetime(2000, 1, 1, 0)):
     scene.attrs["end_time"] = end_time
     scene.attrs["start_time"] = start_time
     scene['ir_105'] = xr.DataArray(
-        4.0 * np.ones((6000, 6000)),
+        4.0 * np.ones((2*size, 2*size)),
         dims=('y', 'x'),
         attrs={'calibration': 'brightness_temperature',
                'start_time': start_time,
@@ -83,7 +83,7 @@ def get_fake_scene(start_time=dt.datetime(2000, 1, 1, 0)):
                'area': SwathDefinition(lons, lats)}
     )
     scene['ir_105_time'] = xr.DataArray(
-        4.0 + np.ones((6000, 6000)),
+        4.0 + np.ones((2*size, 2*size)),
         dims=('y', 'x'),
         attrs={}
     )
@@ -119,9 +119,13 @@ class TestFCI2PPS(unittest.TestCase):
         out1 = fci2pps.resample_data(scene, ["ir_105"], "coarse")
         out2 = fci2pps.resample_data(scene, ["ir_105"], "fine")
         out3 = fci2pps.resample_data(scene, ["ir_105"], "msg_seviri_fes_3km")
+        out4 = fci2pps.resample_data(scene, ["ir_105"], "1km")
+        out5 = fci2pps.resample_data(scene, ["ir_105"], "msg_seviri_fes_3km", resample_save_ram=True)
+        self.assertEqual(out1["ir_105"].shape[0], 10)
+        self.assertEqual(out2["ir_105"].shape[0], 20)
         self.assertEqual(out3["ir_105"].shape[0], 3712)
-        self.assertEqual(out1["ir_105"].shape[0], 3000)
-        self.assertEqual(out2["ir_105"].shape[0], 6000)
+        self.assertEqual(out4["ir_105"].shape[0], 10)
+        self.assertEqual(out5["ir_105"].shape[0], 3712)
         with self.assertRaises(ValueError):
             fci2pps.resample_data(scene, ["ir_105"], "bad_arg")
 
@@ -140,7 +144,7 @@ class TestFCI2PPS(unittest.TestCase):
     def test_process_one_scene(self, mock_lonlats, mock_scene, mock_check_file_exists):
         """Test to set process_one_scene."""
         scene = get_fake_scene()
-        del scene["vis_09"]
+        del scene["vis_08"]
         mock_scene.return_value = scene
         scene.resample_data = mock.MagicMock(return_value=scene)
         filename = fci2pps.process_one_scene("dummy", out_path='./level1c4pps/tests/')

@@ -40,13 +40,13 @@ class TestMETimage2PPS(unittest.TestCase):
 
         self.scene = Scene()
         for key in metimage2pps.GEOLOCATION_NAMES:
-            self.scene[key] = xr.DataArray(np.random.random((816, 3144)),
+            self.scene[key] = xr.DataArray(np.random.random((816, 3)),
                                            dims=('y', 'x'),
                                            attrs={'name': key,
                                                   'id_tag': key})
         start_time = dt.datetime(2020, 1, 1, 12, 1)
         end_time = dt.datetime(2020, 1, 1, 12, 2)
-        data = 270 + 5 * np.random.random((816, 3144))
+        data = 270 + 0.1 * np.random.random((816, 3))
         linear_48 = np.array(list(range(48)))
         linear_48 = linear_48 - np.mean(linear_48)
         self.scene["vii_668"] = xr.DataArray(
@@ -58,7 +58,7 @@ class TestMETimage2PPS(unittest.TestCase):
                    "wavelength": WavelengthRange(0.56, 0.635, 0.71)}
         )
         self.scene["vii_10690"] = xr.DataArray(
-            data + np.tile(linear_48[:, np.newaxis], (17, 3144)),
+            data + 0.1 * np.tile(linear_48[:, np.newaxis], (17, 3)),
             dims=("y", "x"),
             attrs={"calibration": "brightness_temperature",
                    "platform_name": "metopsga1",
@@ -68,7 +68,7 @@ class TestMETimage2PPS(unittest.TestCase):
                    "wavelength": WavelengthRange(9.8, 10.8, 11.8)}
         )
         self.scene["vii_12020"] = xr.DataArray(
-            data + 2 * np.tile(linear_48[:, np.newaxis], (17, 3144)),
+            data + 0.1 * np.tile(linear_48[:, np.newaxis], (17, 3)),
             dims=("y", "x"),
             attrs={"calibration": "brightness_temperature",
                    "start_time": start_time,

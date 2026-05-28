@@ -92,6 +92,7 @@ def load_data(scene_files, channel_selection):
     scene.load(bands_to_load)
     # Everything should be on the same grid, to be saved as ppsleve1c
     scene = scene.resample(resampler="native")
+    return scene
 
 
 def process_one_scene(scene_files, out_path, engine='h5netcdf',

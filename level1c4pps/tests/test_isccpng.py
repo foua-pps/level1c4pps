@@ -62,12 +62,13 @@ class TestIsccpng2PPS(unittest.TestCase):
         scene_dict["pixel_time"].coords["crs"] = ""
         for key in scene_dict:
             self.scene[key] = scene_dict[key]
+        self.scene.load = mock.MagicMock()
         self.scene.attrs['sensor'] = ['isccpng']
 
     @mock.patch("level1c4pps.isccpng2pps_lib.check_file_exists")
-    @mock.patch("level1c4pps.isccpng2pps_lib.load_data")
-    def test_process_one_scene(self, mock_load, mock_check_file_exists):
+    @mock.patch("level1c4pps.isccpng2pps_lib.Scene")
+    def test_process_one_scene(self, mock_scene, mock_check_file_exists):
         """Test to set process_one_scene."""
-        mock_load.return_value = self.scene
+        mock_scene.return_value = self.scene
         filename = isccpng2pps.process_one_scene("dummy", out_path='./level1c4pps/tests/', orbit_n='12345')
         self.assertEqual(os.path.basename(filename), "S_NWC_seviri__12345_20210628T0000000Z_20210628T0001000Z.nc")

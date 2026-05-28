@@ -205,8 +205,9 @@ def get_satellite_angles(dataset, lons, lats):
                               np.array([58]), np.array([0]))[1] > 30 and
             get_observer_look(0, 0, 36000,
                               datetime.now(timezone.utc), np.array([16]),
-                              np.array([58]), np.array([0]))[1] < 23 and
+                              np.array([58]), np.array([0]))[1] < 24 and
             sat_alt > 38000):
+        # Correct value around 22
         raise UnexpectedSatpyVersion(
             'Unexpected handling of satellite altitude in pyorbital/'
             'satpy. Conversion to km is probably unneeded and wrong.')
