@@ -89,3 +89,11 @@ class TestAvhrr2PPS(unittest.TestCase):
         mock_scene_class.return_value = self.scene
         filename = avhrr2pps.process_one_scene("dummy", out_path='./level1c4pps/tests/', orbit_n='12345')
         self.assertEqual(os.path.basename(filename), "S_NWC_avhrr_noaa19_12345_20090701T1201000Z_20090701T1201000Z.nc")
+
+    @mock.patch("level1c4pps.avhrr2pps_lib.check_file_exists")
+    @mock.patch("level1c4pps.avhrr2pps_lib.Scene")
+    def test_process_one_scene(self, mock_scene_class, mock_check_file_exists):
+        """Test to set process_one_scene."""
+        mock_scene_class.return_value = self.scene
+        filename = avhrr2pps.process_one_scene("AVHR_xxx_", out_path='./level1c4pps/tests/', orbit_n='12345')
+        self.assertEqual(os.path.basename(filename), "S_NWC_avhrr_noaa19_12345_20090701T1201000Z_20090701T1201000Z.nc")
