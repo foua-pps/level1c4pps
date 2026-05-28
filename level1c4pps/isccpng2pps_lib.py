@@ -26,13 +26,12 @@ import logging
 import time
 
 import numpy as np
-import xarray as xr
 from satpy.scene import Scene
 
 from level1c4pps import (adjust_lons_to_valid_range, apply_sunz_correction,
                          check_file_exists, compose_filename, convert_angles,
                          dt64_to_datetime, get_header_attrs, get_refl_bands,
-                         log_time, rename_latitude_longitude, save_data,
+                         log_time, save_data,
                          set_header_and_band_attrs_defaults,
                          update_angle_attributes)
 

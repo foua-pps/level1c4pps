@@ -42,7 +42,6 @@ class TestInit(unittest.TestCase):
                         "SGA-1": "metopsga1",
                         "EOS-Terra": "eos1",
                         "Terra": "eos1",
-                        "EOS-Aqua": "eos2",
                         "NOAA-20": "noaa20",
                         "Suomi-NPP": "npp"}
         for platform_name in input_output:

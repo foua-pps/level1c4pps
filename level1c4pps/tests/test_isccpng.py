@@ -19,7 +19,6 @@
 
 """Unit tests for the isccpng2pps_lib module."""
 
-import datetime as dt
 import os
 import unittest
 from unittest import mock

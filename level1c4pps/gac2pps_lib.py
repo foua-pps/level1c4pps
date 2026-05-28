@@ -22,7 +22,6 @@
 
 import logging
 import time
-from datetime import datetime
 
 import dask.array as da
 import pygac  # testing that pygac is available # noqa: F401
