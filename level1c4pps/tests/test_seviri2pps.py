@@ -232,12 +232,12 @@ class TestSeviri2PPS(unittest.TestCase):
         lats = np.tile(np.array([90.0, 180.0]), (6000, 2))
         ds = mock.MagicMock(attrs={'start_time': dt.datetime(2020, 1, 1, 12)})
         sat_azimuth, sat_zenith = seviri2pps.get_satellite_angles(ds, lons, lats)
-        self.assertEqual(sat_azimuth[0, 0], 270.0 )
+        self.assertEqual(sat_azimuth[0, 0], 270.0)
         lons = np.tile(np.array([90.0, 180.0]), (2, 2))
         lats = np.tile(np.array([90.0, 180.0]), (2, 2))
         ds = mock.MagicMock(attrs={'start_time': dt.datetime(2020, 1, 1, 12)})
         sat_azimuth, sat_zenith = seviri2pps.get_satellite_angles(ds, lons, lats)
-        self.assertEqual(sat_azimuth[0, 0], 270.0 )
+        self.assertEqual(sat_azimuth[0, 0], 270.0)
 
     @mock.patch('level1c4pps.seviri2pps_lib.satpy.utils.get_satpos')
     def test_get_satellite_angles_unexpected_version_sat_alt_km(self, mock_get_satpos):
@@ -250,7 +250,7 @@ class TestSeviri2PPS(unittest.TestCase):
         self.assertRaises(seviri2pps.UnexpectedSatpyVersion,
                           seviri2pps.get_satellite_angles,
                           ds, lons, lats)
-        
+
     @mock.patch('level1c4pps.seviri2pps_lib.get_observer_look')
     @mock.patch('level1c4pps.seviri2pps_lib.satpy.utils.get_satpos')
     def test_get_satellite_angles_unexpected_version(self, mock_get_satpos, mock_broken_get_observer_look):

@@ -39,13 +39,13 @@ def get_fake_scene(start_time=dt.datetime(2000, 1, 1, 0), size=10):
     scene = Scene()
     end_time = dt.datetime(2000, 1, 1, 0, 1)
     lons = xr.DataArray(
-        74 + np.ones((2*size, 2*size)),
+        74 + np.ones((2 * size, 2 * size)),
         dims=('y', 'x'))
     lats = xr.DataArray(
-        34 + np.ones((2*size, 2*size)),
+        34 + np.ones((2 * size, 2 * size)),
         dims=('y', 'x'))
     scene['vis_06'] = xr.DataArray(
-        np.ones((2*size, 2*size)),
+        np.ones((2 * size, 2 * size)),
         dims=('y', 'x'),
         attrs={'calibration': 'reflectance',
                'sun_earth_distance_correction_applied': True,
@@ -65,7 +65,7 @@ def get_fake_scene(start_time=dt.datetime(2000, 1, 1, 0), size=10):
                'area': SwathDefinition(lons[::2, ::2], lats[::2, ::2])}
     )
     scene['ir_105_time'] = xr.DataArray(
-        np.ones((2*size, 2*size)),
+        np.ones((2 * size, 2 * size)),
         dims=('y', 'x'),
         attrs={"name": 'ir_105_time'}
     )
@@ -74,7 +74,7 @@ def get_fake_scene(start_time=dt.datetime(2000, 1, 1, 0), size=10):
     scene.attrs["end_time"] = end_time
     scene.attrs["start_time"] = start_time
     scene['ir_105'] = xr.DataArray(
-        4.0 * np.ones((2*size, 2*size)),
+        4.0 * np.ones((2 * size, 2 * size)),
         dims=('y', 'x'),
         attrs={'calibration': 'brightness_temperature',
                'start_time': start_time,
@@ -83,7 +83,7 @@ def get_fake_scene(start_time=dt.datetime(2000, 1, 1, 0), size=10):
                'area': SwathDefinition(lons, lats)}
     )
     scene['ir_105_time'] = xr.DataArray(
-        4.0 + np.ones((2*size, 2*size)),
+        4.0 + np.ones((2 * size, 2 * size)),
         dims=('y', 'x'),
         attrs={}
     )
