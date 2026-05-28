@@ -123,9 +123,10 @@ class TestSeviri2PPS(unittest.TestCase):
             "H-000-MSG4__-MSG4________-WV_073___-000006___-201908261215-__"
         ]
 
-        filename = seviri2pps.process_one_scan(hrit_files, out_path='./level1c4pps/tests/')
+        filename = seviri2pps.process_one_scan(hrit_files, out_path='./level1c4pps/tests/',
+                                               use_nominal_time_in_filename=True)
         self.assertEqual(os.path.basename(filename),
-                         "S_NWC_seviri_meteosat11_99999_20200101T1200000Z_20090701T0100000Z.nc")
+                         "S_NWC_seviri_meteosat11_99999_20200101T1200000Z_20200101T1215000Z.nc")
 
     @mock.patch('level1c4pps.seviri2pps_lib.Scene')
     def test_load_and_calibrate(self, mocked_scene):
