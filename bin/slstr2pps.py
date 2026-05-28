@@ -39,7 +39,7 @@ if __name__ == "__main__":
                         help="Engine for saving netcdf files netcdf4 or h5netcdf (default).")
     parser.add_argument('-ch', '--channel_selection', nargs='?',
                         required=False, default="default",
-                        choices=["default", "all", "pps"],
+                        choices=["default", "all", "pps", "avhrr_heritage"]],
                         help="Channels to use.")
     parser.add_argument('-on', '--orbit_number', type=int, nargs='?',
                         required=False, default=0,
