@@ -38,7 +38,7 @@ class TestViirs2PPS(unittest.TestCase):
         self.scene = Scene()
         scene_dict = {}
         grid_data = [[1.0, 2.0], [3.0, 4.0]]
-        all_keys = ['M05', 'M15'] + ['m_latitude', 'm_longitude'] + viirs2pps.ANGLE_NAMES
+        all_keys = ['M05', 'M15', 'M12', 'I04'] + ['m_latitude', 'm_longitude'] + viirs2pps.ANGLE_NAMES
         for key in all_keys:
             scene_dict[key] = xr.DataArray(grid_data,
                                            dims=('y', 'x'),
@@ -57,10 +57,25 @@ class TestViirs2PPS(unittest.TestCase):
                                    'start_time': dt.datetime(2009, 7, 1, 12, 1, 0),
                                    'end_time': dt.datetime(2009, 7, 1, 12, 1, 0),
                                    'orbit_number': 99999}
+        scene_dict['M12'].attrs = {'name': 'image2',
+                                   'id_tag': 'ch_tb37',
+                                   'wavelength': [1, 2, 3, 'um']}
+        scene_dict['I04'].attrs = {'name': 'image3',
+                                   'id_tag': 'ch_tb11',
+                                   'platform': "Suomi-NPP",
+                                   'number_of_scans': 15,
+                                   'rows_per_scan': 16,
+                                   'wavelength': [1, 2, 3, 'um'],
+                                   'start_time': dt.datetime(2009, 7, 1, 12, 1, 0),
+                                   'end_time': dt.datetime(2009, 7, 1, 12, 1, 0),
+                                   'orbit_number': 99999}
         for key in scene_dict:
             self.scene[key] = scene_dict[key]
-        self.scene.load = mock.MagicMock
+        self.scene.load = mock.MagicMock()
+        self.scene.resample = mock.MagicMock(return_value=self.scene)
         self.scene.attrs['sensor'] = ['viirs']
+
+
 
     def test_set_header_and_band_attrs(self):
         """Test to set header_and_band_attrs."""
@@ -73,5 +88,32 @@ class TestViirs2PPS(unittest.TestCase):
     def test_process_one_scene(self, mock_scene_class, mock_check_file_exists):
         """Test to set process_one_scene."""
         mock_scene_class.return_value = self.scene
-        filename = viirs2pps.process_one_scene("dummy", out_path='./level1c4pps/tests/', orbit_n='12345')
-        self.assertEqual(os.path.basename(filename), "S_NWC_viirs_npp_12345_20090701T1201000Z_20090701T1201000Z.nc")
+        filename = viirs2pps.process_one_scene("dummy", out_path='./level1c4pps/tests/', channel_selection="all")
+        self.assertEqual(os.path.basename(filename), "S_NWC_viirs_npp_00000_20090701T1201000Z_20090701T1201000Z.nc")
+        self.scene.load.assert_called_with(
+            ['M01', 'M02', 'M03', 'M04', 'M05', 'M06', 'M07', 'M08',
+             'M09', 'M10', 'M11', 'M12', 'M13', 'M14', 'M15', 'M16',
+             'satellite_zenith_angle',
+             'solar_zenith_angle',
+             'satellite_azimuth_angle',
+             'solar_azimuth_angle',
+             'm_latitude',
+             'm_longitude'], resolution=742)
+
+    @mock.patch("level1c4pps.viirs2pps_lib.check_file_exists")
+    @mock.patch("level1c4pps.viirs2pps_lib.Scene")
+    def test_process_one_scene_iband(self, mock_scene_class, mock_check_file_exists):
+        """Test to set process_one_scene."""
+        mock_scene_class.return_value = self.scene
+        filename = viirs2pps.process_one_scene("dummy", out_path='./level1c4pps/tests/', use_iband_res=True)
+        self.assertEqual(os.path.basename(filename), "S_NWC_viirs_npp_00000_20090701T1201000Z_20090701T1201000Z.nc")
+        self.scene.load.assert_called_with(['M09', 'M11', 'M14', 'M15', 'M16'], resolution=742)
+
+    @mock.patch("level1c4pps.viirs2pps_lib.check_file_exists")
+    @mock.patch("level1c4pps.viirs2pps_lib.Scene")
+    def test_process_one_scene_compact(self, mock_scene_class, mock_check_file_exists):
+        """Test to set process_one_scene."""
+        mock_scene_class.return_value = self.scene
+        filename = viirs2pps.process_one_scene("dummy", out_path='./level1c4pps/tests/',  reader="viirs_compact")
+        self.assertEqual(os.path.basename(filename), "S_NWC_viirs_npp_00000_20090701T1201000Z_20090701T1201000Z.nc")
+        self.scene.load.assert_called_with(['M05', 'M07', 'M09', 'M10', 'M11'], modifiers=('sunz_corrected',))
