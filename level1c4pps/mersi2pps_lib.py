@@ -126,7 +126,7 @@ def process_one_scene(scene_files, out_path, channel_selection="default", engine
     for angle in ['sunzenith', 'satzenith', 'azimuthdiff']:
         scene[angle].attrs['file_key'] = ANGLE_ATTRIBUTES['mersi_file_key'][angle]
     header_attrs = get_header_attrs(scene, band=ir_channel_obj, sensor=sensor)
-    filename = compose_filename(scene, out_path, instrument=sensor.replace('-', ''), band=band)
+    filename = compose_filename(scene, out_path, instrument=sensor.replace('-', ''), band=ir_channel_obj)
     save_data(scene, filename, header_attrs, engine)
     log_time(filename, tic)
     return filename
