@@ -720,8 +720,8 @@ def convert_to_noaa19(scene, sbaf_version, noaa21_sbaf_version):
 
 def set_header_and_band_attrs(scene, orbit_n=0):
     """Set and delete some attributes."""
-    irch = scene[ONE_IR_CHANNEL]
-    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGS, irch, orbit_n=orbit_n)
+    ir_channel_obj = scene[ONE_IR_CHANNEL]
+    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGS, ir_channel_obj, orbit_n=orbit_n)
     scene.attrs["source"] = "vgac2pps.py"
     for band in refl_bands:
         if band not in scene:
@@ -851,19 +851,19 @@ def process_one_scene(scene_files, out_path, engine="h5netcdf",
         scenes = [scenein]
     filenames = []
     for scene in scenes:
-        irch = scene[ONE_IR_CHANNEL]
+        ir_channel_obj = scene[ONE_IR_CHANNEL]
         set_header_and_band_attrs(scene, orbit_n=orbit_n)
         rename_latitude_longitude(scene)
         convert_angles(scene, delete_azimuth=False)
-        update_angle_attributes(scene, irch)
+        update_angle_attributes(scene, ir_channel_obj)
         sensor = "viirs"
         if noaa19_sbaf_version is not None:
             sensor = "avhrr"
             convert_to_noaa19(scene, noaa19_sbaf_version, noaa21_sbaf_version)
-        filename = compose_filename(scene, out_path, instrument=sensor, band=irch)
+        filename = compose_filename(scene, out_path, instrument=sensor, band=ir_channel_obj)
         encoding = get_encoding(scene)
         fix_timestamp_datatype(scene, encoding, "scanline_timestamps")
-        header_attrs = get_header_attrs(scene, band=irch, sensor=sensor,
+        header_attrs = get_header_attrs(scene, band=ir_channel_obj, sensor=sensor,
                                         sbaf_version=noaa19_sbaf_version)
         save_data(scene, filename, header_attrs, engine)
         log_time(filename, tic)

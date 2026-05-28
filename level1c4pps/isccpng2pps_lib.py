@@ -152,11 +152,11 @@ def set_header_and_band_attrs(scene, orbit_n=00000):
     """Set and delete some attributes."""
     nimg = 0  # name of first dataset is image0
     # Set some header attributes:
-    irch = scene[ONE_IR_CHANNEL]
-    irch.attrs['instrument'] = "seviri"
+    ir_channel_obj = scene[ONE_IR_CHANNEL]
+    ir_channel_obj.attrs['instrument'] = "seviri"
     scene.attrs['source'] = "isccpng2pps.py"
     scene.attrs['platform_name'] = "meteosat11"
-    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGS, irch, orbit_n=orbit_n)
+    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGS, ir_channel_obj, orbit_n=orbit_n)
     for band in refl_bands:
         if band not in scene:
             continue
@@ -239,18 +239,18 @@ def process_one_scene(scene_files, out_path,
     tic = time.time()
     check_file_exists(scene_files)
     scene = load_data(scene_files)
-    irch = scene[ONE_IR_CHANNEL]
+    ir_channel_obj = scene[ONE_IR_CHANNEL]
     set_header_and_band_attrs(scene, orbit_n=orbit_n)
     fix_pixel_time(scene)
     # rename_latitude_longitude(scene)
     adjust_lons_to_valid_range(scene)
     convert_angles(scene, delete_azimuth=True)
-    update_angle_attributes(scene, irch)
+    update_angle_attributes(scene, ir_channel_obj)
     recalibrate_meteosat(scene)
     homogenize(scene)
     apply_sunz_correction(scene, refl_bands)
-    filename = compose_filename(scene, out_path, instrument='seviri', band=irch)
-    header_attrs = get_header_attrs(scene, band=irch, sensor='seviri')
+    filename = compose_filename(scene, out_path, instrument='seviri', band=ir_channel_obj)
+    header_attrs = get_header_attrs(scene, band=ir_channel_obj, sensor='seviri')
     save_data(scene, filename, header_attrs, engine)
     log_time(filename, tic)
     return filename

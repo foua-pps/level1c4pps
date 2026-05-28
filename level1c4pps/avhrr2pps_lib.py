@@ -63,8 +63,8 @@ ONE_IR_CHANNEL = '4'
 
 def set_header_and_band_attrs(scene, orbit_n=0):
     """Set and delete some attributes."""
-    irch = scene[ONE_IR_CHANNEL]
-    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGS, irch, orbit_n=orbit_n)
+    ir_channel_obj = scene[ONE_IR_CHANNEL]
+    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGS, ir_channel_obj, orbit_n=orbit_n)
     scene.attrs['source'] = "avhrr2pps.py"
     return nimg
 
@@ -107,16 +107,16 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf', orbit_n=0):
     tic = time.time()
     check_file_exists(scene_files)
     scene = load_data(scene_files)
-    irch = scene[ONE_IR_CHANNEL]
+    ir_channel_obj = scene[ONE_IR_CHANNEL]
     # Check if we have old hrpt format with data only every 20th line
     check_broken_data(scene)
     set_header_and_band_attrs(scene, orbit_n=orbit_n)
     rename_latitude_longitude(scene)
     convert_angles(scene, delete_azimuth=True)
-    update_angle_attributes(scene, irch)
+    update_angle_attributes(scene, ir_channel_obj)
     apply_sunz_correction(scene, refl_bands)
-    header_attrs = get_header_attrs(scene, band=irch, sensor='avhrr')
-    filename = compose_filename(scene, out_path, instrument='avhrr', band=irch)
+    header_attrs = get_header_attrs(scene, band=ir_channel_obj, sensor='avhrr')
+    filename = compose_filename(scene, out_path, instrument='avhrr', band=ir_channel_obj)
     save_data(scene, filename, header_attrs, engine)
     log_time(filename, tic)
     return filename

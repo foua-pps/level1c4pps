@@ -76,7 +76,7 @@ RENAME_AND_MOVE_TO_HEADER = {'id': 'euemtsat_gac_id',
 
 def update_ancilliary_datasets(scene):
     """Rename, delete and add some datasets and attributes."""
-    irch = scene[ONE_IR_CHANNEL]
+    ir_channel_obj = scene[ONE_IR_CHANNEL]
 
     # Create new data set scanline timestamps
     scene['scanline_timestamps'] = scene['acq_time']
@@ -87,7 +87,7 @@ def update_ancilliary_datasets(scene):
     # Update qual_flags attrs
     scene['qual_flags'].attrs['id_tag'] = 'qual_flags'
     scene['qual_flags'].attrs['long_name'] = 'pygac quality flags'
-    scene['qual_flags'].coords['time'] = irch.attrs['start_time']
+    scene['qual_flags'].coords['time'] = ir_channel_obj.attrs['start_time']
     del scene['qual_flags'].coords['acq_time']
     for band in ['scanline_timestamps',
                  'qual_flags',
@@ -106,11 +106,11 @@ def update_ancilliary_datasets(scene):
 
 def set_header_and_band_attrs(scene, orbit_n=99999):
     """Set and delete some attributes."""
-    irch = scene[ONE_IR_CHANNEL]
+    ir_channel_obj = scene[ONE_IR_CHANNEL]
     for attr in RENAME_AND_MOVE_TO_HEADER:
-        if attr in irch.attrs:
-            scene.attrs[RENAME_AND_MOVE_TO_HEADER[attr]] = irch.attrs.pop(attr)
-    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGS, irch, orbit_n=orbit_n)
+        if attr in ir_channel_obj.attrs:
+            scene.attrs[RENAME_AND_MOVE_TO_HEADER[attr]] = ir_channel_obj.attrs.pop(attr)
+    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGS, ir_channel_obj, orbit_n=orbit_n)
     scene.attrs['source'] = "eumgacfdr2pps.py"
     scene.attrs['is_gac'] = 'True'
     for band in band_names:
@@ -201,15 +201,15 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None,
     # Crop after all renaming of variables are done
     # Problems to rename if cropping is done first.
     set_exact_time_and_crop(scene, start_line, end_line, time_key='acq_time')
-    irch = scene[ONE_IR_CHANNEL]  # Redefine, to get updated start/end_times
+    ir_channel_obj = scene[ONE_IR_CHANNEL]  # Redefine, to get updated start/end_times
     set_header_and_band_attrs(scene, orbit_n=orbit_n)
     rename_latitude_longitude(scene)
     convert_angles(scene)
-    update_angle_attributes(scene, irch)  # Standard name etc
+    update_angle_attributes(scene, ir_channel_obj)  # Standard name etc
     # Handle gac specific datasets qual_flags and scanline_timestamps
     update_ancilliary_datasets(scene)
-    header_attrs = get_header_attrs(scene, band=irch, sensor='avhrr')
-    filename = compose_filename(scene, out_path, instrument='avhrr', band=irch)
+    header_attrs = get_header_attrs(scene, band=ir_channel_obj, sensor='avhrr')
+    filename = compose_filename(scene, out_path, instrument='avhrr', band=ir_channel_obj)
     save_data(scene, filename, header_attrs, engine)
     log_time(filename, tic)
     return filename

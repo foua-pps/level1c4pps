@@ -76,8 +76,8 @@ ONE_IR_CHANNEL = 'S8'
 
 def set_header_and_band_attrs(scene, orbit_n=0):
     """Set and delete some attributes."""
-    irch = scene[ONE_IR_CHANNEL]
-    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGS, irch, orbit_n=orbit_n)
+    ir_channel_obj = scene[ONE_IR_CHANNEL]
+    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGS, ir_channel_obj, orbit_n=orbit_n)
     scene.attrs['source'] = "slstr2pps.py"
     return nimg
 
@@ -100,13 +100,13 @@ def process_one_scene(scene_files, out_path, engine='h5netcdf',
     tic = time.time()
     check_file_exists(scene_files)
     scene = load_data(scene_files, channel_selection)
-    irch = scene[ONE_IR_CHANNEL]
+    ir_channel_obj = scene[ONE_IR_CHANNEL]
     set_header_and_band_attrs(scene, orbit_n=orbit_n)
     rename_latitude_longitude(scene)
     convert_angles(scene, delete_azimuth=True)
-    update_angle_attributes(scene, irch)
-    header_attrs = get_header_attrs(scene, band=irch, sensor='slstr')
-    filename = compose_filename(scene, out_path, instrument='slstr', band=irch)
+    update_angle_attributes(scene, ir_channel_obj)
+    header_attrs = get_header_attrs(scene, band=ir_channel_obj, sensor='slstr')
+    filename = compose_filename(scene, out_path, instrument='slstr', band=ir_channel_obj)
     save_data(scene, filename, header_attrs, engine)
     log_time(filename, tic)
     return filename

@@ -77,10 +77,10 @@ RESOLUTION = 1000  # [m]
 LOW_TB = 1  # [K] very cold brightness temperature
 
 
-def set_header_and_band_attrs(scene, band, orbit_n):
+def set_header_and_band_attrs(scene, ir_channel_obj, orbit_n):
     """Set and delete some attributes."""
     set_header_and_band_attrs_defaults(
-        scene, PPS_TAGS, band, orbit_n=orbit_n,
+        scene, PPS_TAGS, ir_channel_obj, orbit_n=orbit_n,
     )
     scene.attrs['source'] = "mersi2pps.py"
 
@@ -118,14 +118,14 @@ def process_one_scene(scene_files, out_path, channel_selection="default", engine
     sensor = get_sensor(os.path.basename(scene_files[0]))
     scene = load_data(scene_files, sensor, channel_selection)
     remove_broken_data(scene)
-    band = scene[ONE_IR_CHANNEL]
-    set_header_and_band_attrs(scene, band, orbit_n)
+    ir_channel_obj = scene[ONE_IR_CHANNEL]
+    set_header_and_band_attrs(scene, ir_channel_obj, orbit_n)
     rename_latitude_longitude(scene)
     convert_angles(scene, delete_azimuth=True)
-    update_angle_attributes(scene, band)
+    update_angle_attributes(scene, ir_channel_obj)
     for angle in ['sunzenith', 'satzenith', 'azimuthdiff']:
         scene[angle].attrs['file_key'] = ANGLE_ATTRIBUTES['mersi_file_key'][angle]
-    header_attrs = get_header_attrs(scene, band=band, sensor=sensor)
+    header_attrs = get_header_attrs(scene, band=ir_channel_obj, sensor=sensor)
     filename = compose_filename(scene, out_path, instrument=sensor.replace('-', ''), band=band)
     save_data(scene, filename, header_attrs, engine)
     log_time(filename, tic)

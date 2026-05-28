@@ -108,9 +108,9 @@ def set_header_and_band_attrs(scene, orbit_n=00000):
     """Set and delete some attributes."""
     nimg = 0  # name of first dataset is image0
     # Set some header attributes:
-    irch = scene[ONE_IR_CHANNEL]
+    ir_channel_obj = scene[ONE_IR_CHANNEL]
     scene.attrs['source'] = "metimage2pps.py"
-    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGS, irch, orbit_n=orbit_n)
+    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGS, ir_channel_obj, orbit_n=orbit_n)
     for band in refl_bands:
         if band not in scene:
             continue
@@ -139,12 +139,12 @@ def process_one_scene(scene_files, out_path,
     check_file_exists(scene_files)
     scene = load_data(scene_files, channel_selection)
     # one ir channel
-    irch = scene[ONE_IR_CHANNEL]
+    ir_channel_obj = scene[ONE_IR_CHANNEL]
     set_header_and_band_attrs(scene, orbit_n=orbit_n)
     rename_latitude_longitude(scene)
     adjust_lons_to_valid_range(scene)
     convert_angles(scene, delete_azimuth=True)
-    update_angle_attributes(scene, irch)
+    update_angle_attributes(scene, ir_channel_obj)
     if destripe_ir_channels:
         for channel in IR_BANDS:
             if channel in scene:
@@ -152,8 +152,8 @@ def process_one_scene(scene_files, out_path,
     apply_sunz_correction(scene, refl_bands)
     if platform_name is not None:
         scene.attrs['platform'] = platform_name
-    filename = compose_filename(scene, out_path, instrument='metimage', band=irch)
-    header_attrs = get_header_attrs(scene, band=irch, sensor='metimage')
+    filename = compose_filename(scene, out_path, instrument='metimage', band=ir_channel_obj)
+    header_attrs = get_header_attrs(scene, band=ir_channel_obj, sensor='metimage')
     save_data(scene, filename, header_attrs, engine)
     log_time(filename, tic)
     return filename

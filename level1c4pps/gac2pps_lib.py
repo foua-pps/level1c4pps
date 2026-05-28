@@ -73,21 +73,21 @@ ONE_IR_CHANNEL = '4'
 
 def update_ancilliary_datasets(scene):
     """Rename, delete and add some datasets and attributes."""
-    irch = scene[ONE_IR_CHANNEL]
+    ir_channel_obj = scene[ONE_IR_CHANNEL]
     scene['scanline_timestamps'] = xr.DataArray(da.from_array(scene['qual_flags'].coords['acq_time']),
                                                 dims=['y'], coords={'y': scene['qual_flags']['y']})
     scene['scanline_timestamps'].attrs['name'] = 'scanline_timestamps'
     # Update qual_flags attrs
     scene['qual_flags'].attrs['id_tag'] = 'qual_flags'
     scene['qual_flags'].attrs['long_name'] = 'pygac quality flags'
-    scene['qual_flags'].coords['time'] = irch.attrs['start_time']
+    scene['qual_flags'].coords['time'] = ir_channel_obj.attrs['start_time']
     del scene['qual_flags'].coords['acq_time']
 
 
 def set_header_and_band_attrs(scene, orbit_n=99999):
     """Set and delete some attributes."""
-    irch = scene[ONE_IR_CHANNEL]
-    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGS, irch, orbit_n=orbit_n)
+    ir_channel_obj = scene[ONE_IR_CHANNEL]
+    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGS, ir_channel_obj, orbit_n=orbit_n)
     scene.attrs['source'] = "gac2pps.py"
     scene.attrs['is_gac'] = 'True'
     for band in band_names:
@@ -124,15 +124,15 @@ def process_one_file(gac_file, out_path='.', reader_kwargs=None, engine='h5netcd
     tic = time.time()
     check_file_exists(gac_file)
     scene = load_data(gac_file, reader_kwargs)
-    irch = scene[ONE_IR_CHANNEL]
+    ir_channel_obj = scene[ONE_IR_CHANNEL]
     set_header_and_band_attrs(scene, orbit_n=orbit_n)
     rename_latitude_longitude(scene)
     convert_angles(scene)
-    update_angle_attributes(scene, irch)
+    update_angle_attributes(scene, ir_channel_obj)
     # Handle gac specific datasets qual_flags and scanline_timestamps
     update_ancilliary_datasets(scene)
-    filename = compose_filename(scene, out_path, instrument='avhrr', band=irch)
-    header_attrs = get_header_attrs(scene, band=irch, sensor='avhrr')
+    filename = compose_filename(scene, out_path, instrument='avhrr', band=ir_channel_obj)
+    header_attrs = get_header_attrs(scene, band=ir_channel_obj, sensor='avhrr')
     save_data(scene, filename, header_attrs, engine)
     log_time(filename, tic)
     return filename
