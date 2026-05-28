@@ -75,8 +75,6 @@ class TestViirs2PPS(unittest.TestCase):
         self.scene.resample = mock.MagicMock(return_value=self.scene)
         self.scene.attrs['sensor'] = ['viirs']
 
-
-
     def test_set_header_and_band_attrs(self):
         """Test to set header_and_band_attrs."""
         viirs2pps.set_header_and_band_attrs(self.scene)
@@ -114,6 +112,6 @@ class TestViirs2PPS(unittest.TestCase):
     def test_process_one_scene_compact(self, mock_scene_class, mock_check_file_exists):
         """Test to set process_one_scene."""
         mock_scene_class.return_value = self.scene
-        filename = viirs2pps.process_one_scene("dummy", out_path='./level1c4pps/tests/',  reader="viirs_compact")
+        filename = viirs2pps.process_one_scene("dummy", out_path='./level1c4pps/tests/', reader="viirs_compact")
         self.assertEqual(os.path.basename(filename), "S_NWC_viirs_npp_00000_20090701T1201000Z_20090701T1201000Z.nc")
         self.scene.load.assert_called_with(['M05', 'M07', 'M09', 'M10', 'M11'], modifiers=('sunz_corrected',))
