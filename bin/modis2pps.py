@@ -37,10 +37,14 @@ if __name__ == "__main__":
     parser.add_argument('-ne', '--nc_engine', type=str, nargs='?',
                         required=False, default='h5netcdf',
                         help="Engine for saving netcdf files netcdf4 or h5netcdf (default).")
-    parser.add_argument('-ch', '--channel_selection', type=str, nargs='?',
+    parser.add_argument('-ch', '--channel_selection',
                         required=False, default="default",
                         choices=["default", "all", "pps", "avhrr_heritage"],
-                        help="Choose which channels to store.")
+                        help=("Channels to use. Choose from:"
+                              "  default - Uses the standard channels,"
+                              "  all - Uses all available channels,"
+                              "  pps - Uses the channels required for PPS only, "
+                              "  avhrr_heritage - Uses channels available on AVHRR."))
     parser.add_argument('-on', '--orbit_number', type=int, nargs='?',
                         required=False, default=0,
                         help="Orbit number (default is 00000).")

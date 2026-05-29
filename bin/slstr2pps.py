@@ -31,17 +31,21 @@ if __name__ == "__main__":
         description=('Script to produce a PPS-level1c file for a MERSI-2 level-1 scene'))
     parser.add_argument('files', metavar='fileN', type=str, nargs='+',
                         help='List of SLSTR files to process')
-    parser.add_argument('-o', '--out_dir', type=str, nargs='?',
+    parser.add_argument('-o', '--out_dir', type=str,
                         required=False, default='.',
                         help="Output directory where to store the level1c file")
-    parser.add_argument('-ne', '--nc_engine', type=str, nargs='?',
+    parser.add_argument('-ne', '--nc_engine', type=str,
                         required=False, default='h5netcdf',
                         help="Engine for saving netcdf files netcdf4 or h5netcdf (default).")
-    parser.add_argument('-ch', '--channel_selection', nargs='?',
+    parser.add_argument('-ch', '--channel_selection',
                         required=False, default="default",
                         choices=["default", "all", "pps", "avhrr_heritage"],
-                        help="Channels to use.")
-    parser.add_argument('-on', '--orbit_number', type=int, nargs='?',
+                        help=("Channels to use. Choose from:"
+                              "  default - Uses the standard channels,"
+                              "  all - Uses all available channels,"
+                              "  pps - Uses the channels required for PPS only, "
+                              "  avhrr_heritage - Uses channels available on AVHRR."))
+    parser.add_argument('-on', '--orbit_number', type=int,
                         required=False, default=0,
                         help="Orbit number (default is 00000).")
     options = parser.parse_args()

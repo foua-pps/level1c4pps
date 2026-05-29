@@ -620,15 +620,15 @@ def get_band_names(pps_tags_dict, mode="default"):
     if mode == "all":
         return sorted(list(pps_tags_dict.keys()))
     if mode == "pps":
-        return [key for key in pps_tags_dict if pps_tags_dict[key] in PPS_BANDS]
+        return [key for key, val in pps_tags_dict.items() if val in PPS_BANDS]
     if mode == "avhrr_heritage":
-        return [key for key in pps_tags_dict if pps_tags_dict[key] in AVHRR_BANDS]
-    return [key for key in pps_tags_dict if "xx" not in pps_tags_dict[key]]
+        return [key for key, val in pps_tags_dict.items() if val in AVHRR_BANDS]
+    return [key for key, val in pps_tags_dict.items() if "xx" not in val]
 
 
 def get_refl_bands(pps_tags_dict):
     """Get reflective bands."""
-    return [key for key in pps_tags_dict if "ch_r" in pps_tags_dict[key]]
+    return [key for key, val in pps_tags_dict.items() if "ch_r" in val]
 
 
 def save_data(

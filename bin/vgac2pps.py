@@ -44,10 +44,14 @@ if __name__ == "__main__":
                               "And apply SBAFs to the channels. "))
     parser.add_argument('--noaa21_to_snpp', default=None, required=("--as_noaa19" in sys.argv or "-n19" in sys.argv),
                         help=("Apply SBAFs to the channels, can be combined with -n19. "))
-    parser.add_argument('-ch', '--channel_selection', type=str, nargs='?',
+    parser.add_argument('-ch', '--channel_selection',
                         required=False, default="default",
                         choices=["default", "all", "pps", "avhrr_heritage"],
-                        help="Choose which channels to store.")        
+                        help=("Channels to use. Choose from:"
+                              "  default - Uses the standard channels,"
+                              "  all - Uses all available channels,"
+                              "  pps - Uses the channels required for PPS only, "
+                              "  avhrr_heritage - Uses channels available on AVHRR."))
     parser.add_argument('-on', '--orbit_number', type=int, nargs='?',
                         required=False, default=0,
                         help="Orbit number (default is 00000).")

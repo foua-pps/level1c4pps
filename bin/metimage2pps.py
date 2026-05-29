@@ -34,10 +34,14 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--out_dir', type=str, nargs='?',
                         required=False, default='.',
                         help="Output directory where to store the level1c file")
-    parser.add_argument('-ch', '--channel_selection', type=str, nargs='?',
+    parser.add_argument('-ch', '--channel_selection',
                         required=False, default="default",
                         choices=["default", "all", "pps", "avhrr_heritage"],
-                        help="Choose which channels to store.")
+                        help=("Channels to use. Choose from:"
+                              "  default - Uses the standard channels,"
+                              "  all - Uses all available channels,"
+                              "  pps - Uses the channels required for PPS only, "
+                              "  avhrr_heritage - Uses channels available on AVHRR."))
     parser.add_argument('-destripe', '--destripe_ir_channels', action='store_true',
                         help="Destripe IR channels.")
     parser.add_argument('-ne', '--nc_engine', type=str, nargs='?',
