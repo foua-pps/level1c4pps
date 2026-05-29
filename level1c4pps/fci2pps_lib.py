@@ -32,7 +32,7 @@ from pyorbital.astronomy import get_alt_az, sun_zenith_angle
 from satpy.scene import Scene
 
 from level1c4pps import (check_file_exists, compose_filename, dt64_to_datetime,
-                         fix_timestamp_datatype, get_band_names, get_encoding,
+                         fix_timestamp_datatype, get_band_names,
                          get_header_attrs, get_refl_bands, log_time, save_data,
                          set_header_and_band_attrs_defaults)
 from level1c4pps.seviri2pps_lib import (add_ancillary_datasets, get_lonlats,
@@ -189,8 +189,7 @@ def process_one_scene(scene_files, out_path,
     ir_channel_obj = scene[ONE_IR_CHANNEL]
     set_header_and_band_attrs(scene, orbit_n=orbit_n)
     filename = compose_filename(scene, out_path, instrument='fci', band=ir_channel_obj)
-    encoding = get_encoding(scene)
-    fix_timestamp_datatype(scene, encoding, "ir_105_time")
+    fix_timestamp_datatype(scene, "ir_105_time")
     header_attrs = get_header_attrs(scene, band=ir_channel_obj, sensor='fci')
     save_data(scene, filename, header_attrs, engine)
     log_time(filename, tic)

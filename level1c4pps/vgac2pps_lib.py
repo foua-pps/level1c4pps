@@ -861,8 +861,7 @@ def process_one_scene(scene_files, out_path, engine="h5netcdf",
             sensor = "avhrr"
             convert_to_noaa19(scene, noaa19_sbaf_version, noaa21_sbaf_version)
         filename = compose_filename(scene, out_path, instrument=sensor, band=ir_channel_obj)
-        encoding = get_encoding(scene)
-        fix_timestamp_datatype(scene, encoding, "scanline_timestamps")
+        fix_timestamp_datatype(scene, "scanline_timestamps")
         header_attrs = get_header_attrs(scene, band=ir_channel_obj, sensor=sensor,
                                         sbaf_version=noaa19_sbaf_version)
         save_data(scene, filename, header_attrs, engine)
