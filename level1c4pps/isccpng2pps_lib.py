@@ -36,8 +36,8 @@ from level1c4pps import (get_encoding,
                          set_header_and_band_attrs_defaults,
                          convert_angles,
                          adjust_lons_to_valid_range)
-
 import logging
+from pyorbital.astronomy import get_alt_az, sun_zenith_angle
 
 
 logger = logging.getLogger('isccpng2pps')
@@ -232,11 +232,32 @@ def recalibrate_meteosat(scene):
             scene[band].values = np.where(update, scene[band].values * new_gain / old_gain, scene[band].values)
 
 
+def get_solar_angles(scene, lons, lats):
+    """Compute solar angles.
+    Compute angles for each scanline using their acquisition time to account for
+    the earth's rotation over the course of one scan.
+    Returns:
+        Solar azimuth angle, Solar zenith angle in degrees
+    """
+    acq_time =  scene["pixel_time"].copy()
+    _, suna = get_alt_az(acq_time, lons, lats)
+    suna = np.rad2deg(suna)
+    sunz = sun_zenith_angle(acq_time, lons, lats)
+    return suna, sunz
+
+
 def fix_pixel_time(scene):
     """Fix the time pixel variable, original file does not contain units."""
     del scene["pixel_time"].coords["crs"]
     scene["pixel_time"].encoding['coordinates'] = "lon lat"
+    scene["pixel_time"] = scene["pixel_time"].interpolate_na(dim = "y", fill_value="extrapolate", use_coordinate=False)  # update NaTs
     scene["pixel_time"].data = scene["pixel_time"].data * np.timedelta64(1, 's') + scene['temp_11_00um'].attrs["start_time"]
+
+def update_solar_angles(scene):
+    """USe pixel time to calculate solar angles."""
+    suna, sunz = get_solar_angles(scene, lons=scene["lon"], lats=scene["lat"])
+    scene["solar_zenith_angle"].values = sunz.values
+    scene["solar_azimuth_angle"].values = suna.values
 
 
 def process_one_scene(scene_files, out_path,
@@ -254,6 +275,7 @@ def process_one_scene(scene_files, out_path,
     fix_pixel_time(scn_)
     # rename_latitude_longitude(scn_)
     adjust_lons_to_valid_range(scn_)
+    update_solar_angles(scn_)
     convert_angles(scn_, delete_azimuth=True)
     update_angle_attributes(scn_, irch)
     recalibrate_meteosat(scn_)
