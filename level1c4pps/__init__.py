@@ -606,8 +606,9 @@ def get_header_attrs(scene, band, sensor='avhrr', sbaf_version='NO_SBAF'):
     return header_attrs
 
 
-def fix_timestamp_datatype(scene, encoding, param):
+def fix_timestamp_datatype(scene, param):
     """Fix time datatype."""
+    encoding = get_encoding(scene)
     if "milliseconds" in encoding[param]["units"]:
         scene[param].data = scene[param].data.astype('datetime64[ms]')
 

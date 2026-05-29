@@ -27,7 +27,8 @@ import time
 from satpy.scene import Scene
 
 from level1c4pps import (check_file_exists, compose_filename, convert_angles,
-                         dt64_to_datetime, get_header_attrs, get_refl_bands,
+                         dt64_to_datetime, fix_timestamp_datatype,
+                         get_header_attrs, get_refl_bands,
                          log_time, rename_latitude_longitude, save_data,
                          set_header_and_band_attrs_defaults,
                          update_angle_attributes)
@@ -208,6 +209,7 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None,
     update_angle_attributes(scene, ir_channel_obj)  # Standard name etc
     # Handle gac specific datasets qual_flags and scanline_timestamps
     update_ancilliary_datasets(scene)
+    fix_timestamp_datatype(scene, "scanline_timestamps")
     header_attrs = get_header_attrs(scene, band=ir_channel_obj, sensor='avhrr')
     filename = compose_filename(scene, out_path, instrument='avhrr', band=ir_channel_obj)
     save_data(scene, filename, header_attrs, engine)
