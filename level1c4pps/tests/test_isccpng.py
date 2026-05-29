@@ -18,7 +18,6 @@
 # along with level1c4pps.  If not, see <http://www.gnu.org/licenses/>.
 
 """Unit tests for the isccpng2pps_lib module."""
-
 import os
 import unittest
 from unittest import mock
@@ -47,15 +46,15 @@ class TestIsccpng2PPS(unittest.TestCase):
         scene_dict["refl_00_65um"].attrs = {
             'name': 'image0',
             'wavelength': [1, 2, 3, 'um'],
-            'start_time': np.datetime64('2021-06-28T01:00:00.000000000+0100'),
-            'end_time': np.datetime64('2021-06-28T01:01:00.000000000+0100'),
+            'start_time': np.datetime64('2021-06-28T01:00:00'),
+            'end_time': np.datetime64('2021-06-28T01:01:00'),
             'id_tag': 'ch_r06'}
         scene_dict['temp_11_00um'].attrs = {
             'name': 'image1',
             'id_tag': 'ch_tb11',
             'wavelength': [1, 2, 3, 'um'],
-            'start_time': np.datetime64('2021-06-28T01:00:00.000000000+0100'),
-            'end_time': np.datetime64('2021-06-28T01:01:00.000000000+0100'),
+            'start_time': np.datetime64('2021-06-28T01:00:00'),
+            'end_time': np.datetime64('2021-06-28T01:01:00'),
             'platform_name': '',
             'orbit_number': 99999}
         scene_dict["pixel_time"].coords["crs"] = ""
@@ -70,4 +69,4 @@ class TestIsccpng2PPS(unittest.TestCase):
         """Test to set process_one_scene."""
         mock_scene.return_value = self.scene
         filename = isccpng2pps.process_one_scene("dummy", out_path='./level1c4pps/tests/', orbit_n='12345')
-        self.assertEqual(os.path.basename(filename), "S_NWC_seviri__12345_20210628T0000000Z_20210628T0001000Z.nc")
+        self.assertEqual(os.path.basename(filename), "S_NWC_seviri__12345_20210628T0100000Z_20210628T0101000Z.nc")

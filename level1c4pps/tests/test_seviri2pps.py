@@ -87,7 +87,7 @@ def get_fake_scene(size=1):
                'wavelength': WavelengthRange(9.8, 10.8, 11.8)}
     )
     scene.attrs['sensor'] = {'seviri'}
-    start = np.datetime64('2019-08-26 12:20:00.000000003')
+    start = np.datetime64('2019-08-26 12:20:00.000')
     acq_time = start - 0.1 * np.arange(size * 2).astype('timedelta64[D]')
     acq_time = xr.DataArray(np.array(acq_time, dtype='datetime64[ns]'), dims=('y'))
     scene['VIS006'].coords["acq_time"] = acq_time
