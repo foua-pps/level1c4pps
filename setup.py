@@ -1,23 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-# Copyright (c) 2019 level1c4pps developers
-
+# Copyright (c) 2025 level1c4pps developers
+#
 # Author(s): AUTHORS.md
-
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+#
+# The level1c4pps is free software: you can redistribute it and/or modify it
+# under the terms of the Apache-2.0 license.
+#
+#
 """Scripts to convert various satellite level-1 data formats to NWCSAF/PPS level-1c format."""
 
 from setuptools import setup
@@ -54,8 +44,7 @@ setup(name=NAME,
       author_email='6160529+ninahakansson@users.noreply.github.com',
       classifiers=["Development Status :: 3 - Alpha",
                    "Intended Audience :: Science/Research",
-                   "License :: OSI Approved :: GNU General Public License v3 " +
-                   "or later (GPLv3+)",
+                   "License :: Apache-2.0",
                    "Operating System :: OS Independent",
                    "Programming Language :: Python",
                    "Topic :: Scientific/Engineering"],
