@@ -354,7 +354,15 @@ def update_lat_lon_attrs(scene):
     """Update lat/lon attributes."""
     scene['lat'].attrs = LATLON_ATTRIBUTES['lat']
     scene['lon'].attrs = LATLON_ATTRIBUTES['lon']
-    for coord_name in ['acq_time', 'm_latitude', 'i_latitude', 'm_latitude', 'i_latitude', 'latitude', 'longitude', 'crs']:
+    for coord_name in [
+        'acq_time',
+        'm_latitude',
+        'i_latitude',
+        'm_latitude',
+        'i_latitude',
+        'latitude',
+        'longitude',
+            'crs']:
         try:
             del scene['lat'].coords[coord_name]
             del scene['lon'].coords[coord_name]
