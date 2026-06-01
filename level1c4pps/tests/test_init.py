@@ -12,9 +12,11 @@
 """Unit tests for misc functions in __init__.py."""
 
 import unittest
-import xarray as xr
-import level1c4pps
+
 import numpy as np
+import xarray as xr
+
+import level1c4pps
 
 
 class TestInit(unittest.TestCase):
@@ -32,19 +34,16 @@ class TestInit(unittest.TestCase):
                         "SGA-1": "metopsga1",
                         "EOS-Terra": "eos1",
                         "Terra": "eos1",
-                        "EOS-Aqua": "eos2",
                         "NOAA-20": "noaa20",
                         "Suomi-NPP": "npp"}
         for platform_name in input_output:
-            
             out = platform_name_to_use_in_filename(platform_name)
             self.assertTrue(out == input_output[platform_name])
 
     def test_get_band_encoding(self):
         """Test get encoding."""
         ds = xr.DataArray([], attrs={'name': 'dummy'})
-        self.assertRaises(ValueError, level1c4pps.get_band_encoding, ds,
-                          None, None)
+        self.assertRaises(ValueError, level1c4pps.get_band_encoding, ds)
 
     def test_adjust_lons(self):
         """Test adjusted longitudes."""
@@ -58,10 +57,23 @@ class TestInit(unittest.TestCase):
         np.testing.assert_allclose(centered_modulus(in_lons_np),
                                    out_lons_np, rtol=0.00001)
 
+    def test_get_band_names(self):
+        """Test get_band_names."""
+        from level1c4pps import get_band_names
+        from level1c4pps.modis2pps_lib import PPS_TAGS
+        band_names_default = get_band_names(PPS_TAGS, "default")
+        band_names_all = get_band_names(PPS_TAGS, "all")
+        band_names_pps = get_band_names(PPS_TAGS, "pps")
+        band_names_avhrr = get_band_names(PPS_TAGS, "avhrr_heritage")
+        band_names_avhrr_exp = ["1", "2", "6", "20", "31", "32"]
+        band_names_pps_exp = ["1", "2", "6", "20", "31", "32", "29", "26"]
+        band_names_default_exp = ["1", "2", "6", "20", "31", "32", "29", "7", "26", "27", "28", "33"]
+        self.assertEqual(sorted(band_names_all), sorted(PPS_TAGS.keys()))
+        self.assertEqual(sorted(band_names_pps), sorted(band_names_pps_exp))
+        self.assertEqual(sorted(band_names_avhrr), sorted(band_names_avhrr_exp))
+        self.assertEqual(sorted(band_names_default), sorted(band_names_default_exp))
 
-def suite():
-    """Create the test suite for test_init."""
-    loader = unittest.TestLoader()
-    mysuite = unittest.TestSuite()
-    mysuite.addTest(loader.loadTestsFromTestCase(TestInit))
-    return mysuite
+    def test_check_file_exists(self):
+        """Test the check that input files are existing."""
+        self.assertRaises(FileNotFoundError, level1c4pps.check_file_exists, "a_filename_that_does_not_exists")
+        self.assertRaises(FileNotFoundError, level1c4pps.check_file_exists, ["a_filename_that_does_not_exists"])

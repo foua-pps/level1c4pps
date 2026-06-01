@@ -10,76 +10,56 @@
 
 """Functions to convert VGAC level-1c data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
 
+import logging
 import os
 import time
-from satpy.scene import Scene
-from level1c4pps import (get_encoding, compose_filename,
-                         set_header_and_band_attrs_defaults,
-                         rename_latitude_longitude,
-                         dt64_to_datetime,
-                         fix_timestamp_datatype,
-                         update_angle_attributes, get_header_attrs,
-                         convert_angles)
-import pyspectral  # testing that pyspectral is available # noqa: F401
-import logging
+
 import numpy as np
+import pyspectral  # testing that pyspectral is available # noqa: F401
+from satpy.scene import Scene
+
+from level1c4pps import (check_file_exists, compose_filename, convert_angles,
+                         dt64_to_datetime, fix_timestamp_datatype,
+                         get_band_names, get_encoding, get_header_attrs,
+                         get_refl_bands, log_time, rename_latitude_longitude,
+                         save_data, set_header_and_band_attrs_defaults,
+                         update_angle_attributes)
 
 logger = logging.getLogger("vgac2pps")
 
-# Order of BANDNAMES decides order of channels in file. Not important
-# but nice to have the same order for I- and M-bands
-BANDNAMES = ["M01", "M02", "M03", "M04",
-             "M05", "M06", "M07",  # 0.6, 0.7, 0.9 M-band
-             "I01", "I02",         # 0.6, 0.9 I-band
-             "M08", "M09",         # 1.2, 1.3 M-band
-             "M10",                # 1.6 M-band
-             "I03",                # 1.6 I-band
-             "M11",                # 2.25 M-band
-             "M12",                # 3.7 M-band
-             "I04",                # 3.7 I-band
-             "M13", "M14",         # 4.05, 8.55 M-band
-             "M15", "M16",         # 11, 12 M-band
-             "I05"]                # 11.5 I-band
-
-MBANDS = ["M01", "M02", "M03", "M04", "M05", "M06", "M07", "M08",
-          "M09", "M10", "M11", "M12", "M13", "M14", "M15", "M16"]
-
-
-REFL_BANDS = ["M01", "M02", "M03", "M04", "M05", "M06", "M07", "M08",
-              "M09", "M10", "M11", "I01", "I02", "I03"]
-
-MBAND_PPS = ["M05", "M07", "M09", "M10", "M11", "M12", "M14", "M15", "M16"]
 
 # "M10", "M14" are not AVHRR channels, but needed for NN SABAF
 MBAND_AVHRR = ["M05", "M07", "M12", "M15", "M16", "M10", "M14"]
 
-MBAND_DEFAULT = ["M05", "M07", "M09", "M10", "M11", "M12", "M14", "M15", "M16"]
+GEOLOCATION_NAMES = [  # additional variables to load
+    "vza",
+    "sza",
+    "azn",
+    "azi",
+    "latitude",
+    "longitude",
+    "scanline_timestamps"]
 
+PPS_TAGS = {"M05": "ch_r06",
+            "M07": "ch_r09",
+            "M09": "ch_r13",
+            "M10": "ch_r16",
+            "M12": "ch_tb37",
+            "M11": "ch_r22",
+            "M14": "ch_tb85",
+            "M15": "ch_tb11",
+            "M16": "ch_tb12",
+            "M01": "ch_rxx",
+            "M02": "ch_rxx",
+            "M03": "ch_rxx",
+            "M04": "ch_rxx",
+            "M06": "ch_rxx",
+            "M08": "ch_rxx",
+            "M13": "ch_tbxx"}
 
-ANGLE_NAMES = ["vza", "sza", "azn", "azi"]
-
-PPS_TAGNAMES = {"M05": "ch_r06",
-                "M07": "ch_r09",
-                "M09": "ch_r13",
-                "M10": "ch_r16",
-                "M12": "ch_tb37",
-                "M11": "ch_r22",
-                "M14": "ch_tb85",
-                "M15": "ch_tb11",
-                "M16": "ch_tb12",
-                "I01": "ch_r06",
-                "I02": "ch_r09",
-                "I03": "ch_r16",
-                "I04": "ch_tb37",
-                # Not used by pps:
-                "I05": "ch_tbxx",
-                "M01": "ch_rxx",
-                "M02": "ch_rxx",
-                "M03": "ch_rxx",
-                "M04": "ch_rxx",
-                "M06": "ch_rxx",
-                "M08": "ch_rxx",
-                "M13": "ch_tbxx"}
+refl_bands = get_refl_bands(PPS_TAGS)
+band_names = sorted(list(PPS_TAGS.keys()))
+ONE_IR_CHANNEL = 'M15'
 
 # SBAF dictionary
 #
@@ -132,7 +112,7 @@ SBAF_N19_TO_N19 = {
             }
         }
     }
-    }
+}
 
 SBAF_VGAC_SNPP_TO_N19 = {
 
@@ -687,10 +667,10 @@ def convert_to_noaa19_KNMI_v2(scene, sbaf_version):
                 # 70 < SZA < 85: BT = (1-f)*BT(day) + f*BT(night), f=(SZA-70)/15
 
                 f = (scene["sunzenith"].values - scaling["min_sunzenith"]) / 15
-                tb37_day_slope = scaling["tb37_day"]["slope"]
-                tb37_day_offset = scaling["tb37_day"]["offset"]
-                tb37_night_slope = scaling["tb37_night"]["slope"]
-                tb37_night_offset = scaling["tb37_night"]["offset"]
+                tb37_day_slope = SBAF_VGAC_SNPP_TO_N19[sbaf_version]["tb37_day"]["slope"]
+                tb37_day_offset = SBAF_VGAC_SNPP_TO_N19[sbaf_version]["tb37_day"]["offset"]
+                tb37_night_slope = SBAF_VGAC_SNPP_TO_N19[sbaf_version]["tb37_night"]["slope"]
+                tb37_night_offset = SBAF_VGAC_SNPP_TO_N19[sbaf_version]["tb37_night"]["offset"]
                 tb37_day = tb37_day_slope * scene[viirs_channel].values + tb37_day_offset
                 tb37_night = tb37_night_slope * scene[viirs_channel].values + tb37_night_offset
 
@@ -730,20 +710,12 @@ def convert_to_noaa19(scene, sbaf_version, noaa21_sbaf_version):
     del scene["M14"]
 
 
-def get_encoding_viirs(scene):
-    """Get netcdf encoding for all datasets."""
-    return get_encoding(scene,
-                        BANDNAMES,
-                        PPS_TAGNAMES,
-                        chunks=None)
-
-
 def set_header_and_band_attrs(scene, orbit_n=0):
     """Set and delete some attributes."""
-    irch = scene["M15"]
-    nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch, orbit_n=orbit_n)
+    ir_channel_obj = scene[ONE_IR_CHANNEL]
+    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGS, ir_channel_obj, orbit_n=orbit_n)
     scene.attrs["source"] = "vgac2pps.py"
-    for band in REFL_BANDS:
+    for band in refl_bands:
         if band not in scene:
             continue
         # Original VGAC files provide normalized reflectances AND Earth-Sun distance corrected data
@@ -805,7 +777,8 @@ def set_exact_time_and_crop(scene, start_line, end_line, time_key="scanline_time
     end_time_dt64 = scene[time_key].values[end_line]
     start_time = dt64_to_datetime(start_time_dt64)
     end_time = dt64_to_datetime(end_time_dt64)
-    for ds in BANDNAMES + ANGLE_NAMES + ["latitude", "longitude", "scanline_timestamps"]:
+    bands_to_crop = band_names + GEOLOCATION_NAMES
+    for ds in bands_to_crop:
         if ds in scene and "nscn" in scene[ds].dims:
             scene[ds] = scene[ds].isel(nscn=slice(start_line, end_line + 1))
             try:
@@ -840,64 +813,50 @@ def fix_platform_name(scene, scene_files):
         scene.attrs['platform'] = "JPSS-2"
 
 
+def load_data(scene_files, channel_selection, noaa19_sbaf_version):
+    """Load data with satpy."""
+    scene = Scene(
+        reader="viirs_vgac_l1c_nc",
+        filenames=scene_files)
+    my_mbands = get_band_names(PPS_TAGS, channel_selection)
+    if noaa19_sbaf_version is not None:
+        my_mbands = MBAND_AVHRR
+    bands_to_load = my_mbands + GEOLOCATION_NAMES
+    scene.load(bands_to_load)
+    return scene
+
+
 def process_one_scene(scene_files, out_path, engine="h5netcdf",
-                      all_channels=False, pps_channels=False, orbit_n=0,
+                      channel_selection="default",
+                      orbit_n=0,
                       noaa19_sbaf_version=None,
                       noaa21_sbaf_version=None,
-                      avhrr_channels=False,
                       split_files_at_midnight=True):
     """Make level 1c files in PPS-format."""
     tic = time.time()
-    scn_in = Scene(
-        reader="viirs_vgac_l1c_nc",
-        filenames=scene_files)
-
-    MY_MBAND = MBAND_DEFAULT
-
-    if all_channels:
-        MY_MBAND = MBANDS
-    if pps_channels:
-        MY_MBAND = MBAND_PPS
-    if noaa19_sbaf_version is not None:
-        MY_MBAND = MBAND_AVHRR
-    if avhrr_channels:
-        MY_MBAND = MBAND_AVHRR
-
-    scn_in.load(MY_MBAND
-                + ANGLE_NAMES
-                + ["latitude", "longitude", "scanline_timestamps"])
-    fix_platform_name(scn_in, scene_files)
+    check_file_exists(scene_files)
+    scenein = load_data(scene_files, channel_selection, noaa19_sbaf_version)
+    fix_platform_name(scenein, scene_files)
     if split_files_at_midnight:
-        scenes = split_scene_at_midnight(scn_in)
+        scenes = split_scene_at_midnight(scenein)
     else:
-        scenes = [scn_in]
+        scenes = [scenein]
     filenames = []
-    for scn_ in scenes:
-
-        irch = scn_["M15"]
-        set_header_and_band_attrs(scn_, orbit_n=orbit_n)
-        rename_latitude_longitude(scn_)
-        convert_angles(scn_, delete_azimuth=False)
-        update_angle_attributes(scn_, irch)
+    for scene in scenes:
+        ir_channel_obj = scene[ONE_IR_CHANNEL]
+        set_header_and_band_attrs(scene, orbit_n=orbit_n)
+        rename_latitude_longitude(scene)
+        convert_angles(scene, delete_azimuth=False)
+        update_angle_attributes(scene, ir_channel_obj)
         sensor = "viirs"
         if noaa19_sbaf_version is not None:
             sensor = "avhrr"
-            convert_to_noaa19(scn_, noaa19_sbaf_version, noaa21_sbaf_version)
-
-        filename = compose_filename(scn_, out_path, instrument=sensor, band=irch)
-        encoding = get_encoding_viirs(scn_)
-        fix_timestamp_datatype(scn_, encoding, "scanline_timestamps")
-
-        scn_.save_datasets(writer="cf",
-                           filename=filename,
-                           header_attrs=get_header_attrs(scn_, band=irch, sensor=sensor,
-                                                         sbaf_version=noaa19_sbaf_version),
-                           engine=engine,
-                           include_lonlats=False,
-                           flatten_attrs=True,
-                           encoding=encoding)
-        logger.info("Saved file {:s} after {:3.1f} seconds".format(
-            os.path.basename(filename),
-            time.time() - tic))
+            convert_to_noaa19(scene, noaa19_sbaf_version, noaa21_sbaf_version)
+        filename = compose_filename(scene, out_path, instrument=sensor, band=ir_channel_obj)
+        fix_timestamp_datatype(scene, "scanline_timestamps")
+        header_attrs = get_header_attrs(scene, band=ir_channel_obj, sensor=sensor,
+                                        sbaf_version=noaa19_sbaf_version)
+        save_data(scene, filename, header_attrs, engine)
+        log_time(filename, tic)
         filenames.append(filename)
     return filenames

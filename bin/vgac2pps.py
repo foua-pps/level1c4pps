@@ -30,18 +30,20 @@ if __name__ == "__main__":
     parser.add_argument('-ne', '--nc_engine', type=str, nargs='?',
                         required=False, default='h5netcdf',
                         help="Engine for saving netcdf files netcdf4 or h5netcdf (default).")
-    parser.add_argument('-all_ch', '--all_channels', action='store_true',
-                        help="Save all 21 channels to level1c4pps file.")
     parser.add_argument('-n19', '--as_noaa19',
                         default=None,
                         help=("Save only the AVHRR (1,2, 3B, 4, 5) channels to level1c4pps file. "
                               "And apply SBAFs to the channels. "))
     parser.add_argument('--noaa21_to_snpp', default=None, required=("--as_noaa19" in sys.argv or "-n19" in sys.argv),
                         help=("Apply SBAFs to the channels, can be combined with -n19. "))
-    parser.add_argument('-pps_ch', '--pps_channels', action='store_true',
-                        help="Save only the necessary (for PPS) channels to level1c4pps file.")
-    parser.add_argument('-avhrr_ch', '--avhrr_channels', action='store_true',
-                        help="Save only the AVHRR (1,2, 3B, 4, 5) channels to level1c4pps file.")
+    parser.add_argument('-ch', '--channel_selection',
+                        required=False, default="default",
+                        choices=["default", "all", "pps", "avhrr_heritage"],
+                        help=("Channels to use. Choose from:"
+                              "  default - Uses the standard channels,"
+                              "  all - Uses all available channels,"
+                              "  pps - Uses the channels required for PPS only, "
+                              "  avhrr_heritage - Uses channels available on AVHRR."))
     parser.add_argument('-on', '--orbit_number', type=int, nargs='?',
                         required=False, default=0,
                         help="Orbit number (default is 00000).")
@@ -49,8 +51,8 @@ if __name__ == "__main__":
                         help="Don't split files at midnight, keep as one level1c file.")
     options = parser.parse_args()
     process_one_scene(options.files, options.out_dir, engine=options.nc_engine,
-                      all_channels=options.all_channels, pps_channels=options.pps_channels,
-                      orbit_n=options.orbit_number, noaa19_sbaf_version=options.as_noaa19,
+                      channel_selection=options.channel_selection,
+                      orbit_n=options.orbit_number,
+                      noaa19_sbaf_version=options.as_noaa19,
                       noaa21_sbaf_version=options.noaa21_to_snpp,
-                      avhrr_channels=options.avhrr_channels,
                       split_files_at_midnight=not options.don_split_files_at_midnight)

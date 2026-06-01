@@ -1,3 +1,13 @@
+## Version <0.2.43> (2026/05/12)
+
+
+### Pull Requests Merged
+
+* [PR 128](https://github.com/foua-pps/level1c4pps/pull/128) - Fix seviri calibration, by [@ninahakansson](https://github.com/ninahakansson)
+* [PR 127](https://github.com/foua-pps/level1c4pps/pull/127) - Destripe metimage, by [@ninahakansson](https://github.com/ninahakansson)
+
+In this release 2 pull requests were closed.
+
 ## Version <0.2.42> (2026/04/01)
 
 

@@ -37,7 +37,7 @@ if __name__ == "__main__":
                         help="Don't rotate images")
     parser.add_argument('--azimuth_angles', action='store_true',
                         help="Save azimuth angles")
-    parser.add_argument('-ne', '--nc_engine', type=str, nargs='?',
+    parser.add_argument('-ne', '--nc_engine', type=str,
                         required=False, default='h5netcdf',
                         help="Engine for saving netcdf files netcdf4 or h5netcdf (default).")
     parser.add_argument('--use-nominal-time-in-filename', action='store_true',

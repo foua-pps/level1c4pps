@@ -26,10 +26,16 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--out_dir', type=str, nargs='?',
                         required=False, default='.',
                         help="Output directory where to store the level1c file")
-    parser.add_argument('-all_ch', '--all_channels', action='store_true',
-                        help="Save all 20 channels to level1c4pps file.")
-    parser.add_argument('-pps_ch', '--pps_channels', action='store_true',
-                        help="Save only the necessary (for PPS) channels to level1c4pps file.")
+    parser.add_argument('-ch', '--channel_selection',
+                        required=False, default="default",
+                        choices=["default", "all", "pps", "avhrr_heritage"],
+                        help=("Channels to use. Choose from:"
+                              "  default - Uses the standard channels,"
+                              "  all - Uses all available channels,"
+                              "  pps - Uses the channels required for PPS only, "
+                              "  avhrr_heritage - Uses channels available on AVHRR."))
+    parser.add_argument('-destripe', '--destripe_ir_channels', action='store_true',
+                        help="Destripe IR channels.")
     parser.add_argument('-ne', '--nc_engine', type=str, nargs='?',
                         required=False, default='h5netcdf',
                         help="Engine for saving netcdf files netcdf4 or h5netcdf (default).")
@@ -43,7 +49,7 @@ if __name__ == "__main__":
     options = parser.parse_args()
     process_one_scene(options.files, options.out_dir,
                       engine=options.nc_engine,
-                      all_channels=options.all_channels,
-                      pps_channels=options.pps_channels,
+                      channel_selection=options.channel_selection,
+                      destripe_ir_channels=options.destripe_ir_channels,
                       orbit_n=options.orbit_number,
                       platform_name=options.platform_name)
