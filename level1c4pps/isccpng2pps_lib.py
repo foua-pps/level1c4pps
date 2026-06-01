@@ -22,28 +22,42 @@
 
 """Functions to convert ISCCP Next Generation level-1-G data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
 
-import logging
-import time
-
-import numpy as np
-from pyorbital.astronomy import get_alt_az, sun_zenith_angle
-from satpy.scene import Scene
-
 from level1c4pps import (adjust_lons_to_valid_range, apply_sunz_correction,
                          check_file_exists, compose_filename, convert_angles,
                          dt64_to_datetime, get_header_attrs, get_refl_bands,
                          log_time, save_data,
                          set_header_and_band_attrs_defaults,
-                         update_angle_attributes)
+                         update_angle_attributes, update_lat_lon_attrs)
+import logging
+import os
+import time
+
+import numpy as np
+from pyorbital.astronomy import get_alt_az, sun_zenith_angle
+from satpy.scene import Scene
+from satpy.utils import debug_on
+import xarray as xr
+debug_on()
+
 
 logger = logging.getLogger('isccpng2pps')
 
-GEOLOCATION_NAMES = [
+GEOLOCATION_NAMES_ISCCP_NG_DEMO = [
     'solar_zenith_angle',
     'satellite_zenith_angle',
     'solar_azimuth_angle',
     'satellite_azimuth_angle',
     "wmo_id",
+    "pixel_time",
+    "lon",
+    "lat"]
+
+GEOLOCATION_NAMES_EUM = [
+    'solar_zenith_angle',
+    'sensor_zenith_angle',
+    'solar_azimuth_angle',
+    'sensor_azimuth_angle',
+    "sensor_flag",
     "pixel_time",
     "lon",
     "lat"]
@@ -147,6 +161,18 @@ satellite_names = {270: "GOES-16",  # ABI
                    55: "Meteosat-8",  # MSG1 SEVIRI
                    70: "Meteosat-11"}
 
+sensor_flag_dict = {1: "GOES-16",  # ABI
+                    2: "GOES-17",  # ABI
+                    3: "GOES-18",  # ABI
+                    4: "GOES-19",  # ABI
+                    5: "Himawari-8",  # AHI
+                    6: "Himawari-9",  # AHI
+                    7: "Meteosat-8",  # MSG1 SEVIRI
+                    8: "Meteosat-9",
+                    9: "Meteosat-10",
+                    10: "Meteosat-11",
+                    12: "Meteosat-12", }
+
 
 def set_header_and_band_attrs(scene, orbit_n=00000):
     """Set and delete some attributes."""
@@ -223,25 +249,31 @@ def get_solar_angles(scene, lons, lats):
     Returns:
         Solar azimuth angle, Solar zenith angle in degrees
     """
-    acq_time =  scene["pixel_time"].copy()
+    acq_time = scene["pixel_time"].copy()
     _, suna = get_alt_az(acq_time, lons, lats)
     suna = np.rad2deg(suna)
     sunz = sun_zenith_angle(acq_time, lons, lats)
     return suna, sunz
 
 
-def fix_pixel_time(scene):
+def fix_pixel_time(scene, is_eum):
     """Fix the time pixel variable, original file does not contain units."""
     del scene["pixel_time"].coords["crs"]
     scene["pixel_time"].encoding['coordinates'] = "lon lat"
-    scene["pixel_time"] = scene["pixel_time"].interpolate_na(dim = "y", fill_value="extrapolate", use_coordinate=False)  # update NaTs
-    scene["pixel_time"].data = scene["pixel_time"].data * np.timedelta64(1, 's') + scene['temp_11_00um'].attrs["start_time"]
+    if not is_eum:
+        scene["pixel_time"] = scene["pixel_time"].interpolate_na(
+            dim="y", fill_value="extrapolate", use_coordinate=False)  # update NaTs
+        scene["pixel_time"].data = scene["pixel_time"].data * \
+            np.timedelta64(1, 's') + scene['temp_11_00um'].attrs["start_time"]
 
 
-def load_data(scene_files):
+def load_data(scene_files, is_eum):
     """Load data."""
     scene = Scene(reader='multiple_sensors_isccpng_l1g_nc', filenames=scene_files)
-    bands_to_load = band_names + GEOLOCATION_NAMES
+    if is_eum:
+        bands_to_load = band_names + GEOLOCATION_NAMES_EUM
+    else:
+        bands_to_load = band_names + GEOLOCATION_NAMES_ISCCP_NG_DEMO
     scene.load(bands_to_load)
     return scene
 
@@ -253,17 +285,42 @@ def update_solar_angles(scene):
     scene["solar_azimuth_angle"].values = suna.values
 
 
+def get_wmo_id_from_sensor_flag(scene):
+    """Get wmo_id used in ISSCCPNG-demo format from EUM sensor_flag."""
+    if "wmo_id" in scene:
+        return
+    del scene["sensor_flag"].coords["crs"]
+    scene["wmo_id"] = scene["sensor_flag"].copy()
+    wmo_id_array = np.empty(scene["sensor_flag"].values.shape)
+    for index, name in sensor_flag_dict.items():
+        for wmo_id, name2 in satellite_names.items():
+            if name == name2:
+                logger.info(f"For {name} setting using wmo_id {wmo_id} for channel sensor_flag {index}.")
+                set_these = scene["sensor_flag"] == index
+                wmo_id_array[set_these] = wmo_id
+    scene["wmo_id"].values = wmo_id_array
+
+
+def check_if_eum_format(scene_files):
+    """Check if we have ISCCP-NG or EUM format."""
+    for filename in scene_files:
+        if "EUM_L1g" in os.path.basename(filename):
+            return True
+
+
 def process_one_scene(scene_files, out_path,
                       engine='h5netcdf',
                       orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
     check_file_exists(scene_files)
-    scene = load_data(scene_files)
+    is_eum = check_if_eum_format(scene_files)
+    scene = load_data(scene_files, is_eum)
     ir_channel_obj = scene[ONE_IR_CHANNEL]
     set_header_and_band_attrs(scene, orbit_n=orbit_n)
-    fix_pixel_time(scene)
-    # rename_latitude_longitude(scene)
+    get_wmo_id_from_sensor_flag(scene)
+    fix_pixel_time(scene, is_eum)
+    update_lat_lon_attrs(scene)
     update_solar_angles(scene)
     adjust_lons_to_valid_range(scene)
     convert_angles(scene, delete_azimuth=True)
@@ -271,7 +328,7 @@ def process_one_scene(scene_files, out_path,
     recalibrate_meteosat(scene)
     homogenize(scene)
     apply_sunz_correction(scene, refl_bands)
-    filename = compose_filename(scene, out_path, instrument='seviri', band=ir_channel_obj)
+    filename = compose_filename(scene, out_path, instrument='seviri', band=scene["pixel_time"])
     header_attrs = get_header_attrs(scene, band=ir_channel_obj, sensor='seviri')
     save_data(scene, filename, header_attrs, engine)
     log_time(filename, tic)

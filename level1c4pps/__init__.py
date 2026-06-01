@@ -347,9 +347,22 @@ def rename_latitude_longitude(scene):
     del scene[lat_name_satpy]
     del scene[lon_name_satpy]
     # Update attributes
+    update_lat_lon_attrs(scene)
+
+
+def update_lat_lon_attrs(scene):
+    """Update lat/lon attributes."""
     scene['lat'].attrs = LATLON_ATTRIBUTES['lat']
     scene['lon'].attrs = LATLON_ATTRIBUTES['lon']
-    for coord_name in ['acq_time', 'm_latitude', 'i_latitude', 'm_latitude', 'i_latitude', 'latitude', 'longitude']:
+    for coord_name in [
+        'acq_time',
+        'm_latitude',
+        'i_latitude',
+        'm_latitude',
+        'i_latitude',
+        'latitude',
+        'longitude',
+            'crs']:
         try:
             del scene['lat'].coords[coord_name]
             del scene['lon'].coords[coord_name]
@@ -506,7 +519,7 @@ def update_angle_attributes(scene, band):
             except (AttributeError, KeyError):
                 pass
         # delete some coords
-        for coord_name in ['acq_time', 'latitude', 'longitude']:
+        for coord_name in ['acq_time', 'latitude', 'longitude', 'crs']:
             try:
                 del scene[angle].coords[coord_name]
             except KeyError:

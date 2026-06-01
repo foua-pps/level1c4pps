@@ -37,7 +37,7 @@ class TestIsccpng2PPS(unittest.TestCase):
         self.scene = Scene()
         scene_dict = {}
         grid_data = [[1.0, 2.0], [3.0, 4.0]]
-        all_keys = ["refl_00_65um", 'temp_11_00um'] + isccpng2pps.GEOLOCATION_NAMES
+        all_keys = ["refl_00_65um", 'temp_11_00um'] + isccpng2pps.GEOLOCATION_NAMES_ISCCP_NG_DEMO
         for key in all_keys:
             scene_dict[key] = xr.DataArray(grid_data,
                                            dims=('y', 'x'),
@@ -58,6 +58,8 @@ class TestIsccpng2PPS(unittest.TestCase):
             'platform_name': '',
             'orbit_number': 99999}
         scene_dict["pixel_time"].coords["crs"] = ""
+        scene_dict['pixel_time'].attrs = {'start_time': np.datetime64('2021-06-28T01:00:00'),
+                                          'end_time': np.datetime64('2021-06-28T01:01:00')}
         for key in scene_dict:
             self.scene[key] = scene_dict[key]
         self.scene.load = mock.MagicMock()
@@ -68,5 +70,5 @@ class TestIsccpng2PPS(unittest.TestCase):
     def test_process_one_scene(self, mock_scene, mock_check_file_exists):
         """Test to set process_one_scene."""
         mock_scene.return_value = self.scene
-        filename = isccpng2pps.process_one_scene("dummy", out_path='./level1c4pps/tests/', orbit_n='12345')
+        filename = isccpng2pps.process_one_scene(["ISCCP-NG"], out_path='./level1c4pps/tests/', orbit_n='12345')
         self.assertEqual(os.path.basename(filename), "S_NWC_seviri__12345_20210628T0100000Z_20210628T0101000Z.nc")
