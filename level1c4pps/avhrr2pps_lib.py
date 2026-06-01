@@ -19,52 +19,52 @@
 
 """Functions to convert AVHRR AAPP or EPS l1b data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
 
-import os
-import time
-from satpy.scene import Scene
-from level1c4pps import (get_encoding, compose_filename,
-                         rename_latitude_longitude,
-                         set_header_and_band_attrs_defaults,
-                         update_angle_attributes, get_header_attrs,
-                         convert_angles,
-                         apply_sunz_correction)
-
 import logging
+import time
+
+from satpy.scene import Scene
+
+from level1c4pps import (apply_sunz_correction, check_file_exists,
+                         compose_filename, convert_angles, get_header_attrs,
+                         get_refl_bands, log_time, rename_latitude_longitude,
+                         save_data, set_header_and_band_attrs_defaults,
+                         update_angle_attributes)
 
 # Example:
 # hrpt_noaa19_20141210_1056_30086.l1b
 
 logger = logging.getLogger('avhrr2pps')
 
-BANDNAMES = ['1', '2', '3a', '3b', '4', '5']
+GEOLOCATION_NAMES_EPS = [  # additional variables to load
+    'satellite_zenith_angle',
+    'solar_zenith_angle',
+    'satellite_azimuth_angle',
+    'solar_azimuth_angle',
+    'latitude',
+    'longitude']
+GEOLOCATION_NAMES_AAPP = [  # additional variables to load
+    'sensor_zenith_angle',
+    'solar_zenith_angle',
+    'sun_sensor_azimuth_difference_angle',
+    'latitude',
+    'longitude']
 
-ANGLE_NAMES_EPS = ['satellite_zenith_angle', 'solar_zenith_angle',
-                   'satellite_azimuth_angle', 'solar_azimuth_angle']
-ANGLE_NAMES_AAPP = ['sensor_zenith_angle', 'solar_zenith_angle',
-                    'sun_sensor_azimuth_difference_angle']
+PPS_TAGS = {'1': 'ch_r06',
+            '2': 'ch_r09',
+            '3a': 'ch_r16',
+            '3b': 'ch_tb37',
+            '4': 'ch_tb11',
+            '5': 'ch_tb12'}
 
-REFL_BANDS = ['1', '2', '3a']
-
-PPS_TAGNAMES = {'1': 'ch_r06',
-                '2': 'ch_r09',
-                '3a': 'ch_r16',
-                '3b': 'ch_tb37',
-                '4': 'ch_tb11',
-                '5': 'ch_tb12'}
-
-
-def get_encoding_avhrr(scene):
-    """Get netcdf encoding for all datasets."""
-    return get_encoding(scene,
-                        BANDNAMES,
-                        PPS_TAGNAMES,
-                        chunks=None)
+refl_bands = get_refl_bands(PPS_TAGS)
+band_names = sorted(list(PPS_TAGS.keys()))
+ONE_IR_CHANNEL = '4'
 
 
 def set_header_and_band_attrs(scene, orbit_n=0):
     """Set and delete some attributes."""
-    irch = scene['4']
-    nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch, orbit_n=orbit_n)
+    ir_channel_obj = scene[ONE_IR_CHANNEL]
+    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGS, ir_channel_obj, orbit_n=orbit_n)
     scene.attrs['source'] = "avhrr2pps.py"
     return nimg
 
@@ -86,47 +86,37 @@ def check_broken_data(scene):
             'Stopping. File will not be written.')
 
 
+def load_data(scene_files):
+    """Load data with satpy."""
+    if 'AVHR_xxx' in scene_files[0]:
+        avhrr_reader = 'avhrr_l1b_eps'
+        angles = GEOLOCATION_NAMES_EPS
+    else:
+        avhrr_reader = 'avhrr_l1b_aapp'
+        angles = GEOLOCATION_NAMES_AAPP
+    scene = Scene(
+        reader=avhrr_reader,
+        filenames=scene_files)
+    bands_to_load = band_names + angles
+    scene.load(bands_to_load)
+    return scene
+
+
 def process_one_scene(scene_files, out_path, engine='h5netcdf', orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
-    if 'AVHR_xxx' in scene_files[0]:
-        avhrr_reader = 'avhrr_l1b_eps'
-        angles = ANGLE_NAMES_EPS
-    else:
-        avhrr_reader = 'avhrr_l1b_aapp'
-        angles = ANGLE_NAMES_AAPP
-    scn_ = Scene(
-        reader=avhrr_reader,
-        filenames=scene_files)
-    scn_.load(BANDNAMES + ['latitude', 'longitude'] + angles)
-    # one ir channel
-    irch = scn_['4']
-
+    check_file_exists(scene_files)
+    scene = load_data(scene_files)
+    ir_channel_obj = scene[ONE_IR_CHANNEL]
     # Check if we have old hrpt format with data only every 20th line
-    check_broken_data(scn_)
-
-    # Set header and band attributes
-    set_header_and_band_attrs(scn_, orbit_n=orbit_n)
-
-    # Rename longitude, latitude to lon, lat.
-    rename_latitude_longitude(scn_)
-
-    # Convert angles to PPS
-    convert_angles(scn_, delete_azimuth=True)
-    update_angle_attributes(scn_, irch)
-
-    # Apply sunz correction
-    apply_sunz_correction(scn_, REFL_BANDS)
-
-    filename = compose_filename(scn_, out_path, instrument='avhrr', band=irch)
-    scn_.save_datasets(writer='cf',
-                       filename=filename,
-                       header_attrs=get_header_attrs(scn_, band=irch, sensor='avhrr'),
-                       engine=engine,
-                       include_lonlats=False,
-                       flatten_attrs=True,
-                       encoding=get_encoding_avhrr(scn_))
-    print("Saved file {:s} after {:3.1f} seconds".format(
-        os.path.basename(filename),
-        time.time() - tic))
+    check_broken_data(scene)
+    set_header_and_band_attrs(scene, orbit_n=orbit_n)
+    rename_latitude_longitude(scene)
+    convert_angles(scene, delete_azimuth=True)
+    update_angle_attributes(scene, ir_channel_obj)
+    apply_sunz_correction(scene, refl_bands)
+    header_attrs = get_header_attrs(scene, band=ir_channel_obj, sensor='avhrr')
+    filename = compose_filename(scene, out_path, instrument='avhrr', band=ir_channel_obj)
+    save_data(scene, filename, header_attrs, engine)
+    log_time(filename, tic)
     return filename

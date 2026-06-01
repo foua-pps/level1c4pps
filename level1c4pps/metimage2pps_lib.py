@@ -19,22 +19,20 @@
 
 """Functions to convert EPS-SG MetImage level-1 data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
 
-import numpy as np
-import os
-import time
-import satpy
-from satpy.scene import Scene
-from level1c4pps import (apply_sunz_correction,
-                         get_encoding, compose_filename,
-                         rename_latitude_longitude,
-                         update_angle_attributes, get_header_attrs,
-                         set_header_and_band_attrs_defaults,
-                         convert_angles,
-                         adjust_lons_to_valid_range)
-
 import logging
-from packaging.version import Version
+import time
 
+import numpy as np
+import satpy
+from packaging.version import Version
+from satpy.scene import Scene
+
+from level1c4pps import (adjust_lons_to_valid_range, apply_sunz_correction,
+                         check_file_exists, compose_filename, convert_angles,
+                         get_band_names, get_header_attrs, get_refl_bands,
+                         log_time, rename_latitude_longitude, save_data,
+                         set_header_and_band_attrs_defaults,
+                         update_angle_attributes)
 
 # from satpy.utils import debug_on
 # debug_on()
@@ -53,69 +51,39 @@ else:
     logger.info("Sunz correction not done by satpy reader for versions >= 0.60.")
 
 N_DETECTORS = 24
-BANDNAMES_DEFAULT = ["vii_668",
-                     "vii_865",
-                     "vii_1375",
-                     "vii_1630",
-                     "vii_3740",
-                     "vii_7325",
-                     "vii_8540",
-                     "vii_10690",
-                     "vii_12020",
-                     # "vii_443",
-                     # "vii_555",
-                     # "vii_752",
-                     # "vii_763",
-                     # "vii_914",
-                     # "vii_1240",
-                     "vii_2250",
-                     # "vii_3959",
-                     # "vii_4050",
-                     "vii_6725",
-                     "vii_13345"]
 
-BANDNAMES_PPS = ["vii_668",
-                 "vii_865",
-                 "vii_1375",
-                 "vii_1630",
-                 "vii_2250",
-                 "vii_3740",
-                 "vii_8540",
-                 "vii_10690",
-                 "vii_12020"]
+GEOLOCATION_NAMES = ['satellite_zenith_angle',
+                     'solar_zenith_angle',
+                     'satellite_azimuth_angle',
+                     'solar_azimuth_angle',
+                     'lat_pixels',
+                     'lon_pixels']
 
-REFL_BANDS = ["vii_668", "vii_865", "vii_1375", "vii_1630", "vii_443",
-              "vii_555", "vii_752", "vii_763", "vii_914", "vii_1240",
-              "vii_2250"]
-
-ANGLE_NAMES = ['satellite_zenith_angle', 'solar_zenith_angle',
-               'satellite_azimuth_angle', 'solar_azimuth_angle']
-
-PPS_TAGNAMES = {"vii_668": "ch_r06",
-                "vii_865": "ch_r09",
-                "vii_1375": "ch_r13",
-                "vii_1630": "ch_r16",
-                "vii_3740": "ch_tb37",
-                "vii_8540": "ch_tb85",
-                "vii_10690": "ch_tb11",
-                "vii_12020": "ch_tb12",
-                "vii_2250": "ch_r22",
-                # Not used yet:
-                "vii_6725": "ch_tb67",
-                "vii_13345": "ch_tb133",
-                "vii_7325": "ch_tb73",
-                "vii_443": "ch_rxx",
-                "vii_555": "ch_rxx",
-                "vii_752": "ch_rxx",
-                "vii_763": "ch_rx",
-                "vii_914": "ch_rxx",
-                "vii_1240": "ch_rxx",
-                "vii_3959": "ch_tbxx",
-                "vii_4050": "ch_tbxx"}
-IR_BANDS = ["vii_3740", "vii_8540", "vii_10690", "vii_12020",  "vii_6725",
-            "vii_13345",  "vii_7325", "vii_3959", "vii_4050"]
-
-BANDNAMES = list(PPS_TAGNAMES.keys())
+PPS_TAGS = {"vii_668": "ch_r06",
+            "vii_865": "ch_r09",
+            "vii_1375": "ch_r13",
+            "vii_1630": "ch_r16",
+            "vii_3740": "ch_tb37",
+            "vii_8540": "ch_tb85",
+            "vii_10690": "ch_tb11",
+            "vii_12020": "ch_tb12",
+            "vii_2250": "ch_r22",
+            # Not used yet:
+            "vii_6725": "ch_tb67",
+            "vii_13345": "ch_tb133",
+            "vii_7325": "ch_tb73",
+            "vii_443": "ch_rxx",
+            "vii_555": "ch_rxx",
+            "vii_752": "ch_rxx",
+            "vii_763": "ch_rx",
+            "vii_914": "ch_rxx",
+            "vii_1240": "ch_rxx",
+            "vii_3959": "ch_tbxx",
+            "vii_4050": "ch_tbxx"}
+IR_BANDS = ["vii_3740", "vii_8540", "vii_10690", "vii_12020", "vii_6725",
+            "vii_13345", "vii_7325", "vii_3959", "vii_4050"]
+refl_bands = get_refl_bands(PPS_TAGS)
+ONE_IR_CHANNEL = "vii_10690"
 
 
 def destripe(scene, band, n_scans_per_block=2):
@@ -136,22 +104,14 @@ def destripe(scene, band, n_scans_per_block=2):
     return offset_per_row_in_block
 
 
-def get_encoding_metimage(scene):
-    """Get netcdf encoding for all datasets."""
-    return get_encoding(scene,
-                        BANDNAMES,
-                        PPS_TAGNAMES,
-                        chunks=None)
-
-
 def set_header_and_band_attrs(scene, orbit_n=00000):
     """Set and delete some attributes."""
     nimg = 0  # name of first dataset is image0
     # Set some header attributes:
-    irch = scene['vii_10690']
+    ir_channel_obj = scene[ONE_IR_CHANNEL]
     scene.attrs['source'] = "metimage2pps.py"
-    nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch, orbit_n=orbit_n)
-    for band in REFL_BANDS:
+    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGS, ir_channel_obj, orbit_n=orbit_n)
+    for band in refl_bands:
         if band not in scene:
             continue
         # Sunz correction not done by satpy reader for versions >= 0.60.
@@ -159,58 +119,41 @@ def set_header_and_band_attrs(scene, orbit_n=00000):
     return nimg
 
 
+def load_data(scene_files, channel_selection):
+    """Load data."""
+    scene = Scene(reader='vii_l1b_nc', filenames=scene_files)
+    my_bands = get_band_names(PPS_TAGS, channel_selection)
+    bands_to_load = my_bands + GEOLOCATION_NAMES
+    scene.load(bands_to_load)
+    return scene
+
+
 def process_one_scene(scene_files, out_path,
                       engine='h5netcdf',
-                      all_channels=False,
-                      pps_channels=False,
+                      channel_selection="default",
                       destripe_ir_channels=False,
                       orbit_n=0,
                       platform_name=None):
     """Make level 1c files in PPS-format."""
     tic = time.time()
-    scn_ = Scene(reader='vii_l1b_nc', filenames=scene_files)
-
-    MY_BANDNAMES = BANDNAMES_DEFAULT
-    if all_channels:
-        MY_BANDNAMES = BANDNAMES
-    if pps_channels:
-        MY_BANDNAMES = BANDNAMES_PPS
-
-    scn_.load(MY_BANDNAMES + ANGLE_NAMES + ['lat_pixels', 'lon_pixels'])
-
-    # Transpose data to get scanlines as row dimension
-    for key in MY_BANDNAMES + ANGLE_NAMES + ['lat_pixels', 'lon_pixels']:
-        if 'num_pixels' in scn_[key].dims:
-            # satpy <= 0 .26.0
-            scn_[key] = scn_[key].transpose('num_lines', 'num_pixels')
-        elif scn_[key].dims[0] == 'x':
-            # first dim should be y
-            scn_[key] = scn_[key].transpose('y', 'x')
-
+    check_file_exists(scene_files)
+    scene = load_data(scene_files, channel_selection)
     # one ir channel
-    irch = scn_['vii_10690']
-    set_header_and_band_attrs(scn_, orbit_n=orbit_n)
-    rename_latitude_longitude(scn_)
-    adjust_lons_to_valid_range(scn_)
-    convert_angles(scn_, delete_azimuth=True)
-    update_angle_attributes(scn_, irch)
+    ir_channel_obj = scene[ONE_IR_CHANNEL]
+    set_header_and_band_attrs(scene, orbit_n=orbit_n)
+    rename_latitude_longitude(scene)
+    adjust_lons_to_valid_range(scene)
+    convert_angles(scene, delete_azimuth=True)
+    update_angle_attributes(scene, ir_channel_obj)
     if destripe_ir_channels:
         for channel in IR_BANDS:
-            if channel in scn_:
-                destripe(scn_, channel)
-
-    apply_sunz_correction(scn_, REFL_BANDS)
+            if channel in scene:
+                destripe(scene, channel)
+    apply_sunz_correction(scene, refl_bands)
     if platform_name is not None:
-        scn_.attrs['platform'] = platform_name
-    filename = compose_filename(scn_, out_path, instrument='metimage', band=irch)
-    scn_.save_datasets(writer='cf',
-                       filename=filename,
-                       header_attrs=get_header_attrs(scn_, band=irch, sensor='metimage'),
-                       engine=engine,
-                       include_lonlats=False,
-                       flatten_attrs=True,
-                       encoding=get_encoding_metimage(scn_))
-    print("Saved file {:s} after {:3.1f} seconds".format(
-        os.path.basename(filename),
-        time.time() - tic))
+        scene.attrs['platform'] = platform_name
+    filename = compose_filename(scene, out_path, instrument='metimage', band=ir_channel_obj)
+    header_attrs = get_header_attrs(scene, band=ir_channel_obj, sensor='metimage')
+    save_data(scene, filename, header_attrs, engine)
+    log_time(filename, tic)
     return filename

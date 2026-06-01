@@ -20,11 +20,10 @@
 """Unit tests for the merci2pps_lib module."""
 
 import datetime as dt
+import os
 import unittest
-try:
-    from unittest import mock
-except ImportError:
-    import mock
+from unittest import mock
+
 import numpy as np
 import xarray as xr
 from satpy import Scene
@@ -37,26 +36,32 @@ class TestMersi2PPS(unittest.TestCase):
 
     def setUp(self):
         """Create a test scene."""
-        mersi2pps.BANDNAMES = ['3', '24']
-        vis006 = mock.MagicMock(attrs={'name': 'image0',
-                                       'wavelength': [1, 2, 3, 'um'],
-                                       'id_tag': 'ch_r06'})
-        ir_108 = mock.MagicMock(attrs={'name': 'image1',
-                                       'id_tag': 'ch_tb11',
-                                       'wavelength': [1, 2, 3, 'um'],
-                                       'start_time': dt.datetime(2009, 7, 1, 12, 1, 0),
-                                       'end_time': dt.datetime(2009, 7, 1, 12, 1, 0),
-                                       'platform_name': 'fy3d',
-                                       'orbit_number': 99999})
-        satzenith = mock.MagicMock(attrs={'name': 'satzenith',
-                                          'id_tag': 'satzenith'})
         self.scene = Scene()
-        scene_dict = {'3': vis006, '24': ir_108, 'satzenith': satzenith}
+        scene_dict = {}
+        grid_data = [[1.0, 2.0], [3.0, 4.0]]
+        all_keys = ['3', '24'] + mersi2pps.GEOLOCATION_NAMES
+        for key in all_keys:
+            scene_dict[key] = xr.DataArray(grid_data,
+                                           dims=('y', 'x'),
+                                           attrs={'name': key,
+                                                  'id_tag': key})
+        scene_dict['3'].attrs = {'name': 'image0',
+                                 'wavelength': [1, 2, 3, 'um'],
+                                 'modifiers': ("sunz_correction", ),
+                                 'id_tag': 'ch_r06'}
+        scene_dict['24'].attrs = {'name': 'image1',
+                                  'id_tag': 'ch_tb11',
+                                  'platform': "FY-3F",
+                                  'number_of_scans': 15,
+                                  'rows_per_scan': 16,
+                                  'wavelength': [1, 2, 3, 'um'],
+                                  'start_time': dt.datetime(2009, 7, 1, 12, 1, 0),
+                                  'end_time': dt.datetime(2009, 7, 1, 12, 1, 0),
+                                  'orbit_number': 99999}
         for key in scene_dict:
-            pps_name = scene_dict[key].attrs['name']
             self.scene[key] = scene_dict[key]
-            self.scene[key].attrs['name'] = pps_name
-        self.scene.attrs['sensor'] = ['mersi2']
+        self.scene.load = mock.MagicMock
+        self.scene.attrs['sensor'] = ['mersi3']
 
     def test_compose_filename(self):
         """Test compose filename for MERSI-2."""
@@ -76,7 +81,7 @@ class TestMersi2PPS(unittest.TestCase):
 
     def test_set_header_and_band_attrs(self):
         """Test to set header_and_band_attrs."""
-        mersi2pps.set_header_and_band_attrs(self.scene, band=self.scene['24'], orbit_n='12345')
+        mersi2pps.set_header_and_band_attrs(self.scene, self.scene['24'], orbit_n='12345')
         self.assertTrue(isinstance(self.scene.attrs['orbit_number'], int))
         self.assertEqual(self.scene.attrs['orbit_number'], 12345)
 
@@ -110,11 +115,11 @@ class TestMersi2PPS(unittest.TestCase):
             sensor = mersi2pps.get_sensor(filename)
             self.assertEqual(sensor, expect)
 
-
-def suite():
-    """Create the test suite for test_mersi22pps."""
-    loader = unittest.TestLoader()
-    mysuite = unittest.TestSuite()
-    mysuite.addTest(loader.loadTestsFromTestCase(TestMersi2PPS))
-
-    return mysuite
+    @mock.patch("level1c4pps.mersi2pps_lib.check_file_exists")
+    @mock.patch("level1c4pps.mersi2pps_lib.Scene")
+    def test_process_one_scene(self, mock_scene_class, mock_check_file_exists):
+        """Test to set process_one_scene."""
+        mock_scene_class.return_value = self.scene
+        filename = mersi2pps.process_one_scene(
+            ["tf2019234102243.FY3F-X_MERSI_GEOQK_L1B.HDF"], out_path='./level1c4pps/tests/', orbit_n='12345')
+        self.assertEqual(os.path.basename(filename), "S_NWC_mersi3_fy3f_12345_20090701T1201000Z_20090701T1201000Z.nc")

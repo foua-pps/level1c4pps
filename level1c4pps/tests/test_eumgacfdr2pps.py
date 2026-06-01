@@ -19,17 +19,15 @@
 
 """Unit tests for the eumgacfdr2pps_lib module."""
 
-import netCDF4
 import unittest
 from datetime import datetime, timezone
-try:
-    from unittest import mock
-except ImportError:
-    import mock
+from unittest import mock
+
+import netCDF4
+import numpy as np
 from satpy import Scene
 
 import level1c4pps.eumgacfdr2pps_lib as eumgacfdr2pps
-import numpy as np
 
 
 class TestEumgacfdr2PPS(unittest.TestCase):
@@ -59,30 +57,6 @@ class TestEumgacfdr2PPS(unittest.TestCase):
             pps_name = scene_dict[key].attrs['name']
             self.scene[key] = scene_dict[key]
             self.scene[key].attrs['name'] = pps_name
-
-    def test_get_encoding(self):
-        """Test the encoding for EUMSAT GAC FDR."""
-        encoding_exp = {
-            'image0': {'dtype': 'int16',
-                       'scale_factor': 0.01,
-                       'zlib': True,
-                       'complevel': 4,
-                       '_FillValue': -32767,
-                       'add_offset': 0.0},
-            'image1': {'dtype': 'int16',
-                       'scale_factor': 0.01,
-                       '_FillValue': -32767,
-                       'zlib': True,
-                       'complevel': 4,
-                       'add_offset': 273.15},
-            'qual_flags': {'dtype': 'int16', 'zlib': True,
-                           'complevel': 4, '_FillValue': -32001.0},
-            'scanline_timestamps': {'dtype': 'int64', 'zlib': True,
-                                    'units': 'milliseconds since 1970-01-01',
-                                    'complevel': 4, '_FillValue': -1.0},
-        }
-        encoding = eumgacfdr2pps.get_encoding_gac(self.scene)
-        self.assertDictEqual(encoding, encoding_exp)
 
     def test_set_header_and_band_attrs(self):
         """Test to set header_and_band_attrs."""
@@ -125,12 +99,3 @@ class TestEumgacfdr2PPS(unittest.TestCase):
 
         np.testing.assert_almost_equal(pps_nc.variables['image1'].sun_earth_distance_correction_factor,
                                        0.9975245, decimal=4)
-
-
-def suite():
-    """Create the test suite for test_eumgacfdr2pps."""
-    loader = unittest.TestLoader()
-    mysuite = unittest.TestSuite()
-    mysuite.addTest(loader.loadTestsFromTestCase(TestEumgacfdr2PPS))
-
-    return mysuite

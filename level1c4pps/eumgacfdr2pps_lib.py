@@ -19,54 +19,55 @@
 
 """Utilities to convert AVHRR GAC formattet data to PPS level-1c format."""
 
-import os
-import time
-import satpy
-from satpy.scene import Scene
-from level1c4pps import (get_encoding, compose_filename,
-                         set_header_and_band_attrs_defaults,
-                         rename_latitude_longitude, update_angle_attributes,
-                         dt64_to_datetime,
-                         logger,
-                         get_header_attrs, convert_angles)
-from satpy.utils import debug_on
-from packaging.version import Version
-
-if Version(satpy.__version__) < Version('0.24.0'):
-    debug_on()
-    raise ImportError("'eumgac2pps' writer requires satpy 0.24.0 or greater")
 # import xarray as xr
 # xr.set_options(keep_attrs=True)
+import logging
+import time
+
+from satpy.scene import Scene
+
+from level1c4pps import (check_file_exists, compose_filename, convert_angles,
+                         dt64_to_datetime, fix_timestamp_datatype,
+                         get_header_attrs, get_refl_bands,
+                         log_time, rename_latitude_longitude, save_data,
+                         set_header_and_band_attrs_defaults,
+                         update_angle_attributes)
+
+logger = logging.getLogger('eumgacfdr2pps')
 
 # AVHRR-GAC_FDR_1C_N06_19810330T005421Z_19810330T024632Z_R_O_20200101T000000Z_0100.nc
+GEOLOCATION_NAMES = [  # additional variables to load
+    'sensor_zenith_angle',
+    'solar_zenith_angle',
+    'solar_azimuth_angle',
+    'sensor_azimuth_angle',
+    'sun_sensor_azimuth_difference_angle',
+    'latitude',
+    'longitude',
+    'qual_flags',
+    'acq_time'
+]
 
-BANDNAMES = ['reflectance_channel_1',
-             'reflectance_channel_2',
-             'reflectance_channel_3',
-             'reflectance_channel_3a',
-             'brightness_temperature_channel_3',
-             'brightness_temperature_channel_3b',
-             'brightness_temperature_channel_4',
-             'brightness_temperature_channel_5']
+PPS_TAGS = {"reflectance_channel_1": "ch_r06",
+            "reflectance_channel_2": "ch_r09",
+            "reflectance_channel_3": "ch_r16",
+            "reflectance_channel_3a": "ch_r16",
+            "brightness_temperature_channel_3b": "ch_tb37",
+            "brightness_temperature_channel_3": "ch_tb37",
+            "brightness_temperature_channel_4": "ch_tb11",
+            "brightness_temperature_channel_5": "ch_tb12"}
 
-ANGLENAMES = ['sensor_zenith_angle',
-              'solar_zenith_angle',
-              'solar_azimuth_angle',
-              'sensor_azimuth_angle',
-              'sun_sensor_azimuth_difference_angle']
+refl_bands = get_refl_bands(PPS_TAGS)
+band_names = sorted(list(PPS_TAGS.keys()))
+ATTRIBUTES_TO_LOAD = [
+    'equator_crossing_time',
+    'equator_crossing_longitude']
+EXTRA_ATTRIBUTES_TO_LOAD_WHEN_NOT_CROPPING = [
+    'overlap_free_end',
+    'overlap_free_start',
+    'midnight_line']
 
-REFL_BANDS = ['reflectance_channel_1', 'reflectance_channel_2', 'reflectance_channel_3',
-              'reflectance_channel_3a']
-
-PPS_TAGNAMES = {"reflectance_channel_1": "ch_r06",
-                "reflectance_channel_2": "ch_r09",
-                "reflectance_channel_3": "ch_r16",
-                "reflectance_channel_3a": "ch_r16",
-                "brightness_temperature_channel_3b": "ch_tb37",
-                "brightness_temperature_channel_3": "ch_tb37",
-                "brightness_temperature_channel_4": "ch_tb11",
-                "brightness_temperature_channel_5": "ch_tb12"}
-
+ONE_IR_CHANNEL = "brightness_temperature_channel_4"
 
 RENAME_AND_MOVE_TO_HEADER = {'id': 'euemtsat_gac_id',
                              'licence': 'eumetsat_licence',
@@ -74,17 +75,9 @@ RENAME_AND_MOVE_TO_HEADER = {'id': 'euemtsat_gac_id',
                              'version_satpy': 'version_eumetsat_pygac_fdr_satpy'}
 
 
-def get_encoding_gac(scene):
-    """Get netcdf encoding for all datasets."""
-    return get_encoding(scene,
-                        BANDNAMES,
-                        PPS_TAGNAMES,
-                        chunks=None)
-
-
 def update_ancilliary_datasets(scene):
     """Rename, delete and add some datasets and attributes."""
-    irch = scene['brightness_temperature_channel_4']
+    ir_channel_obj = scene[ONE_IR_CHANNEL]
 
     # Create new data set scanline timestamps
     scene['scanline_timestamps'] = scene['acq_time']
@@ -95,7 +88,7 @@ def update_ancilliary_datasets(scene):
     # Update qual_flags attrs
     scene['qual_flags'].attrs['id_tag'] = 'qual_flags'
     scene['qual_flags'].attrs['long_name'] = 'pygac quality flags'
-    scene['qual_flags'].coords['time'] = irch.attrs['start_time']
+    scene['qual_flags'].coords['time'] = ir_channel_obj.attrs['start_time']
     del scene['qual_flags'].coords['acq_time']
     for band in ['scanline_timestamps',
                  'qual_flags',
@@ -114,17 +107,17 @@ def update_ancilliary_datasets(scene):
 
 def set_header_and_band_attrs(scene, orbit_n=99999):
     """Set and delete some attributes."""
-    irch = scene['brightness_temperature_channel_4']
+    ir_channel_obj = scene[ONE_IR_CHANNEL]
     for attr in RENAME_AND_MOVE_TO_HEADER:
-        if attr in irch.attrs:
-            scene.attrs[RENAME_AND_MOVE_TO_HEADER[attr]] = irch.attrs.pop(attr)
-    nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch, orbit_n=orbit_n)
+        if attr in ir_channel_obj.attrs:
+            scene.attrs[RENAME_AND_MOVE_TO_HEADER[attr]] = ir_channel_obj.attrs.pop(attr)
+    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGS, ir_channel_obj, orbit_n=orbit_n)
     scene.attrs['source'] = "eumgacfdr2pps.py"
     scene.attrs['is_gac'] = 'True'
-    for band in BANDNAMES:
+    for band in band_names:
         if band not in scene:
             continue
-        if band in REFL_BANDS:
+        if band in refl_bands:
             scene[band].attrs['sun_earth_distance_correction_applied'] = 'True'
     return nimg
 
@@ -139,7 +132,8 @@ def set_exact_time_and_crop(scene, start_line, end_line, time_key='scanline_time
     end_time_dt64 = scene[time_key].values[end_line]
     start_time = dt64_to_datetime(start_time_dt64)
     end_time = dt64_to_datetime(end_time_dt64)
-    for ds in BANDNAMES + ['latitude', 'longitude', 'qual_flags', 'acq_time'] + ANGLENAMES:
+    datasets_to_crop = band_names + GEOLOCATION_NAMES
+    for ds in datasets_to_crop:
         if ds in scene and 'y' in scene[ds].dims:
             if end_line != -1:
                 scene[ds] = scene[ds].isel(y=slice(start_line, end_line + 1))
@@ -161,7 +155,7 @@ def remove_broken_data(scene):
     bad_lines = np.sum(scene['qual_flags'].values[:, 1:], axis=1) > 0
     if bad_lines.any():
         remove = np.where(bad_lines, np.nan, 0)
-        for band in BANDNAMES:
+        for band in PPS_TAGS:
             if band in scene:
                 scene[band].values = scene[band].values + remove[:, np.newaxis]
 
@@ -174,11 +168,24 @@ def remove_broken_data(scene):
     # bad_lines = qflags.sum(dim='num_flags') > 0
     # bad_pixels = bad_lines.expand_dims({'x': x})  # filled with zeros
     # bad_pixels, _ = xr.broadcast(bad_lines, bad_pixels)
-    # for band in BANDNAMES:
+    # for band in band_names:
     #    if band in scene:
     #        print(scene[band].attrs['name'])
     #        scene[band] = scene[band].where(~bad_pixels)
     #        print(scene[band].attrs['name'])
+
+
+def load_data(eumgacfdr_file, start_line=None, end_line=None):
+    """Load data."""
+    scene = Scene(reader='avhrr_l1c_eum_gac_fdr_nc',
+                  filenames=[eumgacfdr_file])
+    scene.load(band_names)
+    scene.load(GEOLOCATION_NAMES)
+    scene.load(ATTRIBUTES_TO_LOAD)
+    # Only load these if we do not crop data
+    if start_line is None and end_line is None:
+        scene.load(EXTRA_ATTRIBUTES_TO_LOAD_WHEN_NOT_CROPPING)
+    return scene
 
 
 def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None,
@@ -186,62 +193,25 @@ def process_one_file(eumgacfdr_file, out_path='.', reader_kwargs=None,
                      remove_broken=True, orbit_n=99999):
     """Make level 1c files in PPS-format."""
     tic = time.time()
-    scn_ = Scene(reader='avhrr_l1c_eum_gac_fdr_nc',
-                 filenames=[eumgacfdr_file])
-
-    scn_.load(BANDNAMES)
-    scn_.load(['latitude',
-               'longitude',
-               'qual_flags',
-               'equator_crossing_time',
-               'equator_crossing_longitude',
-               'acq_time'] +
-              ANGLENAMES)
-
-    # Only load these if we do not crop data
-    if start_line is None and end_line is None:
-        scn_.load(['overlap_free_end',
-                   'overlap_free_start',
-                   'midnight_line'])
-
+    check_file_exists(eumgacfdr_file)
+    scene = load_data(eumgacfdr_file, start_line=start_line, end_line=end_line)
     # Needs to be done before everything else to avoid problems with attributes.
     if remove_broken:
         logger.info("Setting low quality data (qual_flags) to nodata.")
-        remove_broken_data(scn_)
-
+        remove_broken_data(scene)
     # Crop after all renaming of variables are done
     # Problems to rename if cropping is done first.
-    set_exact_time_and_crop(scn_, start_line, end_line, time_key='acq_time')
-    irch = scn_['brightness_temperature_channel_4']  # Redefine, to get updated start/end_times
-
-    # One ir channel
-    irch = scn_['brightness_temperature_channel_4']
-
-    # Set header and band attributes
-    set_header_and_band_attrs(scn_, orbit_n=orbit_n)
-
-    # Rename longitude, latitude to lon, lat.
-    rename_latitude_longitude(scn_)
-
-    # Convert angles to PPS
-    convert_angles(scn_)
-    update_angle_attributes(scn_, irch)  # Standard name etc
-
+    set_exact_time_and_crop(scene, start_line, end_line, time_key='acq_time')
+    ir_channel_obj = scene[ONE_IR_CHANNEL]  # Redefine, to get updated start/end_times
+    set_header_and_band_attrs(scene, orbit_n=orbit_n)
+    rename_latitude_longitude(scene)
+    convert_angles(scene)
+    update_angle_attributes(scene, ir_channel_obj)  # Standard name etc
     # Handle gac specific datasets qual_flags and scanline_timestamps
-    update_ancilliary_datasets(scn_)
-
-    filename = compose_filename(scn_, out_path, instrument='avhrr', band=irch)
-    encoding = get_encoding_gac(scn_)
-    scn_.save_datasets(writer='cf',
-                       filename=filename,
-                       header_attrs=get_header_attrs(scn_, band=irch, sensor='avhrr'),
-                       engine=engine,
-                       flatten_attrs=True,
-                       include_lonlats=False,  # Included anyway as they are datasets in scn_
-                       pretty=True,
-                       encoding=encoding)
-
-    logger.info("Saved file {:s} after {:3.1f} seconds".format(
-        os.path.basename(filename),
-        time.time() - tic))
+    update_ancilliary_datasets(scene)
+    fix_timestamp_datatype(scene, "scanline_timestamps")
+    header_attrs = get_header_attrs(scene, band=ir_channel_obj, sensor='avhrr')
+    filename = compose_filename(scene, out_path, instrument='avhrr', band=ir_channel_obj)
+    save_data(scene, filename, header_attrs, engine)
+    log_time(filename, tic)
     return filename

@@ -18,14 +18,18 @@
 # along with level1c4pps.  If not, see <http://www.gnu.org/licenses/>.
 
 """Package Initializer for level1c4pps."""
-from importlib.metadata import version
-import numpy as np
-import xarray as xr
-from datetime import datetime, timezone
-import os
 import logging
+import os
+import time
+from datetime import datetime, timezone
+from importlib.metadata import version
+
+import numpy as np
 import satpy
+import xarray as xr
+
 import level1c4pps
+
 logging.basicConfig(
     format='level1c4pps %(levelname)s: |%(asctime)s|: %(message)s',
     level=logging.INFO,
@@ -36,19 +40,19 @@ xr.set_options(keep_attrs=True)
 
 __version__ = version(__name__)
 
-PPS_TAGNAMES_TO_IMAGE_NR = {'ch_r06': 'image1',
-                            'ch_r09': 'image2',
-                            'ch_tb11': 'image3',
-                            'ch_tb12': 'image4',
-                            'ch_tb37': 'image5',
-                            'ch_r16': 'image6',
-                            'ch_tb85': 'image7',
-                            'ch_r13': 'image8',
-                            'ch_r22': 'image9',
-                            'ch_r21': 'image10',
-                            'ch_tb67': 'image11',
-                            'ch_tb73': 'image12',
-                            'ch_tb133': 'image13'}
+PPS_TAGS_TO_IMAGE_NR = {'ch_r06': 'image1',
+                        'ch_r09': 'image2',
+                        'ch_tb11': 'image3',
+                        'ch_tb12': 'image4',
+                        'ch_tb37': 'image5',
+                        'ch_r16': 'image6',
+                        'ch_tb85': 'image7',
+                        'ch_r13': 'image8',
+                        'ch_r22': 'image9',
+                        'ch_r21': 'image10',
+                        'ch_tb67': 'image11',
+                        'ch_tb73': 'image12',
+                        'ch_tb133': 'image13'}
 
 ATTRIBUTES_TO_DELETE_FROM_CHANNELS = [
     'ancillary_variables',
@@ -256,23 +260,21 @@ def dt64_to_datetime(dt64):
     return dt64
 
 
-def get_encoding(scene, bandnames, pps_tagnames, chunks=None):
+def get_encoding(scene, chunks=None):
     """Get netcdf encoding for all datasets."""
     encoding = {}
     for dataset in scene.keys():
         try:
-            name, enc = get_band_encoding(scene[dataset['name']], bandnames, pps_tagnames,
-                                          chunks=chunks)
+            name, enc = get_band_encoding(scene[dataset['name']], chunks=chunks)
         except (NameError, TypeError):
-            name, enc = get_band_encoding(scene[dataset.name], bandnames, pps_tagnames,
-                                          chunks=chunks)
+            name, enc = get_band_encoding(scene[dataset.name], chunks=chunks)
         except ValueError:
             continue
         encoding[name] = enc
     return encoding
 
 
-def get_band_encoding(dataset, bandnames, pps_tagnames, chunks=None):
+def get_band_encoding(dataset, chunks=None):
     """Get netcdf encoding for a datasets."""
     name = dataset.attrs['name']
     id_tag = dataset.attrs.get('id_tag', None)
@@ -317,14 +319,7 @@ def get_band_encoding(dataset, bandnames, pps_tagnames, chunks=None):
         # pygac qual flags
         enc = {'dtype': 'int16', 'zlib': True,
                'complevel': 4, '_FillValue': -32001.0}
-    elif name in ['scanline_timestamps', 'pixel_time']:
-        # pygac scanline_timestamps
-        enc = {'dtype': 'int64',
-               'zlib': True,
-               'units': 'milliseconds since 1970-01-01',
-               'complevel': 4,
-               '_FillValue': -1.0}
-    elif name in ['ir_105_time']:
+    elif name in ['scanline_timestamps', 'pixel_time', 'ir_105_time']:
         enc = {'dtype': 'int64',
                'zlib': True,
                'units': 'milliseconds since 1970-01-01',
@@ -333,12 +328,6 @@ def get_band_encoding(dataset, bandnames, pps_tagnames, chunks=None):
     if not enc:
         raise ValueError('Unsupported band: {}'.format(name))
     return name, enc
-
-
-def remove_attributes(scene, band, remove):
-    """Remove attributes from band."""
-    for attr in remove:
-        scene[band].attrs.pop(attr, None)
 
 
 def rename_latitude_longitude(scene):
@@ -390,9 +379,10 @@ def fix_sun_earth_distance_correction_factor(scene, band, start_time):
         scene[band].attrs['sun_earth_distance_correction_factor'] = sun_earth_distance * sun_earth_distance
 
 
-def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch, orbit_n=0):
+def set_header_and_band_attrs_defaults(scene, PPS_TAGS, irch, orbit_n=0):
     """Add some default values for band attributes."""
     # Set some header attributes:
+    refl_bands = get_refl_bands(PPS_TAGS)
     scene.attrs['history'] = "Created by level1c4pps."
     scene.attrs['history'] += irch.attrs.pop('history', "")
     if 'platform' in scene.attrs:
@@ -430,10 +420,10 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
 
     # bands
     nimg = 20  # name of first dataset id_tag ch_rxx or ch_tbxx is image20
-    for band in BANDNAMES:
+    for band in PPS_TAGS:
         if band not in scene:
             continue
-        idtag = PPS_TAGNAMES.get(band, None)
+        idtag = PPS_TAGS.get(band, None)
         if idtag is not None:
             scene[band].attrs['id_tag'] = idtag
         scene[band].attrs['description'] = sensor_name.upper() + ' ' + str(band).upper()
@@ -444,18 +434,18 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
             # Assume factor applied if available as attribute.
             scene[band].attrs['sun_earth_distance_correction_applied'] = 'True'
             fix_sun_earth_distance_correction_factor(scene, band, irch.attrs['start_time'])
-        if 'wavelength' in  scene[band].attrs:   
+        if 'wavelength' in scene[band].attrs:
             scene[band].attrs['wavelength'] = scene[band].attrs['wavelength'][0:3]
         scene[band].attrs['sun_zenith_angle_correction_applied'] = 'False'
         if "sunz_corrected" in scene[band].attrs.get('modifiers', []):
             scene[band].attrs['sun_zenith_angle_correction_applied'] = 'True'
-        if idtag in PPS_TAGNAMES_TO_IMAGE_NR:
-            scene[band].attrs['name'] = PPS_TAGNAMES_TO_IMAGE_NR[idtag]
+        if idtag in PPS_TAGS_TO_IMAGE_NR:
+            scene[band].attrs['name'] = PPS_TAGS_TO_IMAGE_NR[idtag]
         else:
             scene[band].attrs['name'] = "image{:d}".format(nimg)
             nimg += 1
         scene[band].attrs['coordinates'] = 'lon lat'
-        if band in REFL_BANDS:
+        if band in refl_bands:
             scene[band].attrs['valid_range'] = np.array([0, 20000], dtype='int16')
             scene[band].attrs['units'] = '%'  # Needed by AVHRR
         else:
@@ -464,7 +454,7 @@ def set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BAND
 
         # Add time coordinate. To make cfwriter aware that we want 3D data.
         scene[band].coords['time'] = irch.attrs['start_time']
-        
+
         # Remove some attributes and coordinates
         for attr in RENAME_VARS:
             if attr in scene[band].attrs:
@@ -562,7 +552,6 @@ def platform_name_to_use_in_filename(platform_name):
                     'eosterra': 'eos1',
                     'terra': 'eos1',
                     'suominpp': 'npp'}
-
     new_name = new_name.replace("-", "")
     for orig, new in replace_dict.items():
         if new_name == orig:
@@ -616,7 +605,65 @@ def get_header_attrs(scene, band, sensor='avhrr', sbaf_version='NO_SBAF'):
 
     return header_attrs
 
-def fix_timestamp_datatype(scene, encoding, param):
+
+def fix_timestamp_datatype(scene, param):
     """Fix time datatype."""
+    encoding = get_encoding(scene)
     if "milliseconds" in encoding[param]["units"]:
         scene[param].data = scene[param].data.astype('datetime64[ms]')
+
+
+def get_band_names(pps_tags_dict, mode="default"):
+    """Get bands to use from all, default and recommended for pps."""
+    PPS_BANDS = ['ch_r06', 'ch_r09', 'ch_r13', 'ch_r16', 'ch_tb37', 'ch_tb85', 'ch_tb11', 'ch_tb12']
+    AVHRR_BANDS = ['ch_r06', 'ch_r09', 'ch_r16', 'ch_tb37', 'ch_tb11', 'ch_tb12']
+    if mode == "all":
+        return sorted(list(pps_tags_dict.keys()))
+    if mode == "pps":
+        return [key for key, val in pps_tags_dict.items() if val in PPS_BANDS]
+    if mode == "avhrr_heritage":
+        return [key for key, val in pps_tags_dict.items() if val in AVHRR_BANDS]
+    return [key for key, val in pps_tags_dict.items() if "xx" not in val]
+
+
+def get_refl_bands(pps_tags_dict):
+    """Get reflective bands."""
+    return [key for key, val in pps_tags_dict.items() if "ch_r" in val]
+
+
+def save_data(
+        scene,
+        filename,
+        header_attrs,
+        engine,
+        unlimited_dims=None,
+        exclude_attrs=None,
+        encoding=None,
+        chunks=None):
+    """Save the level1cfile."""
+    if encoding is None:
+        encoding = get_encoding(scene, chunks=chunks)
+    scene.save_datasets(writer='cf',
+                        filename=filename,
+                        header_attrs=header_attrs,
+                        engine=engine,
+                        unlimited_dims=unlimited_dims,
+                        include_lonlats=False,
+                        flatten_attrs=True,
+                        pretty=True,
+                        encoding=encoding)
+
+
+def log_time(filename, tic):
+    """Log time consumption."""
+    logger.info(f"Saved file {os.path.basename(filename)} after {time.time() - tic:3.1f} seconds")
+
+
+def check_file_exists(filename_list_or_string):
+    """Check that the files exist that we want to read."""
+    if isinstance(filename_list_or_string, list):
+        for fname in filename_list_or_string:
+            if not os.path.isfile(fname):
+                raise FileNotFoundError(f"No such file: {fname}")
+    elif not os.path.isfile(filename_list_or_string):
+        raise FileNotFoundError(f"No such file: {filename_list_or_string}")

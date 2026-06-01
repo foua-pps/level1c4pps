@@ -20,11 +20,11 @@
 """Unit tests for the gac2pps_lib module."""
 
 import datetime as dt
+import os
 import unittest
-try:
-    from unittest import mock
-except ImportError:
-    import mock
+from unittest import mock
+
+import xarray as xr
 from satpy import Scene
 
 import level1c4pps.slstr2pps_lib as slstr2pps
@@ -35,52 +35,31 @@ class TestSlstr2PPS(unittest.TestCase):
 
     def setUp(self):
         """Create a test scene."""
-        slstr2pps.BANDNAMES = ['S2', 's8']
-        vis006 = mock.MagicMock(attrs={'name': 'image0',
-                                       'wavelength': [1, 2, 3, 'um'],
-                                       'id_tag': 'ch_r06'})
-        ir_108 = mock.MagicMock(attrs={'name': 'image1',
-                                       'id_tag': 'ch_tb11',
-                                       'wavelength': [1, 2, 3, 'um'],
-                                       'start_time': dt.datetime(2009, 7, 1, 12, 1, 0),
-                                       'end_time': dt.datetime(2009, 7, 1, 12, 1, 0),
-                                       'platform_name': '',
-                                       'orbit_number': 99999})
-        satzenith = mock.MagicMock(attrs={'name': 'satzenith',
-                                          'id_tag': 'satzenith'})
         self.scene = Scene()
-        scene_dict = {'S2': vis006, 'S8': ir_108, 'satzenith': satzenith}
+        scene_dict = {}
+        grid_data = [[1.0, 2.0], [3.0, 4.0]]
+        all_keys = ['S1', 'S8'] + slstr2pps.GEOLOCATION_NAMES
+        for key in all_keys:
+            scene_dict[key] = xr.DataArray(grid_data,
+                                           dims=('y', 'x'),
+                                           attrs={'name': key,
+                                                  'id_tag': key})
+        scene_dict['S1'].attrs = {'name': 'image0',
+                                  'wavelength': [1, 2, 3, 'um'],
+                                  'id_tag': 'ch_r06'}
+        scene_dict['S8'].attrs = {'name': 'image1',
+                                  'id_tag': 'ch_tb11',
+                                  'platform': "Sentinel-3A",
+                                  'wavelength': [1, 2, 3, 'um'],
+                                  'start_time': dt.datetime(2009, 7, 1, 12, 1, 0),
+                                  'end_time': dt.datetime(2009, 7, 1, 12, 1, 0),
+                                  'platform_name': '',
+                                  'orbit_number': 99999}
         for key in scene_dict:
-            pps_name = scene_dict[key].attrs['name']
             self.scene[key] = scene_dict[key]
-            self.scene[key].attrs['name'] = pps_name
-        self.scene.attrs['sensor'] = ['slstr']
-
-    def test_get_encoding(self):
-        """Test encoding for MERSI-2."""
-        enc_exp_angles = {'dtype': 'int16',
-                          'scale_factor': 0.01,
-                          'zlib': True,
-                          'complevel': 4,
-                          '_FillValue': -32767,
-                          'add_offset': 0.0}
-        encoding_exp = {
-            'image0': {'dtype': 'int16',
-                       'scale_factor': 0.01,
-                       'zlib': True,
-                       'complevel': 4,
-                       '_FillValue': -32767,
-                       'add_offset': 0.0},
-            'image1': {'dtype': 'int16',
-                       'scale_factor': 0.01,
-                       '_FillValue': -32767,
-                       'zlib': True,
-                       'complevel': 4,
-                       'add_offset': 273.15},
-            'satzenith': enc_exp_angles
-        }
-        encoding = slstr2pps.get_encoding_slstr(self.scene)
-        self.assertDictEqual(encoding, encoding_exp)
+        self.scene.load = mock.MagicMock()
+        self.scene.resample = mock.MagicMock(return_value=self.scene)
+        self.scene.attrs['sensor'] = 'slstr'
 
     def test_set_header_and_band_attrs(self):
         """Test to set header_and_band_attrs."""
@@ -88,11 +67,11 @@ class TestSlstr2PPS(unittest.TestCase):
         self.assertTrue(isinstance(self.scene.attrs['orbit_number'], int))
         self.assertEqual(self.scene.attrs['orbit_number'], 12345)
 
-
-def suite():
-    """Create the test suite for test_slstr2pps."""
-    loader = unittest.TestLoader()
-    mysuite = unittest.TestSuite()
-    mysuite.addTest(loader.loadTestsFromTestCase(TestSlstr2PPS))
-
-    return mysuite
+    @mock.patch("level1c4pps.slstr2pps_lib.check_file_exists")
+    @mock.patch("level1c4pps.slstr2pps_lib.Scene")
+    def test_process_one_scene(self, mock_scene_obj, mock_check_file_exists):
+        """Test to set process_one_scene."""
+        mock_scene_obj.return_value = self.scene
+        filename = slstr2pps.process_one_scene("dummy", out_path='./level1c4pps/tests/', orbit_n='12345')
+        self.assertEqual(os.path.basename(filename),
+                         "S_NWC_slstr_sentinel3a_12345_20090701T1201000Z_20090701T1201000Z.nc")

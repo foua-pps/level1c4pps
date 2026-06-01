@@ -22,59 +22,48 @@
 
 """Functions to convert ISCCP Next Generation level-1-G data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
 
-import os
-import time
-import xarray as xr
-import numpy as np
-from satpy.scene import Scene
-from level1c4pps import (get_encoding,
-                         dt64_to_datetime,
-                         compose_filename,
-                         apply_sunz_correction,
-                         rename_latitude_longitude,
-                         update_angle_attributes, get_header_attrs,
-                         set_header_and_band_attrs_defaults,
-                         convert_angles,
-                         adjust_lons_to_valid_range)
 import logging
-from pyorbital.astronomy import get_alt_az, sun_zenith_angle
+import time
 
+import numpy as np
+from pyorbital.astronomy import get_alt_az, sun_zenith_angle
+from satpy.scene import Scene
+
+from level1c4pps import (adjust_lons_to_valid_range, apply_sunz_correction,
+                         check_file_exists, compose_filename, convert_angles,
+                         dt64_to_datetime, get_header_attrs, get_refl_bands,
+                         log_time, save_data,
+                         set_header_and_band_attrs_defaults,
+                         update_angle_attributes)
 
 logger = logging.getLogger('isccpng2pps')
 
-BANDNAMES = ['refl_01_60um',
-             'refl_00_65um',
-             'refl_00_86um',
-             'temp_03_80um',
-             'temp_08_60um',
-             'temp_09_70um',
-             'temp_11_00um',
-             'temp_12_00um',
-             'temp_13_30um',
-             'temp_06_20um',
-             'temp_07_30um']
+GEOLOCATION_NAMES = [
+    'solar_zenith_angle',
+    'satellite_zenith_angle',
+    'solar_azimuth_angle',
+    'satellite_azimuth_angle',
+    "wmo_id",
+    "pixel_time",
+    "lon",
+    "lat"]
+
+PPS_TAGS = {'refl_01_60um': "ch_r16",
+            'refl_00_65um': "ch_r06",
+            'refl_00_86um': "ch_r09",
+            'temp_03_80um': "ch_tb37",
+            'temp_08_60um': "ch_tb85",
+            'temp_09_70um': "ch_tbxx",
+            'temp_11_00um': "ch_tb11",
+            'temp_12_00um': "ch_tb12",
+            'temp_13_30um': "ch_tb133",
+            'temp_06_20um': "ch_tbxx",
+            'temp_07_30um': "ch_tb73"}
 
 
-REFL_BANDS = ['refl_01_60um',
-              'refl_00_65um',
-              'refl_00_86um']
-
-ANGLE_NAMES = ['solar_zenith_angle', 'satellite_zenith_angle',
-               'solar_azimuth_angle', 'satellite_azimuth_angle']
-
-PPS_TAGNAMES = {'refl_01_60um': "ch_r16",
-                'refl_00_65um': "ch_r06",
-                'refl_00_86um': "ch_r09",
-                'temp_03_80um': "ch_tb37",
-                'temp_08_60um': "ch_tb85",
-                'temp_09_70um': "ch_tbxx",
-                'temp_11_00um': "ch_tb11",
-                'temp_12_00um': "ch_tb12",
-                'temp_13_30um': "ch_tb133",
-                'temp_06_20um': "ch_tbxx",
-                'temp_07_30um': "ch_tb73"}
-
-BANDNAMES = list(PPS_TAGNAMES.keys())
+refl_bands = get_refl_bands(PPS_TAGS)
+band_names = sorted(list(PPS_TAGS.keys()))
+ONE_IR_CHANNEL = 'temp_11_00um'
 
 channel_name = {"refl_00_65um": "VIS006",
                 "refl_00_86um": "VIS008",
@@ -83,7 +72,7 @@ channel_name = {"refl_00_65um": "VIS006",
 platform_id = {55: 321,
                70: 324}
 # Normally read from file (HRIT). We do not have access to nominal calibration
-# So we need to have that here. So far only 2021 
+# So we need to have that here. So far only 2021
 calibration_nominal = {2021: {321: {"VIS006": 24.974,
                                     "VIS008": 32.377,
                                     "IR_016": 23.710},
@@ -91,7 +80,7 @@ calibration_nominal = {2021: {321: {"VIS006": 24.974,
                                     "VIS008": 27.921,
                                     "IR_016": 23.112}
                               }}
-    
+
 coef_slope_chan = ['refl_00_65um', 'refl_00_86um', 'refl_01_60um',
                    'temp_03_80um', 'temp_06_20um', 'temp_07_30um', 'temp_08_60um',
                    'temp_09_70um', 'temp_11_00um', 'temp_12_00um', 'temp_13_30um']
@@ -159,21 +148,16 @@ satellite_names = {270: "GOES-16",  # ABI
                    70: "Meteosat-11"}
 
 
-def get_encoding_isccpng(scene):
-    """Get netcdf encoding for all datasets."""
-    return get_encoding(scene, BANDNAMES, PPS_TAGNAMES, chunks=None)
-
-
 def set_header_and_band_attrs(scene, orbit_n=00000):
     """Set and delete some attributes."""
     nimg = 0  # name of first dataset is image0
     # Set some header attributes:
-    irch = scene['temp_11_00um']
-    irch.attrs['instrument'] = "seviri"
+    ir_channel_obj = scene[ONE_IR_CHANNEL]
+    ir_channel_obj.attrs['instrument'] = "seviri"
     scene.attrs['source'] = "isccpng2pps.py"
     scene.attrs['platform_name'] = "meteosat11"
-    nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch, orbit_n=orbit_n)
-    for band in REFL_BANDS:
+    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGS, ir_channel_obj, orbit_n=orbit_n)
+    for band in refl_bands:
         if band not in scene:
             continue
         scene[band].attrs['sun_zenith_angle_correction_applied'] = 'False'
@@ -203,7 +187,7 @@ def homogenize_channel(scene, wmo_id, illum, band, sol_zen):
 def homogenize(scene):
     """Homogenize data to Meteosat-11."""
     sol_zen = scene["sunzenith"]
-    for band in BANDNAMES:
+    for band in band_names:
         if band not in scene:
             continue
         for wmo_id in satellite_names:
@@ -253,6 +237,15 @@ def fix_pixel_time(scene):
     scene["pixel_time"] = scene["pixel_time"].interpolate_na(dim = "y", fill_value="extrapolate", use_coordinate=False)  # update NaTs
     scene["pixel_time"].data = scene["pixel_time"].data * np.timedelta64(1, 's') + scene['temp_11_00um'].attrs["start_time"]
 
+
+def load_data(scene_files):
+    """Load data."""
+    scene = Scene(reader='multiple_sensors_isccpng_l1g_nc', filenames=scene_files)
+    bands_to_load = band_names + GEOLOCATION_NAMES
+    scene.load(bands_to_load)
+    return scene
+
+
 def update_solar_angles(scene):
     """USe pixel time to calculate solar angles."""
     suna, sunz = get_solar_angles(scene, lons=scene["lon"], lats=scene["lat"])
@@ -265,34 +258,21 @@ def process_one_scene(scene_files, out_path,
                       orbit_n=0):
     """Make level 1c files in PPS-format."""
     tic = time.time()
-    scn_ = Scene(reader='multiple_sensors_isccpng_l1g_nc', filenames=scene_files)
-    scn_.load(BANDNAMES + ANGLE_NAMES + ["wmo_id", "pixel_time", "lon", "lat"])
-
-    # one ir channel
-    irch = scn_['temp_11_00um']
-
-    set_header_and_band_attrs(scn_, orbit_n=orbit_n)
-    fix_pixel_time(scn_)
-    # rename_latitude_longitude(scn_)
-    adjust_lons_to_valid_range(scn_)
-    update_solar_angles(scn_)
-    convert_angles(scn_, delete_azimuth=True)
-    update_angle_attributes(scn_, irch)
-    recalibrate_meteosat(scn_)
-    homogenize(scn_)
-    apply_sunz_correction(scn_, REFL_BANDS)
-
-    filename = compose_filename(scn_, out_path, instrument='seviri', band=irch)
-    encoding = get_encoding_isccpng(scn_)
-
-    scn_.save_datasets(writer='cf',
-                       filename=filename,
-                       header_attrs=get_header_attrs(scn_, band=irch, sensor='seviri'),
-                       engine=engine,
-                       include_lonlats=False,
-                       flatten_attrs=True,
-                       encoding=encoding)
-    logging.info("Saved file {:s} after {:3.1f} seconds".format(
-        os.path.basename(filename),
-        time.time()-tic))
+    check_file_exists(scene_files)
+    scene = load_data(scene_files)
+    ir_channel_obj = scene[ONE_IR_CHANNEL]
+    set_header_and_band_attrs(scene, orbit_n=orbit_n)
+    fix_pixel_time(scene)
+    # rename_latitude_longitude(scene)
+    update_solar_angles(scene)
+    adjust_lons_to_valid_range(scene)
+    convert_angles(scene, delete_azimuth=True)
+    update_angle_attributes(scene, ir_channel_obj)
+    recalibrate_meteosat(scene)
+    homogenize(scene)
+    apply_sunz_correction(scene, refl_bands)
+    filename = compose_filename(scene, out_path, instrument='seviri', band=ir_channel_obj)
+    header_attrs = get_header_attrs(scene, band=ir_channel_obj, sensor='seviri')
+    save_data(scene, filename, header_attrs, engine)
+    log_time(filename, tic)
     return filename

@@ -23,36 +23,29 @@
 """Tools to convert SEVIRI hrit to PPS level-1c format."""
 
 
+import logging
 import os
-import numpy as np
-import xarray as xr
-import dask.array as da
-from glob import glob
 import time
 from datetime import datetime, timedelta, timezone
-from satpy.scene import Scene
+from glob import glob
+
+import dask.array as da
+import numpy as np
 import satpy.utils
-from trollsift.parser import globify, Parser
-
-
+import xarray as xr
 from pyorbital.astronomy import get_alt_az, sun_zenith_angle
 from pyorbital.orbital import get_observer_look
-from level1c4pps import dt64_to_datetime
-from level1c4pps.calibration_coefs import get_calibration, CalibrationData
-from level1c4pps import (make_azidiff_angle,
-                         get_encoding,
-                         compose_filename,
-                         update_angle_attributes,
-                         fix_sun_earth_distance_correction_factor)
+from satpy.scene import Scene
+from trollsift.parser import Parser, globify
 
-import logging
-try:
-    FileNotFoundError
-except NameError:
-    # Python 2
-    FileNotFoundError = IOError
+from level1c4pps import (check_file_exists, compose_filename, dt64_to_datetime,
+                         fix_sun_earth_distance_correction_factor,
+                         get_encoding, log_time, make_azidiff_angle, save_data,
+                         update_angle_attributes)
+from level1c4pps.calibration_coefs import CalibrationData, get_calibration
 
 logger = logging.getLogger("seviri2pps")
+
 
 class UnexpectedSatpyVersion(Exception):
     """Exception if unexpected satpy version."""
@@ -60,21 +53,20 @@ class UnexpectedSatpyVersion(Exception):
     pass
 
 
-BANDNAMES = ['VIS006', 'VIS008', 'IR_016', 'IR_039',
-             'IR_087', 'IR_108', 'IR_120',
-             'IR_134', 'IR_097', 'WV_062', 'WV_073']
-PPS_TAGNAMES = {'VIS006': 'ch_r06',
-                'VIS008': 'ch_r09',
-                'IR_016': 'ch_r16',
-                'IR_039': 'ch_tb37',
-                'IR_087': 'ch_tb85',
-                'IR_108': 'ch_tb11',
-                'IR_120': 'ch_tb12',
-                'IR_134': 'ch_tb133',
-                'IR_097': 'ch_tb97',
-                'WV_062': 'ch_tb67',
-                'WV_073': 'ch_tb73'}
-
+BAND_NAMES = ['VIS006', 'VIS008', 'IR_016', 'IR_039',
+              'IR_087', 'IR_108', 'IR_120',
+              'IR_134', 'IR_097', 'WV_062', 'WV_073']
+PPS_TAGS = {'VIS006': 'ch_r06',
+            'VIS008': 'ch_r09',
+            'IR_016': 'ch_r16',
+            'IR_039': 'ch_tb37',
+            'IR_087': 'ch_tb85',
+            'IR_108': 'ch_tb11',
+            'IR_120': 'ch_tb12',
+            'IR_134': 'ch_tb133',
+            'IR_097': 'ch_tb97',
+            'WV_062': 'ch_tb67',
+            'WV_073': 'ch_tb73'}
 
 HRIT_FILE_PATTERN = ('{rate:1s}-000-{hrit_format:_<6s}-'
                      '{platform_shortname:_<12s}-{channel:_<8s}_-'
@@ -142,7 +134,7 @@ def _check_is_seviri_data(scene):
 
 def _load_bands(scene, rotate):
     scene.load(
-        BANDNAMES,
+        BAND_NAMES,
         upper_right_corner=_get_upper_right_corner(rotate)
     )
 
@@ -173,17 +165,17 @@ def get_solar_angles(scene, lons, lats):
         Solar azimuth angle, Solar zenith angle in degrees
 
     """
-    suna = np.full(lons.shape, np.nan)
-    sunz = np.full(lons.shape, np.nan)
+    sun_azimuth = np.full(lons.shape, np.nan)
+    sun_zenith = np.full(lons.shape, np.nan)
     mean_acq_time = get_mean_acq_time(scene)
     for line, acq_time in enumerate(mean_acq_time.values):
         if np.isnat(acq_time):
             continue
-        _, suna_line = get_alt_az(acq_time, lons[line, :], lats[line, :])
-        suna_line = np.rad2deg(suna_line)
-        suna[line, :] = suna_line
-        sunz[line, :] = sun_zenith_angle(acq_time, lons[line, :], lats[line, :])
-    return suna, sunz
+        _, sun_azimuth_line = get_alt_az(acq_time, lons[line, :], lats[line, :])
+        sun_azimuth_line = np.rad2deg(sun_azimuth_line)
+        sun_azimuth[line, :] = sun_azimuth_line
+        sun_zenith[line, :] = sun_zenith_angle(acq_time, lons[line, :], lats[line, :])
+    return sun_azimuth, sun_zenith
 
 
 def get_satellite_angles(dataset, lons, lats):
@@ -213,8 +205,9 @@ def get_satellite_angles(dataset, lons, lats):
                               np.array([58]), np.array([0]))[1] > 30 and
             get_observer_look(0, 0, 36000,
                               datetime.now(timezone.utc), np.array([16]),
-                              np.array([58]), np.array([0]))[1] < 23 and
+                              np.array([58]), np.array([0]))[1] < 24 and
             sat_alt > 38000):
+        # Correct value around 22
         raise UnexpectedSatpyVersion(
             'Unexpected handling of satellite altitude in pyorbital/'
             'satpy. Conversion to km is probably unneeded and wrong.')
@@ -226,31 +219,31 @@ def get_satellite_angles(dataset, lons, lats):
     # Compute angles
 
     if lons.shape[0] < 5000:
-        sata, satel = get_observer_look(
+        sat_azimuth, satel = get_observer_look(
             sat_lon,
             sat_lat,
             sat_alt,
             dataset.attrs['start_time'],
             lons, lats, 0)
     else:
-        sata = np.full(lons.shape, np.nan)
+        sat_azimuth = np.full(lons.shape, np.nan)
         satel = np.full(lons.shape, np.nan)
 
         chunks = list(range(0, lons.shape[0], 2000))
         chunks.append(lons.shape[0])
-        for index in range(len(chunks)-1):
+        for index in range(len(chunks) - 1):
             start_i = chunks[index]
-            end_i = chunks[index+1]
+            end_i = chunks[index + 1]
             logger.info(f"Get angles for lines {start_i} to {end_i}")
-            sata[start_i:end_i, :], satel[start_i:end_i, :] = get_observer_look(
+            sat_azimuth[start_i:end_i, :], satel[start_i:end_i, :] = get_observer_look(
                 sat_lon,
                 sat_lat,
                 sat_alt,
                 dataset.attrs['start_time'],
                 lons[start_i:end_i, :], lats[start_i:end_i, :], 0)
 
-    satz = 90 - satel
-    return sata, satz
+    sat_zenith = 90 - satel
+    return sat_azimuth, sat_zenith
 
 
 def set_attrs(scene):
@@ -264,8 +257,8 @@ def set_attrs(scene):
     scene.attrs['date_created'] = nowutc.strftime("%Y-%m-%dT%H:%M:%SZ")
 
     # For each band
-    for image_num, band in enumerate(BANDNAMES):
-        idtag = PPS_TAGNAMES[band]
+    for image_num, band in enumerate(BAND_NAMES):
+        idtag = PPS_TAGS[band]
         scene[band].attrs['id_tag'] = idtag
         scene[band].attrs['description'] = 'SEVIRI ' + str(band)
         scene[band].attrs['wavelength'] = [scene[band].attrs['wavelength'].min,
@@ -296,7 +289,7 @@ def interpolate_nats(acq_times, filename_starttime):
     update = np.isnat(acq_times.values)
 
     too_late = [ind for (ind, acq_time_i) in enumerate(acq_times.values) if not np.isnat(acq_time_i)
-                and dt64_to_datetime(acq_time_i) - filename_starttime > timedelta(seconds=60*15)]
+                and dt64_to_datetime(acq_time_i) - filename_starttime > timedelta(seconds=60 * 15)]
     too_early = [ind for (ind, acq_time_i) in enumerate(acq_times.values) if not np.isnat(acq_time_i)
                  and dt64_to_datetime(acq_time_i) - filename_starttime < timedelta(seconds=0)]
     update[too_late] = True
@@ -321,7 +314,7 @@ def get_mean_acq_time(scene):
     # not converted to NaN, but to -9.22E18. So we have to set these elements
     # to NaN manually
     acq_times = []
-    for band in BANDNAMES:
+    for band in BAND_NAMES:
         acq_time = scene[band].coords['acq_time'].drop_vars(['acq_time'])
         is_nat = np.isnat(acq_time.values)
         acq_time = acq_time.astype(int).where(np.logical_not(is_nat))
@@ -336,7 +329,7 @@ def get_mean_acq_time(scene):
 def update_coords(scene):
     """Update band coordinates."""
     mean_acq_time = get_mean_acq_time(scene)
-    for band in BANDNAMES:
+    for band in BAND_NAMES:
         # Override channel-specific scanline timestamps with mean acquisition
         # time. The differences are not very large and the resulting nc file
         # is much simpler.
@@ -352,8 +345,8 @@ def update_coords(scene):
         scene[band].coords['time'] = scene[band].attrs['start_time']
 
 
-def add_ancillary_datasets(scene, lons, lats, sunz, satz, azidiff,
-                           suna, sata,
+def add_ancillary_datasets(scene, lons, lats, sun_zenith, sat_zenith, azidiff,
+                           sun_azimuth, sat_azimuth,
                            save_azimuth_angles=False, irch_name="IR_108",
                            chunks=(512, 3712)):
     """Add ancillary datasets to the scene.
@@ -361,8 +354,8 @@ def add_ancillary_datasets(scene, lons, lats, sunz, satz, azidiff,
     Args:
         lons: Longitude coordinates
         lats: Latitude coordinates
-        sunz: Solar zenith angle
-        satz: Satellite zenith angle
+        sun_zenith: Solar zenith angle
+        sat_zenith: Satellite zenith angle
         azidiff: Absolute azimuth difference angle
         chunks: Chunksize
 
@@ -395,12 +388,12 @@ def add_ancillary_datasets(scene, lons, lats, sunz, satz, azidiff,
 
     # Sunzenith
     scene['sunzenith'] = xr.DataArray(
-        da.from_array(sunz[:, :], chunks=chunks),
+        da.from_array(sun_zenith[:, :], chunks=chunks),
         dims=['y', 'x'], coords=angle_coords)
 
     # Satzenith
     scene['satzenith'] = xr.DataArray(
-        da.from_array(satz[:, :], chunks=chunks),
+        da.from_array(sat_zenith[:, :], chunks=chunks),
         dims=['y', 'x'], coords=angle_coords)
 
     # Azidiff
@@ -411,13 +404,13 @@ def add_ancillary_datasets(scene, lons, lats, sunz, satz, azidiff,
     #  Sunazimuth
     if save_azimuth_angles:
         scene['sunazimuth'] = xr.DataArray(
-            da.from_array(suna[:, :], chunks=chunks),
+            da.from_array(sun_azimuth[:, :], chunks=chunks),
             dims=['y', 'x'], coords=angle_coords)
 
     #  Satazimuth
     if save_azimuth_angles:
         scene['satazimuth'] = xr.DataArray(
-            da.from_array(sata[:, :], chunks=chunks),
+            da.from_array(sat_azimuth[:, :], chunks=chunks),
             dims=['y', 'x'], coords=angle_coords)
 
     # Update the attributes
@@ -502,8 +495,6 @@ def get_encoding_seviri(scene):
     # Bands
     chunks = (1, 512, 3712)
     encoding = get_encoding(scene,
-                            bandnames=BANDNAMES,
-                            pps_tagnames=PPS_TAGNAMES,
                             chunks=chunks)
 
     # Time
@@ -612,67 +603,54 @@ def process_one_scan(tslot_files, out_path, rotate=True, engine='h5netcdf',
                      path_to_external_ir_calibration=None,
                      save_azimuth_angles=False):
     """Make level 1c files in PPS-format."""
-    for fname in tslot_files:
-        if not os.path.isfile(fname):
-            raise FileNotFoundError('No such file: {}'.format(fname))
-
     tic = time.time()
-    scn_ = load_and_calibrate(
+    check_file_exists(tslot_files)
+    scene = load_and_calibrate(
         tslot_files,
         rotate=rotate,
         clip_calib=clip_calib,
         path_to_external_ir_calibration=path_to_external_ir_calibration,
     )
-    if hasattr(scn_, 'start_time'):
-        scn_.attrs['start_time'] = scn_.start_time
-        scn_.attrs['end_time'] = scn_.end_time
-    # Find lat/lon data
-    lons, lats = get_lonlats(scn_['IR_108'])
+    if hasattr(scene, 'start_time'):
+        scene.attrs['start_time'] = scene.start_time
+        scene.attrs['end_time'] = scene.end_time
+    lons, lats = get_lonlats(scene['IR_108'])
 
     # Compute angles
-    suna, sunz = get_solar_angles(scn_, lons=lons, lats=lats)
-    sata, satz = get_satellite_angles(scn_['IR_108'], lons=lons, lats=lats)
-    azidiff = make_azidiff_angle(sata, suna)
-
-    # Update coordinates
-    update_coords(scn_)
-
-    # Add ancillary datasets to the scene
-    add_ancillary_datasets(scn_,
-                           lons=lons, lats=lats,
-                           sunz=sunz, satz=satz,
+    sun_azimuth, sun_zenith = get_solar_angles(scene, lons=lons, lats=lats)
+    sat_azimuth, sat_zenith = get_satellite_angles(scene['IR_108'], lons=lons, lats=lats)
+    azidiff = make_azidiff_angle(sat_azimuth, sun_azimuth)
+    update_coords(scene)
+    add_ancillary_datasets(scene,
+                           lons=lons,
+                           lats=lats,
+                           sun_zenith=sun_zenith,
+                           sat_zenith=sat_zenith,
                            azidiff=azidiff,
-                           suna=suna, sata=sata,
+                           sun_azimuth=sun_azimuth,
+                           sat_azimuth=sat_azimuth,
                            save_azimuth_angles=save_azimuth_angles)
-    add_proj_satpos(scn_)
+    add_proj_satpos(scene)
 
     # Set attributes. This changes SEVIRI band names to PPS band names.
-    set_attrs(scn_)
+    set_attrs(scene)
 
     # Write datasets to netcdf
-    ir108_for_filename = scn_['IR_108']
+    ir108_for_filename = scene['IR_108']
     if use_nominal_time_in_filename:
         ir108_for_filename = set_nominal_scan_time(ir108_for_filename)
 
     filename = compose_filename(
-        scene=scn_,
+        scene=scene,
         out_path=out_path,
         instrument='seviri',
         band=ir108_for_filename
     )
-    scn_.save_datasets(writer='cf',
-                       filename=filename,
-                       header_attrs=get_header_attrs(scn_),
-                       engine=engine,
-                       encoding=get_encoding_seviri(scn_),
-                       unlimited_dims=['time'],
-                       include_lonlats=False,
-                       pretty=True,
-                       flatten_attrs=True,
-                       exclude_attrs=['raw_metadata'])
-    print("Saved file {:s} after {:3.1f} seconds".format(
-        os.path.basename(filename),
-        time.time() - tic))  # About 40 seconds
+    encoding = get_encoding_seviri(scene)
+    header_attrs = get_header_attrs(scene)
+    save_data(scene, filename, header_attrs, engine,
+              unlimited_dims=['time'], exclude_attrs=['raw_metadata'], encoding=encoding)
+    log_time(filename, tic)
     return filename
 
 
@@ -689,7 +667,7 @@ def process_all_scans_in_dname(dname, out_path,
     for uqdate in unique_dates:
         date_formated = uqdate.strftime("%Y%m%d%H%M")
         if ok_dates is not None and date_formated not in ok_dates.keys():
-            print("Skipping date {date}".format(date=date_formated))
+            logger.info(f"Skipping date {date_formated}")
             continue
         # Every hour only:
         # if uqdate.minute != 0:

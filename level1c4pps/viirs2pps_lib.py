@@ -19,99 +19,66 @@
 
 """Functions to convert VIIRS level-1 data to a NWCSAF/PPS level-1c formatet netCDF/CF file."""
 
-import os
-import time
-from satpy.scene import Scene
-from level1c4pps import (get_encoding, compose_filename,
-                         set_header_and_band_attrs_defaults,
-                         rename_latitude_longitude,
-                         update_angle_attributes, get_header_attrs,
-                         convert_angles)
-import pyspectral  # testing that pyspectral is available # noqa: F401
 import logging
+import time
+
+import pyspectral  # testing that pyspectral is available # noqa: F401
+from satpy.scene import Scene
+
+from level1c4pps import (check_file_exists, compose_filename, convert_angles,
+                         get_band_names, get_header_attrs, get_refl_bands,
+                         log_time, rename_latitude_longitude, save_data,
+                         set_header_and_band_attrs_defaults,
+                         update_angle_attributes)
 
 # Example:
 
 logger = logging.getLogger('viirs2pps')
 
-# Order of BANDNAMES decides order of channels in file. Not important
-# but nice to have the same order for I- and M-bands
-BANDNAMES = ["M01", "M02", "M03", "M04",
-             "M05", "M06", "M07",  # 0.6, 0.7, 0.9 M-band
-             "I01", "I02",         # 0.6, 0.9 I-band
-             "M08", "M09",         # 1.2, 1.3 M-band
-             "M10",                # 1.6 M-band
-             "I03",                # 1.6 I-band
-             "M11",                # 2.25 M-band
-             "M12",                # 3.7 M-band
-             "I04",                # 3.7 I-band
-             "M13", "M14",         # 4.05, 8.55 M-band
-             "M15", "M16",         # 11, 12 M-band
-             "I05"]                # 11.5 I-band
 
-MBANDS = ["M01", "M02", "M03", "M04", "M05", "M06", "M07", "M08",
-          "M09", "M10", "M11", "M12", "M13", "M14", "M15", "M16"]
+ANGLE_NAMES = ['satellite_zenith_angle',
+               'solar_zenith_angle',
+               'satellite_azimuth_angle',
+               'solar_azimuth_angle']
 
-IBANDS = ["I01", "I02", "I03", "I04", "I05"]
-
-REFL_BANDS = ["M01", "M02", "M03", "M04", "M05", "M06", "M07", "M08",
-              "M09", "M10", "M11", "I01", "I02", "I03"]
-
-MBAND_PPS = ["M05", "M07", "M09", "M10", "M11", "M12", "M14", "M15", "M16"]
-IBAND_PPS_I = ["I01", "I02", "I03", "I04"]
-IBAND_PPS_M = ["M09", "M14", "M15", "M16"]
-
-MBAND_DEFAULT = ["M05", "M07", "M09", "M10", "M11", "M12", "M14", "M15", "M16"]
-IBAND_DEFAULT_I = ["I01", "I02", "I03", "I04"]
-IBAND_DEFAULT_M = ["M09", "M11", "M14", "M15", "M16"]
-
-ANGLE_NAMES = ['satellite_zenith_angle', 'solar_zenith_angle',
-               'satellite_azimuth_angle', 'solar_azimuth_angle']
-
-PPS_TAGNAMES = {"M05": 'ch_r06',
-                "M07": 'ch_r09',
-                "M09": 'ch_r13',
-                "M10": 'ch_r16',
-                "M12": 'ch_tb37',
-                "M11": 'ch_r22',
-                "M14": 'ch_tb85',
-                "M15": 'ch_tb11',
-                "M16": 'ch_tb12',
-                "I01": 'ch_r06',
-                "I02": 'ch_r09',
-                "I03": 'ch_r16',
-                "I04": 'ch_tb37',
-                # Not used by pps:
-                "I05": 'ch_tbxx',
-                "M01": 'ch_rxx',
-                "M02": 'ch_rxx',
-                "M03": 'ch_rxx',
-                "M04": 'ch_rxx',
-                "M06": 'ch_rxx',
-                "M08": 'ch_rxx',
-                "M13": 'ch_tbxx'}
-
-
-def get_encoding_viirs(scene):
-    """Get netcdf encoding for all datasets."""
-    return get_encoding(scene,
-                        BANDNAMES,
-                        PPS_TAGNAMES,
-                        chunks=None)
+PPS_TAGS = {"M05": 'ch_r06',
+            "M07": 'ch_r09',
+            "M09": 'ch_r13',
+            "M10": 'ch_r16',
+            "M12": 'ch_tb37',
+            "M11": 'ch_r22',
+            "M14": 'ch_tb85',
+            "M15": 'ch_tb11',
+            "M16": 'ch_tb12',
+            "I01": 'ch_r06',
+            "I02": 'ch_r09',
+            "I03": 'ch_r16',
+            "I04": 'ch_tb37',
+            # Not used by pps:
+            "I05": 'ch_tbxx',
+            "M01": 'ch_rxx',
+            "M02": 'ch_rxx',
+            "M03": 'ch_rxx',
+            "M04": 'ch_rxx',
+            "M06": 'ch_rxx',
+            "M08": 'ch_rxx',
+            "M13": 'ch_tbxx'}
+refl_bands = get_refl_bands(PPS_TAGS)
+ONE_IR_CHANNEL = 'M15'
 
 
 def set_header_and_band_attrs(scene, orbit_n=0):
     """Set and delete some attributes."""
-    irch = scene['M15']
-    nimg = set_header_and_band_attrs_defaults(scene, BANDNAMES, PPS_TAGNAMES, REFL_BANDS, irch, orbit_n=orbit_n)
+    ir_channel_obj = scene[ONE_IR_CHANNEL]
+    nimg = set_header_and_band_attrs_defaults(scene, PPS_TAGS, ir_channel_obj, orbit_n=orbit_n)
     scene.attrs['source'] = "viirs2pps.py"
     if 'I04' in scene:
         # If highresolution we should have I04,
         scene.attrs['number_of_scans'] = scene['I04'].values.shape[0] / scene['I04'].attrs['rows_per_scan']
     else:
         # else use 11um.
-        scene.attrs['number_of_scans'] = scene['M15'].values.shape[0] / scene['M15'].attrs['rows_per_scan']
-    for band in REFL_BANDS:
+        scene.attrs['number_of_scans'] = scene["M15"].values.shape[0] / scene["M15"].attrs['rows_per_scan']
+    for band in refl_bands:
         if band not in scene:
             continue
         # VIIRS data read with sunz_corrected modifier
@@ -119,63 +86,50 @@ def set_header_and_band_attrs(scene, orbit_n=0):
     return nimg
 
 
-def process_one_scene(scene_files, out_path, use_iband_res=False, reader='viirs_sdr', engine='h5netcdf',
-                      all_channels=False, pps_channels=False, orbit_n=0):
-    """Make level 1c files in PPS-format."""
-    tic = time.time()
-    scn_ = Scene(
+def load_data(scene_files, reader, channel_selection, use_iband_res):
+    """Load data."""
+    scene = Scene(
         reader=reader,
         filenames=scene_files)
-
-    MY_MBAND = MBAND_DEFAULT
-    MY_IBAND_I = IBAND_DEFAULT_I
-    MY_IBAND_M = IBAND_DEFAULT_M
-
-    if all_channels:
-        MY_MBAND = MBANDS
-        MY_IBAND_I = IBANDS
-        MY_IBAND_M = MBANDS
-    if pps_channels:
-        MY_MBAND = MBAND_PPS
-        MY_IBAND_I = IBAND_PPS_I
-        MY_IBAND_M = IBAND_PPS_M
-
-    MY_MBAND_REFL = [band for band in MY_MBAND if band in REFL_BANDS]
-    MY_MBAND_TB = [band for band in MY_MBAND if band not in REFL_BANDS]
+    my_bands = get_band_names(PPS_TAGS, channel_selection)
+    if use_iband_res:
+        my_ibands_i = [band for band in my_bands if "I" in band]
+        my_ibands_i_tags = [PPS_TAGS[band] for band in my_ibands_i]
+        my_ibands_m = [band for band in my_bands if "M" in band and PPS_TAGS[band] not in my_ibands_i_tags]
+    else:
+        my_bands = [band for band in my_bands if "I" not in band]
 
     if use_iband_res:
-        scn_.load(MY_IBAND_I + ANGLE_NAMES + ['i_latitude', 'i_longitude'], resolution=371)
-        scn_.load(MY_IBAND_M, resolution=742)
-        scn_ = scn_.resample(resampler='native')
+        my_ibands_to_load = my_ibands_i + ANGLE_NAMES + ['i_latitude', 'i_longitude']
+        scene.load(my_ibands_to_load, resolution=371)
+        scene.load(my_ibands_m, resolution=742)
+        scene = scene.resample(resampler='native')
     elif reader == "viirs_compact":
-        scn_.load(MY_MBAND_TB + ANGLE_NAMES + ['latitude_m', 'longitude_m'], resolution=742)
+        my_mband_refl = [band for band in my_bands if band in refl_bands]
+        my_mband_tb = [band for band in my_bands if band not in refl_bands]
+        my_unmodified_bands_to_load = my_mband_tb + ANGLE_NAMES + ['latitude_m', 'longitude_m']
+        scene.load(my_unmodified_bands_to_load, resolution=742)
         # Load reflective bands with sunz-correction (not the default for VIIRS compact).
-        scn_.load(MY_MBAND_REFL, modifiers=("sunz_corrected", ))
+        scene.load(my_mband_refl, modifiers=("sunz_corrected", ))
     else:
-        scn_.load(MY_MBAND + ANGLE_NAMES + ['m_latitude', 'm_longitude'], resolution=742)
+        bands_to_load = my_bands + ANGLE_NAMES + ['m_latitude', 'm_longitude']
+        scene.load(bands_to_load, resolution=742)
+    return scene
 
-    # one ir channel
-    irch = scn_['M15']
 
-    # Set header and band attributes
-    set_header_and_band_attrs(scn_, orbit_n=orbit_n)
-
-    # Rename longitude, latitude to lon, lat.
-    rename_latitude_longitude(scn_)
-
-    # Convert angles to PPS
-    convert_angles(scn_, delete_azimuth=True)
-    update_angle_attributes(scn_, irch)
-
-    filename = compose_filename(scn_, out_path, instrument='viirs', band=irch)
-    scn_.save_datasets(writer='cf',
-                       filename=filename,
-                       header_attrs=get_header_attrs(scn_, band=irch, sensor='viirs'),
-                       engine=engine,
-                       include_lonlats=False,
-                       flatten_attrs=True,
-                       encoding=get_encoding_viirs(scn_))
-    print("Saved file {:s} after {:3.1f} seconds".format(
-        os.path.basename(filename),
-        time.time() - tic))
+def process_one_scene(scene_files, out_path, use_iband_res=False, reader='viirs_sdr', engine='h5netcdf',
+                      channel_selection="default", orbit_n=0):
+    """Make level 1c files in PPS-format."""
+    tic = time.time()
+    check_file_exists(scene_files)
+    scene = load_data(scene_files, reader, channel_selection, use_iband_res)
+    ir_channel_obj = scene[ONE_IR_CHANNEL]
+    set_header_and_band_attrs(scene, orbit_n=orbit_n)
+    rename_latitude_longitude(scene)
+    convert_angles(scene, delete_azimuth=True)
+    update_angle_attributes(scene, ir_channel_obj)
+    header_attrs = get_header_attrs(scene, band=ir_channel_obj, sensor='viirs')
+    filename = compose_filename(scene, out_path, instrument='viirs', band=ir_channel_obj)
+    save_data(scene, filename, header_attrs, engine)
+    log_time(filename, tic)
     return filename
