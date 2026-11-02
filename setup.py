@@ -37,7 +37,7 @@ install_requires = [
     "pyorbital",
     "pyspectral",
     "trollsift",
-    "satpy[avhrr_l1b_eps,viirs_l1b,viirs_sdr,viirs_compact]!=0.38.*,!=0.39.*,!=0.40.*,!=0.41.*",
+    "satpy[avhrr_l1b_eps,viirs_l1b,viirs_sdr,viirs_compact,vii_l1b_nc]!=0.38.*,!=0.39.*,!=0.40.*,!=0.41.*",
 ]
 extras_requires = {
      "gaclac": "satpy[avhrr_l1b_gaclac]",
