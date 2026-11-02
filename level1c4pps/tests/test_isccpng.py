@@ -29,6 +29,58 @@ from satpy import Scene
 import level1c4pps.isccpng2pps_lib as isccpng2pps
 
 
+class TestIsccpng2PPSEUM(unittest.TestCase):
+    """Test isccpng2pps_lib."""
+
+    def setUp(self):
+        """Create a test scene."""
+        self.scene = Scene()
+        scene_dict = {}
+        grid_data = [[1.0, 2.0], [3.0, 4.0]]
+        all_keys = ["refl_00_65um", 'temp_11_00um'] + isccpng2pps.GEOLOCATION_NAMES_EUM
+        for key in all_keys:
+            scene_dict[key] = xr.DataArray(grid_data,
+                                           dims=('y', 'x'),
+                                           attrs={'name': key,
+                                                  'id_tag': key})
+        scene_dict["refl_00_65um"].attrs = {
+            'name': 'image0',
+            'wavelength': [1, 2, 3, 'um'],
+            'start_time': np.datetime64('2021-06-28T01:00:00'),
+            'end_time': np.datetime64('2021-06-28T01:01:00'),
+            'id_tag': 'ch_r06'}
+        scene_dict['temp_11_00um'].attrs = {
+            'name': 'image1',
+            'id_tag': 'ch_tb11',
+            'wavelength': [1, 2, 3, 'um'],
+            'start_time': np.datetime64('2021-06-28T01:00:00'),
+            'end_time': np.datetime64('2021-06-28T01:01:00'),
+            'platform_name': '',
+            'orbit_number': 99999}
+        time_i = np.datetime64('2021-06-28T01:00:00')
+        scene_dict['pixel_time'] = xr.DataArray([[time_i, time_i],[time_i, time_i]],
+                                                dims=('y','x'),
+                                                attrs={'name': "pixel_time",
+                                                       'id_tag': "pixel_time",
+                                                       'start_time': np.datetime64('2021-06-28T01:00:00'),
+                                                       'end_time': np.datetime64('2021-06-28T01:01:00')})
+        scene_dict["pixel_time"].coords["crs"] = ""                       
+        scene_dict["sensor_flag"].coords["crs"] = ""
+        scene_dict["sensor_flag"].values = [[1, 1], [3, 3]]
+        for key in scene_dict:
+            self.scene[key] = scene_dict[key]
+        self.scene.load = mock.MagicMock()
+        self.scene.attrs['sensor'] = ['isccpng']
+
+    @mock.patch("level1c4pps.isccpng2pps_lib.check_file_exists")
+    @mock.patch("level1c4pps.isccpng2pps_lib.Scene")
+    def test_process_one_scene(self, mock_scene, mock_check_file_exists):
+        """Test to set process_one_scene."""
+        mock_scene.return_value = self.scene
+        filename = isccpng2pps.process_one_scene(["EUM_L1g_v1_res_0_05deg__"], out_path='./level1c4pps/tests/', orbit_n='12346')
+        self.assertEqual(os.path.basename(filename), "S_NWC_seviri__12346_20210628T0100000Z_20210628T0127000Z.nc")
+
+
 class TestIsccpng2PPS(unittest.TestCase):
     """Test isccpng2pps_lib."""
 
