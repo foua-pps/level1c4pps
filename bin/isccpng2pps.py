@@ -49,7 +49,10 @@ if __name__ == "__main__":
     parser.add_argument('-on', '--orbit_number', type=int, nargs='?',
                         required=False, default=99999,
                         help="Orbit number (default is 99999).")
+    parser.add_argument('--use-solar-angles-from-file', action='store_true',
+                        help='Use solar angles from file.')
     options = parser.parse_args()
     process_one_scene(options.files, options.out_dir,
                       engine=options.nc_engine,
+                      use_solar_angles_from_file=options.use_solar_angles_from_file,
                       orbit_n=options.orbit_number)
