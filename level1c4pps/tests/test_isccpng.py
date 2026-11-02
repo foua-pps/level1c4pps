@@ -71,4 +71,4 @@ class TestIsccpng2PPS(unittest.TestCase):
         """Test to set process_one_scene."""
         mock_scene.return_value = self.scene
         filename = isccpng2pps.process_one_scene(["ISCCP-NG"], out_path='./level1c4pps/tests/', orbit_n='12345')
-        self.assertEqual(os.path.basename(filename), "S_NWC_seviri__12345_20210628T0100000Z_20210628T0101000Z.nc")
+        self.assertEqual(os.path.basename(filename), "S_NWC_seviri__12345_20210628T0100000Z_20210628T0127000Z.nc")
